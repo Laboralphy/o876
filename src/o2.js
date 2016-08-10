@@ -187,3 +187,23 @@ O2.mixin = function(pPrototype, pMixin) {
 	pPrototype.extendPrototype(pMixin);
 };
 
+/**
+ * Make method static
+ * @param object obj
+ * @param array staticMethods static methods list
+ * @return this
+ */
+O2.makeStatic = function(obj, staticMethods) {
+    var myObject = obj.prototype;
+    if(typeof myObject != "object") {
+        console.log("O2 error", "typeof object for makestatic != 'object'");
+    } else {
+        staticMethods.forEach(function(row) {
+            if(row in myObject) {
+                obj[row] = myObject[row];
+            } 
+        });
+    }
+    return this;
+}
+

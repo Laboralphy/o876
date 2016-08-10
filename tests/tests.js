@@ -67,6 +67,21 @@ QUnit.test('Inheritance', function(assert) {
 	TEST = {};
 });
 
+/**
+ * test O2.makeStatic()..
+ */
+QUnit.test('MakeStatic', function(assert) {
+    O2.createClass('TEST.Class1', {
+        staticMethod: function() {
+            return true;
+        }
+    });
+    O2.makeStatic(TEST.Class1, ["staticMethod"]);
+    assert.equal(('staticMethod' in TEST.Class1), true, 'method cloned from prototype');
+    assert.equal(TEST.Class1.staticMethod(), true, 'static method is now callable');
+    TEST = {};
+});
+
 
 /*
  #    #     #    #    #     #    #    #
