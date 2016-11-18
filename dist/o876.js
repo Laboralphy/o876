@@ -8,32 +8,6 @@
 
 var O2 = {};
 
-/** Remplace dans une chaine "inherited(" par "inherited(this"
- * @param s Chaine à remplacer
- * @return nouvelle chaine remplacée
- */
-function __inheritedThisMacroString(s) {
-	return s.toString().replace(/__inherited\s*\(/mg,
-			'O2.parent(this, ').replace(
-			/O2.parent\s*\(\s*this,\s*\)/mg, 'O2.parent(this)');
-}
-
-/** Invoque la methode parente
- * @param This appelant, + Paramètres normaux de la methode parente.
- * @return Retour normal de la methode parente.
- */
-O2.parent = function() {
-	var fCaller = O2.parent.caller;
-	var oThis = arguments[0];
-	var aParams;
-	if ('__inherited' in fCaller) {
-		aParams = Array.prototype.slice.call(arguments, 1);
-		return fCaller.__inherited.apply(oThis, aParams);
-	} else {
-		throw new Error('o2: no __inherited');
-	}
-}
-
 /** Creation d'une nouvelle classe
  * @example NouvelleClasse = Function.createClass(function(param1) { this.data = param1; });
  * @param fConstructor prototype du constructeur
@@ -55,6 +29,19 @@ Function.prototype.createClass = function(pPrototype) {
 	}
 };
 
+O2._superizeFunction = function(f, fParent) {
+	var fNew;
+	var s = 'fNew = function() {\n' +
+		'var __inherited = (function() {\n' +
+		'	return fParent.apply(this, arguments);\n' +
+		'}).bind(this);\n' +
+		'var __function = ' +
+		f.toString() + ';' +
+		'\nreturn __function.apply(this, arguments);\n' +
+	'}\n';
+	return eval(s);
+};
+
 /** Mécanisme d'extention de classe.
  * Cette fonction accepte un ou deux paramètres
  * Appel avec 1 paramètre :
@@ -65,21 +52,26 @@ Function.prototype.createClass = function(pPrototype) {
  * @return Instance de lui-même.
  */
 Function.prototype.extendPrototype = function(aDefinition) {
-	var iProp = '', f, fInherited;
+	var iProp = '', f, fInherited, f2;
 	if (aDefinition instanceof Function) {
 		aDefinition = aDefinition.prototype;
 	}
 	for (iProp in aDefinition) {
 		f = aDefinition[iProp];
-		if (iProp in this.prototype	&& (this.prototype[iProp] instanceof Function)) {
+		if (iProp in this.prototype && (this.prototype[iProp] instanceof Function)) {
 			// Sauvegarde de la méthode en cours : elle pourrait être héritée
 			fInherited = this.prototype[iProp];
 			// La méthode en cour est déja présente dans la super classe
 			if (f instanceof Function) {
 				// completion des __inherited
-				eval('f = ' + __inheritedThisMacroString(f.toString()));
-				this.prototype[iProp] = f;
-				this.prototype[iProp].__inherited = fInherited;
+				// Ancien code
+				//eval('f = ' + __inheritedThisMacroString(f.toString()));
+				//this.prototype[iProp] = f;
+				//this.prototype[iProp].__inherited = fInherited;
+
+				// Nouveau code
+				this.prototype[iProp] = O2._superizeFunction(f, fInherited);
+
 			} else {
 				// On écrase probablement une methode par une propriété : Erreur
 				throw new Error(
@@ -142,15 +134,32 @@ O2.createObject = function(sName, oObject) {
  * @param s string, nom de la classe
  * @return pointer vers la Classe
  */
-O2._loadObject = function(s, oContext) {
+O2.loadObject = function(s, oContext) {
 	var aClass = s.split('.');
 	var pBase = oContext || window;
+	var sSub, sAlready = '';
 	while (aClass.length > 1) {
-		pBase = pBase[aClass.shift()];
+		sSub = aClass.shift();
+		if (sSub in pBase) {
+			pBase = pBase[sSub];
+		} else {
+			throw new Error('could not find ' + sSub + ' in ' + sAlready.substr(1));
+		}
+		sAlready += '.' + sSub;
 	}
 	var sClass = aClass[0];
-	return pBase[sClass];
+	if (sClass in pBase) {
+		return pBase[sClass];
+	} else {
+		throw new Error('could not find ' + sClass + ' in ' + sAlready.substr(1));
+	}
 };
+
+O2._loadObject = function(s, oContext) {
+	console.warn('deprecated call to O2._loadObject');
+	console.stack();
+	return O2.loadObject(s, oContext);
+}
 
 /** Creation d'une classe avec support namespace
  * le nom de la classe suit la syntaxe de la fonction O2.createObject() concernant les namespaces.
@@ -169,7 +178,7 @@ O2.createClass = function(sName, pPrototype) {
  */
 O2.extendClass = function(sName, pParent, pPrototype) {
 	if (typeof pParent === 'string') {
-		pParent = O2._loadObject(pParent);
+		pParent = O2.loadObject(pParent);
 	}
 	return O2.createObject(sName, Function.extendClass(pParent, pPrototype));
 };
@@ -182,7 +191,7 @@ O2.extendClass = function(sName, pParent, pPrototype) {
  */
 O2.mixin = function(pPrototype, pMixin) {
 	if (typeof pPrototype == 'string') {
-		pPrototype = O2._loadObject(pPrototype);
+		pPrototype = O2.loadObject(pPrototype);
 	}
 	pPrototype.extendPrototype(pMixin);
 };
@@ -617,19 +626,25 @@ O2.createClass('O876.Bresenham', {
 	 * @param y0 starting point y
 	 * @param x1 ending point x
 	 * @param y1 ending point y
-	 * @param pCallback a plot function of type function(x, y) { return bool; }
+	 * @param pCallback a plot function of type function(x, y, n) { return bool; }
+	 * avec x, y les coordonnée du point et n le numéro duj point
 	 * @returns {Boolean} false if the fonction has been canceled
 	 */
 	line: function(x0, y0, x1, y1, pCallback) {
+		x0 |= 0;
+		y0 |= 0;
+		x1 |= 0;
+		y1 |= 0;
 		var dx = Math.abs(x1 - x0);
 		var dy = Math.abs(y1 - y0);
 		var sx = (x0 < x1) ? 1 : -1;
 		var sy = (y0 < y1) ? 1 : -1;
 		var err = dx - dy;
 		var e2;
+		var n = 0;
 		while (true) {
 			if (pCallback) {
-				if (pCallback(x0, y0) === false) {
+				if (pCallback(x0, y0, n) === false) {
 					return false;
 				}
 			}
@@ -645,6 +660,7 @@ O2.createClass('O876.Bresenham', {
 				err += dx;
 				y0 += sy;
 			}
+			++n;
 		}
 		return true;
 	}
@@ -767,9 +783,16 @@ O2.createObject('O876.CanvasFactory', {
 	/**
 	 * Create a new canvas
 	 */
-	getCanvas: function() {
+	getCanvas: function(w, h, bImageSmoothing) {
 		var oCanvas = document.createElement('canvas');
 		var oContext = oCanvas.getContext('2d');
+		if (w && h) {
+			oCanvas.width = w;
+			oCanvas.height = h;
+		}
+		if (bImageSmoothing === undefined) {
+			bImageSmoothing = false;
+		}
 		O876.CanvasFactory.setImageSmoothing(oContext, false);
 		return oCanvas;
 	},
@@ -788,6 +811,21 @@ O2.createObject('O876.CanvasFactory', {
 	
 	getImageSmoothing: function(oContext) {
 		return oContext.imageSmoothingEnabled;
+	},
+
+	/**
+	 * Clones a canvas into a new one
+	 * @param oCanvas to be cloned
+	 * @return  Canvas
+	 */
+	cloneCanvas: function(oCanvas) {
+		var c = O876.CanvasFactory.getCanvas(
+			oCanvas.width, 
+			oCanvas.height, 
+			O876.CanvasFactory.getImageSmoothing(oCanvas.getContext('2d'))
+		);
+		c.getContext('2d').drawImage(oCanvas, 0, 0);
+		return c;
 	}
 });
 /** Interface de controle des mobile 
@@ -806,7 +844,6 @@ O2.createClass('O876.Easing', {
 	nTime: 0,
 	iTime: 0,
 	fWeight: 1,
-	sFunction: 'smoothstep',
 	pFunction: null,
 	
 	from: function(x) {
@@ -869,6 +906,9 @@ O2.createClass('O876.Easing', {
 			this.iTime = t;
 		}
 		var p = this.pFunction;
+		if (typeof p != 'function') {
+			throw new Error('easing function is invalid : ' + p);
+		}
 		var v = p(t / this.nTime);
 		this.x = this.xEnd * v + (this.xStart * (1 - v));
 		return t >= this.nTime;
@@ -2139,6 +2179,9 @@ O2.createClass('O876.SoundSystem', {
 	 * le programme d'ambience est reseté par cette manip
 	 */
 	crossFadeMusic: function(sFile) {
+		if (sFile === undefined) {
+			throw new Error('sound file is not specified');
+		}
 		if (this.bCrossFading) {
 			this.sCrossFadeTo = sFile;
 			return;
@@ -2151,7 +2194,7 @@ O2.createClass('O876.SoundSystem', {
 		}
 		this.oInterval = window.setInterval((function() {
 			iVolume += nVolumeDelta;
-			this.oMusicChan.volume = iVolume / 100;
+			this.oMusicChan.volume = Math.min(1, Math.max(0, iVolume / 100));
 			if (iVolume <= 0) {
 				this.playMusic(sFile);
 				this.oMusicChan.volume = 1;
@@ -2237,6 +2280,9 @@ O2.createClass('O876.SoundSystem', {
 	 * @param sSrc what file to play (neither path nor extension)
 	 */
 	_setChanSource: function(oChan, sSrc) {
+		if (sSrc == undefined) {
+			throw new Error('undefined sound');
+		}
 		oChan.src = this.sPath + '/' + this.sFormat + '/' + sSrc + '.' + this.sFormat;
 	},
 	
@@ -2541,6 +2587,50 @@ O2.createObject('O876.parseSearch' , function(sSearch) {
 	   oURLParams[_decode(match[1])] = _decode(match[2]);
 	}
 	return oURLParams;
+});
+/**
+ * Transforms an HTML element (and its content) into a bitmap image 
+ * inside a canvas.
+ * @param xElement the DOM element to be rasterize
+ * @param oCanvas the canvas on which will render the element
+ * @param pDone a callback function called when it's done 
+ * good to GIT
+ */ 
+O2.createObject('O876.rasterize', function(xElement, oCanvas, pDone) {
+	var w = oCanvas.width;
+	var h = oCanvas.height;
+	var ctx = oCanvas.getContext('2d');
+	var sHTML = typeof oElement == 'string' ? xElement : xElement.outerHTML;
+	var sSVG = ([
+'	<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">',
+'		<foreignObject width="100%" height="100%">',
+'			<style scoped="scoped">',
+'div.rasterized-body {',
+'	width: 100%; ',
+'	height: 100%; ',
+'	overflow: hidden;',
+'	background-color: transparent;',
+'	color: black;',
+'	font-family: monospace;',
+'	font-size: 8px;',
+'}',
+'',
+'			</style>',
+'			<div class="rasterized-body" xmlns="http://www.w3.org/1999/xhtml">',
+             sHTML,
+           '</div>',
+         '</foreignObject>',
+       '</svg>'
+    ]).join('\n');
+	var img = new Image();
+	var svg = new Blob([sSVG], {type: 'image/svg+xml;charset=utf-8'});
+	var url = URL.createObjectURL(svg);
+	img.addEventListener('load', function() {
+	    ctx.drawImage(img, 0, 0);
+	    URL.revokeObjectURL(url);
+	    pDone();
+	});
+	img.setAttribute('src', url);
 });
 /**
  * O876 Toolkit

@@ -626,3 +626,43 @@ QUnit.test('buildShadowCanvas', function(assert) {
 	assert.ok(!sc._p);
 
 });
+
+
+
+
+
+
+/*
+
+   #
+  # #    #    #  #####      #    ######  #    #   ####   ######
+ #   #   ##  ##  #    #     #    #       ##   #  #    #  #
+#     #  # ## #  #####      #    #####   # #  #  #       #####
+#######  #    #  #    #     #    #       #  # #  #       #
+#     #  #    #  #    #     #    #       #   ##  #    #  #
+#     #  #    #  #####      #    ######  #    #   ####   ######
+*/
+
+QUnit.module('Ambience');
+
+QUnit.test('getRandomSound', function(assert) {
+	var a = new O876.Ambience();
+	a.load({
+		period: 10,
+		variation: 0,
+		sounds: ['snd1']
+	});
+
+	assert.equal(a.period, 10, 'period ini success');
+	assert.equal(a.variation, 0, 'variation ini success');
+	assert.deepEqual(a.sounds, ['snd1'], 'sounds ini success');
+	assert.equal(a.getRandomSound(), 'snd1', 'will return snd1');
+
+	var aLog = [];
+
+	a.on('sound', function(oEvent) {
+		aLog.push(oEvent.sound);
+	});
+
+	a.process(1);
+});
