@@ -14,7 +14,7 @@ doBuild() {
 		rm "$sDestFile"
 	fi
 	touch "$sDestFile"
-	for sFile in o2.js Mixin/Data.js Mixin/Events.js Astar.js Bresenham.js Browser.js CanvasFactory.js Easing.js Mediator.js Philter.js Rainbow.js SoundSystem.js ThemeGenerator.js XHR.js parseSearch.js Rasterize.js typeMap.js LZW.js Ambience.js
+	for sFile in o2.js Mixin/Data.js Mixin/Events.js Astar.js Bresenham.js Browser.js CanvasFactory.js Easing.js Mediator.js Philter.js Rainbow.js SoundSystem.js ThemeGenerator.js XHR.js parseSearch.js rasterize.js typeMap.js
 	do
 		cat "$SRC_JS_DIR/$sFile" >> "$sDestFile"
 	done
