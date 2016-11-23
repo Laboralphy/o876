@@ -25,7 +25,7 @@ O2.createClass('O876.Mixin.Prop', {
 				}
 			}
 		}
-		
+
 		p.extendPrototype(pProto);
 	}
 });
