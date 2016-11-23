@@ -1,13 +1,31 @@
-(function(O2) {
-	O2.createClass('O876.Mixin.Prop', {
-		prop: function(sVariable, value) {
+/**
+ * good to GIT
+ * Provide jquery like function to access private properties
+ */
+O2.createClass('O876.Mixin.Prop', {
+
+	buildPropFunction: function(sProp) {
+		return function(value) {
 			if (value === undefined) {
-				return this['_' + sVariable];
+				return this[sProp];
 			} else {
-				this['_' + sVariable] = value;
+				this[sProp] = value;
 				return this;
 			}
 		}
-	});
-})(O2);
+	},
 
+	mixin: function(p) {
+		var pProto = {
+		};
+		for (var i in p.prototype) {
+			if (i.match(/^_/)) {
+				if (typeof p.prototype[i] !== 'function') {
+					pProto[i.substr(1)] = this.buildPropFunction(i);
+				}
+			}
+		}
+		
+		p.extendPrototype(pProto);
+	}
+});
