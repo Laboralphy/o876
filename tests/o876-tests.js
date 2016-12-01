@@ -78,7 +78,7 @@ QUnit.test('Inheritance', function(assert) {
 */
 
 QUnit.test('Mixins', function(assert) {
-	O2.createClass('TEST.Class1', {
+	O2.createClass('TEST.ClassMix', {
 		prop1: 100,
 		prop2: 200,
 		meth1: function() {
@@ -86,20 +86,20 @@ QUnit.test('Mixins', function(assert) {
 		}
 	});
 
-	O2.mixin('TEST.Class1', {
+	O2.mixin('TEST.ClassMix', {
 		mult: function(a, b) {
 			return a * b;
 		}
 	});
 
-	assert.ok(TEST.Class1, 'Class1 has been created');
-	assert.equal(typeof TEST.Class1, 'function', 'Class1 is a function');
-	assert.ok('prop1' in TEST.Class1.prototype, 'prop1 is defined in Class1 prototype');
-	assert.ok('prop2' in TEST.Class1.prototype, 'prop2 is defined in Class1 prototype');
-	assert.ok('meth1' in TEST.Class1.prototype, 'meth1 is defined in Class1 prototype');
-	assert.ok('mult' in TEST.Class1.prototype, 'mult is defined in Class1 prototype');
+	assert.ok(TEST.ClassMix, 'Class1 has been created');
+	assert.equal(typeof TEST.ClassMix, 'function', 'Class1 is a function');
+	assert.ok('prop1' in TEST.ClassMix.prototype, 'prop1 is defined in Class1 prototype');
+	assert.ok('prop2' in TEST.ClassMix.prototype, 'prop2 is defined in Class1 prototype');
+	assert.ok('meth1' in TEST.ClassMix.prototype, 'meth1 is defined in Class1 prototype');
+	assert.ok('mult' in TEST.ClassMix.prototype, 'mult is defined in Class1 prototype');
 
-	var m = new TEST.Class1();
+	var m = new TEST.ClassMix();
 	assert.ok(m, 'Class1 has been instanciated');
 	assert.equal(typeof m, 'object', 'Instance of class is an object');
 	assert.equal(m.meth1(), 300, 'meth1 returns 300');
@@ -118,7 +118,7 @@ QUnit.test('Mixins', function(assert) {
 */
 
 QUnit.test('Data', function(assert) {
-	O2.createClass('TEST.Class1', {
+	O2.createClass('TEST.ClassData', {
 		prop1: 100,
 		prop2: 200,
 		meth1: function() {
@@ -126,10 +126,10 @@ QUnit.test('Data', function(assert) {
 		}
 	});
 
-	O2.mixin('TEST.Class1', O876.Mixin.Data);
+	O2.mixin('TEST.ClassData', O876.Mixin.Data);
 
-	var m = new TEST.Class1();
-	assert.ok(m, 'Class1 has been instanciated');
+	var m = new TEST.ClassData();
+	assert.ok(m, 'ClassData has been instanciated');
 	assert.equal(typeof m, 'object', 'Instance of class is an object');
 	assert.deepEqual(m.data(), {}, 'Data container in empty');
 	m.data('xxx', 123);
@@ -158,7 +158,7 @@ QUnit.test('Data', function(assert) {
 QUnit.module('Mixin EventHandler');
 
 QUnit.test('basic working', function(assert) {
-	O2.createClass('TEST.Class1', {
+	O2.createClass('TEST.ClassEvents', {
 		prop1: 100,
 		prop2: 200,
 		meth1: function() {
@@ -168,13 +168,13 @@ QUnit.test('basic working', function(assert) {
 		}
 	});
 
-	O2.mixin(TEST.Class1, O876.Mixin.Events);
+	O2.mixin(TEST.ClassEvents, O876.Mixin.Events);
 
-	assert.ok('on' in TEST.Class1.prototype, 'new function on');
-	assert.ok('off' in TEST.Class1.prototype, 'new function off');
-	assert.ok('trigger' in TEST.Class1.prototype, 'new function trigger');
+	assert.ok('on' in TEST.ClassEvents.prototype, 'new function on');
+	assert.ok('off' in TEST.ClassEvents.prototype, 'new function off');
+	assert.ok('trigger' in TEST.ClassEvents.prototype, 'new function trigger');
 
-	var m = new TEST.Class1();
+	var m = new TEST.ClassEvents();
 	var x = 0;
 	m.on('returning', function(data) {
 		x = data.r;
@@ -207,9 +207,51 @@ QUnit.test('basic working', function(assert) {
 
 
 
+/*
+######
+#     #  #####    ####   #####
+#     #  #    #  #    #  #    #
+######   #    #  #    #  #    #
+#        #####   #    #  #####
+#        #   #   #    #  #
+#        #    #   ####   #
+*/
 
 
+QUnit.module('Mixin PropHandler');
 
+QUnit.test('basic working', function(assert) {
+	O2.createClass('TEST.ClassProp', {
+		_prop1: 100,
+		_prop2: 200,
+		meth1: function() {
+			var r = this.prop1() + this._prop2();
+			this.trigger('returning', {r: r});
+			return r;
+		}
+	});
+
+	O2.mixin(TEST.ClassProp, O876.Mixin.Prop);
+
+	assert.ok('prop1' in TEST.ClassProp.prototype, 'new function prop1');
+	assert.ok('prop2' in TEST.ClassProp.prototype, 'new function prop2');
+
+	var oInst = new TEST.ClassProp();
+
+	assert.equal(oInst.prop1(), 100);
+	assert.equal(oInst.prop2(), 200);
+	
+	oInst.prop1(8);
+	oInst.prop2(88);
+	assert.equal(oInst.prop1(), 8);
+	assert.equal(oInst.prop2(), 88);
+
+	oInst.prop1(6).prop2(66);
+	assert.equal(oInst.prop1(), 6);
+	assert.equal(oInst.prop2(), 66);
+
+	TEST = {};
+});
 
 
 
