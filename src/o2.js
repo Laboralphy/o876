@@ -1,3 +1,4 @@
+"use strict"
 /** O2: Fonctionalités Orientées Objets pour Javascript
  * 2010 Raphaël Marandet
  * ver 1.0 10.10.2010
@@ -156,8 +157,8 @@ O2.loadObject = function(s, oContext) {
 };
 
 O2._loadObject = function(s, oContext) {
-	console.warn('deprecated call to O2._loadObject');
-	console.stack();
+	console.warn('O2._loadObject is deprecated. Use the brand new O2.loadObject, which do the same thing, but without this "_" in front of the name.');
+	console.trace();
 	return O2.loadObject(s, oContext);
 }
 
@@ -190,9 +191,16 @@ O2.extendClass = function(sName, pParent, pPrototype) {
  * @param pMixin mixin lui même
  */
 O2.mixin = function(pPrototype, pMixin) {
+	var oMixin;
 	if (typeof pPrototype == 'string') {
 		pPrototype = O2.loadObject(pPrototype);
 	}
-	pPrototype.extendPrototype(pMixin);
+	if (typeof pMixin === 'function') {
+		oMixin = new pMixin();
+		oMixin.mixin(pPrototype);
+	} else {
+		oMixin = pMixin;
+		pPrototype.extendPrototype(oMixin);
+	}
 };
 
