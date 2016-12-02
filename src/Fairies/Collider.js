@@ -9,40 +9,34 @@ O2.createClass('Fairy.Collider',	{
 	_grid: null,
 	_cellWidth : 0,
 	_cellHeight : 0,
-	_width: 0,
-	_height: 0,
 
-	/**
-	 * Reconstruit les sectoeur de la grille d'après les dimensions
-	 */
-	_rebuildGrid: function(w, h) {
-		var g = [];
-		var x, y, aRow, oSector;
-		for (y = 0; y < h; y++) {
-			aRow = [];
-			for (x = 0; x < w; x++) {
-				oSector = new Fairy.Sector();
-				oSector.x = x;
-				oSector.y = y;
-				aRow.push(oSector);
-			}
-			g.push(aRow);
-		}
-		this.grid(g);
+
+	__construct: function() {
+		this._grid = new Fairy.Grid();
+		this._grid.on('rebuild', function(data) {
+			var oSector = new Fairy.Sector();
+			oSector.x = data.x;
+			oSector.y = data.y;
+			data.cell = oSector;
+		});
 	},
 
 	width: function(w) {
-		if (w !== undefined) {
-			this._rebuildGrid(w, this._height);
+		if (w === undefined) {
+			return this._grid.width();
+		} else {
+			this._grid.width(w);
+			return this;
 		}
-		return this.prop('_width', w);
 	},
 
 	height: function(h) {
-		if (h !== undefined) {
-			this._rebuildGrid(this._width, h);
+		if (h === undefined) {
+			return this._grid.height();
+		} else {
+			this._grid.height(h);
+			return this;
 		}
-		return this.prop('_height', h);
 	},
 
 		/**
@@ -53,11 +47,9 @@ O2.createClass('Fairy.Collider',	{
 	 */
 	sector: function(x, y) {
 		if (y === undefined) {
-			return this.sector(x.x / this._cellWidth | 0, x.y / this._cellWidth | 0);
-		} else if (y < 0 || x < 0 || y >= this._height || x > this._width) {
-			return null;
+			return this.grid().cell(x.x / this.cellWidth(), x.y / this.cellHeight());
 		} else {
-			return this._grid[y | 0][x | 0];
+			return this.grid().cell(x, y);
 		}
 	},
 
@@ -98,8 +90,8 @@ O2.createClass('Fairy.Collider',	{
 		var a = [];
 		var xMin = Math.max(0, x - 1);
 		var yMin = Math.max(0, y - 1);
-		var xMax = Math.min(this._width - 1, x + 1);
-		var yMax = Math.min(this._height - 1, y + 1);
+		var xMax = Math.min(this.width() - 1, x + 1);
+		var yMax = Math.min(this.height() - 1, y + 1);
 		var ix, iy;
 		for (iy = yMin; iy <= yMax; ++iy) {
 			for (ix = xMin; ix <= xMax; ++ix) {

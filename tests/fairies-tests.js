@@ -404,10 +404,11 @@ QUnit.module('Collider');
 
 QUnit.test('grid', function(assert) {
 	var c = new Fairy.Collider();
+	console.log(c.width(20).height(10));
 	c.width(20).height(10).cellWidth(32).cellHeight(32);
 	var g = c.grid();
-	assert.equal(g.length, 10);
-	assert.equal(g[0].length, 20);
+	assert.equal(g.cells().length, 10);
+	assert.equal(g.cells()[0].length, 20);
 
 	var s;
 

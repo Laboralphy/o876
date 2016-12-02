@@ -1,13 +1,13 @@
 O2.createClass('Fairy.Sprite', {
-	_center: null,
+	_origin: null,
 	_color: 'red',
 	
 	__construct: function() {
-		this._center = new Fairy.Vector();
+		this._origin = new Fairy.Vector();
 	},
 
 	render: function(oContext, oFlight) {
-		var c = this._center;
+		var c = this._origin;
 		var p = oFlight.position();
 		oContext.fillStyle = this.color();
 		oContext.fillRect(p.x - c.x, p.y - c.y, 32, 32);

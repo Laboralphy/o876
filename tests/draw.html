@@ -9,6 +9,7 @@
 	<script type="text/javascript" src="../src/Mixin/Events.js"></script>
 	<script type="text/javascript" src="../src/Mixin/Prop.js"></script>
 
+	<script type="text/javascript" src="../src/Fairies/Animation.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Vector.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Flight.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Shape.js"></script>
@@ -22,6 +23,7 @@
 	<script type="text/javascript" src="../src/Fairies/Wings/Gravity.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Wings/BumpFloor.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Wings/Shock.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Wings/Air.js"></script>
 	<script type="text/javascript">
 
 
@@ -67,7 +69,7 @@ function createSprite() {
 		.shape()
 		.p1(new Fairy.Vector(-16, -16))
 		.p2(new Fairy.Vector(16, 16));
-	s.center().set(16, 16);
+	s.origin().set(16, 16);
 	
 	f.position().set(Math.random() * 800 | 0, Math.random() * 400 | 0);
 	
