@@ -21,25 +21,7 @@ O2.createClass('Fairy.Collider',	{
 		});
 	},
 
-	width: function(w) {
-		if (w === undefined) {
-			return this._grid.width();
-		} else {
-			this._grid.width(w);
-			return this;
-		}
-	},
-
-	height: function(h) {
-		if (h === undefined) {
-			return this._grid.height();
-		} else {
-			this._grid.height(h);
-			return this;
-		}
-	},
-
-		/**
+	/**
 	 * Renvoie le secteur désigné par les coordonnées spécifiée
 	 * @param x position x
 	 * @param y position y
@@ -103,3 +85,4 @@ O2.createClass('Fairy.Collider',	{
 });
 
 O2.mixin(Fairy.Collider, O876.Mixin.Prop);
+O2.mixin(Fairy.Collider, Fairy.GridContainer);
