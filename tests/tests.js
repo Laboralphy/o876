@@ -38,7 +38,7 @@ QUnit.test('A simple class', function(assert) {
 
 QUnit.test('Inheritance', function(assert) {
 
-	O2.createClass('TEST.Class1', {
+	O2.createClass('TEST.ClassInh', {
 		prop1: 100,
 		prop2: 200,
 		meth1: function() {
@@ -46,22 +46,22 @@ QUnit.test('Inheritance', function(assert) {
 		}
 	});
 
-	O2.extendClass('TEST.Class1Ext', TEST.Class1, {
+	O2.extendClass('TEST.ClassInhExt', TEST.ClassInh, {
 		prop3: 333,
 		meth1: function() {
 			return __inherited() + this.prop3;
 		}
 	});
 
-	assert.ok(TEST.Class1Ext, 'Class1Ext has been created');
-	assert.equal(typeof TEST.Class1Ext, 'function', 'Class1Ext is a function');
-	assert.ok('prop1' in TEST.Class1Ext.prototype, 'prop1 is defined in Class1Ext prototype');
-	assert.ok('prop2' in TEST.Class1Ext.prototype, 'prop2 is defined in Class1Ext prototype');
-	assert.ok('prop3' in TEST.Class1Ext.prototype, 'prop3 is defined in Class1Ext prototype');
-	assert.ok('meth1' in TEST.Class1Ext.prototype, 'meth1 is defined in Class1Ext prototype');
+	assert.ok(TEST.ClassInhExt, 'ClassInhExt has been created');
+	assert.equal(typeof TEST.ClassInhExt, 'function', 'ClassInhExt is a function');
+	assert.ok('prop1' in TEST.ClassInhExt.prototype, 'prop1 is defined in ClassInhExt prototype');
+	assert.ok('prop2' in TEST.ClassInhExt.prototype, 'prop2 is defined in ClassInhExt prototype');
+	assert.ok('prop3' in TEST.ClassInhExt.prototype, 'prop3 is defined in ClassInhExt prototype');
+	assert.ok('meth1' in TEST.ClassInhExt.prototype, 'meth1 is defined in ClassInhExt prototype');
 
-	var m = new TEST.Class1Ext();
-	assert.ok(m, 'Class1Ext has been instanciated');
+	var m = new TEST.ClassInhExt();
+	assert.ok(m, 'ClassInhExt has been instanciated');
 	assert.equal(typeof m, 'object', 'Instance of class is an object');
 	assert.equal(m.meth1(), 633, 'meth1 returns 633');
 	TEST = {};

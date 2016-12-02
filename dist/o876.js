@@ -1,3 +1,4 @@
+"use strict"
 /** O2: Fonctionalités Orientées Objets pour Javascript
  * 2010 Raphaël Marandet
  * ver 1.0 10.10.2010
@@ -156,8 +157,8 @@ O2.loadObject = function(s, oContext) {
 };
 
 O2._loadObject = function(s, oContext) {
-	console.warn('deprecated call to O2._loadObject');
-	console.stack();
+	console.warn('O2._loadObject is deprecated. Use the brand new O2.loadObject, which do the same thing, but without this "_" in front of the name.');
+	console.trace();
 	return O2.loadObject(s, oContext);
 }
 
@@ -190,131 +191,167 @@ O2.extendClass = function(sName, pParent, pPrototype) {
  * @param pMixin mixin lui même
  */
 O2.mixin = function(pPrototype, pMixin) {
+	var oMixin;
 	if (typeof pPrototype == 'string') {
 		pPrototype = O2.loadObject(pPrototype);
 	}
-	pPrototype.extendPrototype(pMixin);
+	if (typeof pMixin === 'function') {
+		oMixin = new pMixin();
+		oMixin.mixin(pPrototype);
+	} else {
+		oMixin = pMixin;
+		pPrototype.extendPrototype(oMixin);
+	}
 };
 
 /**
  * good to GIT
  */
-(function(O2) {
-
-	var DCName = '_DataContainer';
-
-	O2.createClass('O876.Mixin.Data', {
-		_DataContainer: null,
-
-		setData: function(s, v) {
-			return this.data(s, v);
-		},
-
-		getData: function(s) {
-			return this.data(s);
-		},
+O2.createClass('O876.Mixin.Data', {
+	
+	mixin: function(p) {
+		p.extendPrototype({
 		
-		data: function(s, v) {
-			if (this[DCName] === null) {
-				this[DCName] = {};
-			}
-			var D = this[DCName];
-			if (v === undefined) { // get data
-				if (s === undefined) {
-					return D; // getting all data
-				} else if (typeof s === 'object') {
-					for (var x in s) { // setting many pairs of key values
-						D[x] = s[x];
-					}
-				} else if (s in D) { // getting one key
-					return D[s]; // found !
-				} else {
-					return null; // not found
-				}
-			} else { // set data
-				// setting one pair on key value
-				D[s] = v;
-			}
-			return this;
-		}
-	});
+			_DataContainer: null,
 
-	O876.Mixin.Data.prototype[DCName] = null;
-})(O2);
+			setData: function(s, v) {
+				return this.data(s, v);
+			},
+
+			getData: function(s) {
+				return this.data(s);
+			},
+			
+			data: function(s, v) {
+				if (this._DataContainer === null) {
+					this._DataContainer = {};
+				}
+				var D = this._DataContainer;
+				if (v === undefined) { // get data
+					if (s === undefined) {
+						return D; // getting all data
+					} else if (typeof s === 'object') {
+						for (var x in s) { // setting many pairs of key values
+							D[x] = s[x];
+						}
+					} else if (s in D) { // getting one key
+						return D[s]; // found !
+					} else {
+						return null; // not found
+					}
+				} else { // set data
+					// setting one pair on key value
+					D[s] = v;
+				}
+				return this;
+			}
+		});
+	}
+});
 /**
  * good to GIT
  */
-(function(O2) {
-
-	var WEHName = '_WeirdEventHandlers';
-
-	O2.createClass('O876.Mixin.Events', {
-
-		on: function(sEvent, pCallback) {
-			if (this[WEHName] === null) {
-				this[WEHName] = {};
-			}
-			var weh = this[WEHName];
-			if (!(sEvent in weh)) {
-				weh[sEvent] = [];
-			}
-			weh[sEvent].push(pCallback);
-			return this;
-		},
-
-		one: function(sEvent, pCallback) {
-			var pCallbackOnce;
-			pCallbackOnce = (function() {
-				pCallback.apply(this, Array.prototype.slice.call(arguments, 0));
-				this.off(sEvent, pCallbackOnce);
-				pCallbackOnce = null;
-			}).bind(this);
-			return this.on(sEvent, pCallbackOnce);
-		},
-
-		off: function(sEvent, pCallback) {
-			if (this[WEHName] === null) {
-				throw new Error('no event "' + sEvent + '" defined');
-			}
-			if (sEvent === undefined) {
-				this[WEHName] = {};
-			} else if (!(sEvent in this[WEHName])) {
-				throw new Error('no event "' + sEvent + '" defined');
-			}
-			var weh = this[WEHName];
-			var wehe, n;
-			if (pCallback !== undefined) {
-				wehe = weh[sEvent];
-				n = wehe.indexOf(pCallback);
-				if (n < 0) {
-					throw new Error('this handler is not defined for event "' + sEvent + '"');
-				} else {
-					wehe.splice(n, 1);
+O2.createClass('O876.Mixin.Events', {
+	mixin: function(p) {
+		p.extendPrototype({
+			
+			_WeirdEventHandlers: null,
+		
+			on: function(sEvent, pCallback) {
+				if (this._WeirdEventHandlers === null) {
+					this._WeirdEventHandlers = {};
 				}
+				var weh = this._WeirdEventHandlers;
+				if (!(sEvent in weh)) {
+					weh[sEvent] = [];
+				}
+				weh[sEvent].push(pCallback);
+				return this;
+			},
+
+			one: function(sEvent, pCallback) {
+				var pCallbackOnce;
+				pCallbackOnce = (function() {
+					pCallback.apply(this, Array.prototype.slice.call(arguments, 0));
+					this.off(sEvent, pCallbackOnce);
+					pCallbackOnce = null;
+				}).bind(this);
+				return this.on(sEvent, pCallbackOnce);
+			},
+
+			off: function(sEvent, pCallback) {
+				if (this._WeirdEventHandlers === null) {
+					throw new Error('no event "' + sEvent + '" defined');
+				}
+				if (sEvent === undefined) {
+					this._WeirdEventHandlers = {};
+				} else if (!(sEvent in this._WeirdEventHandlers)) {
+					throw new Error('no event "' + sEvent + '" defined');
+				}
+				var weh = this._WeirdEventHandlers;
+				var wehe, n;
+				if (pCallback !== undefined) {
+					wehe = weh[sEvent];
+					n = wehe.indexOf(pCallback);
+					if (n < 0) {
+						throw new Error('this handler is not defined for event "' + sEvent + '"');
+					} else {
+						wehe.splice(n, 1);
+					}
+				} else {
+					weh[sEvent] = [];
+				}
+				return this;
+			},
+
+			trigger: function(sEvent) {
+				if (this._WeirdEventHandlers === null) {
+					return this;
+				}
+				var weh = this._WeirdEventHandlers;
+				if (!(sEvent in weh)) {
+					return this;
+				}
+				var aArgs = Array.prototype.slice.call(arguments, 1);
+				weh[sEvent].forEach(function(pCallback) {
+					pCallback.apply(this, aArgs);
+				}, this);
+				return this;
+			}
+		});
+	}
+});
+/**
+ * good to GIT
+ * Provide jquery like function to access private properties
+ */
+O2.createClass('O876.Mixin.Prop', {
+
+	buildPropFunction: function(sProp) {
+		return function(value) {
+			if (value === undefined) {
+				return this[sProp];
 			} else {
-				weh[sEvent] = [];
-			}
-			return this;
-		},
-
-		trigger: function(sEvent) {
-			if (this[WEHName] === null) {
+				this[sProp] = value;
 				return this;
 			}
-			var weh = this[WEHName];
-			if (!(sEvent in weh)) {
-				return this;
-			}
-			var aArgs = Array.prototype.slice.call(arguments, 1);
-			weh[sEvent].forEach(function(pCallback) {
-				pCallback.apply(this, aArgs);
-			}, this);
-			return this;
 		}
-	});
+	},
 
-	O876.Mixin.Events.prototype[WEHName] = null;
-})(O2);
+	mixin: function(p) {
+		var pProto = {
+		};
+		for (var i in p.prototype) {
+			if (i.match(/^_/)) {
+				if (typeof p.prototype[i] !== 'function') {
+					pProto[i.substr(1)] = this.buildPropFunction(i);
+				}
+			}
+		}
+
+		p.extendPrototype(pProto);
+	}
+});
 O2.createClass('O876.Astar.Point', {
 	x : 0,
 	y : 0,
@@ -2381,70 +2418,6 @@ O2.createClass('O876.SoundSystem', {
 
 });
 
-/**
- * Générateur de Thème CSS
- * Permet de définir un theme dynamiquement à partir d'une couleur.
- * L'objet theme fournit est un objet associatif dont les clé sont des selecteur CSS 
- * et les valeurs sont des couleurs générées.
- * les couleurs générées ont ce format : $color(-text)(-darken-[1-5] | -lighten-[1-5])
- * exemple de couleur générées :
- * - $color : la couleur de base (appliquée a des backgrounds)
- * - $color-lighten-2 : la couleur de base légèrement plus claire (appliquée a des backgrounds)
- * - $color-darken-2 : la couleur de base légèrement plus foncée (appliquée a des backgrounds)
- * - $color-text : la couleur de base (appliquée à du texte) 
- * - $color-text-lighten-5 : la couleur de base fortemennt éclaircée (appliquée a du texte)
- * - $color-border : la couleur de base (appliquée à des bordures) 
- * - $color-border-lighten-5 : la couleur de base fortemennt éclaircée (appliquée a des bordures)
- * 
- * exemple de thème :
- * 
- * {
- * 		body: ['$color-ligthen-4', '$color-text-darken-5'],
- * 		div.test: ['$color', '$color-text-lighten-3']
- * }
- */
-O2.createClass('O876.ThemeGenerator', {
-	
-	_oStyle: null,
-	
-	define: function(sColor, oTheme) {
-		var r = new O876.Rainbow();
-		var aLighten = r.spectrum(sColor, '#FFFFFF', 7);
-		var aDarken = r.spectrum(sColor, '#000000', 7);
-		var sName = '$color';
-	
-		var oCSS = {};
-		oCSS[sName] = 'background-color : ' + sColor;
-		oCSS[sName + '-text'] = 'color : ' + sColor;
-		
-		for (var i = 1; i < 6; ++i) {
-			oCSS[sName + '.lighten-' + i] = 'background-color: ' + aLighten[i];
-			oCSS[sName + '.darken-' + i] = 'background-color: ' + aDarken[i];
-			oCSS[sName + '-text.lighten-' + i] = 'color: ' + aLighten[i];
-			oCSS[sName + '-text.darken-' + i] = 'color: ' + aDarken[i];
-			oCSS[sName + '-border.lighten-' + i] = 'border-color: ' + aLighten[i];
-			oCSS[sName + '-border.darken-' + i] = 'border-color: ' + aDarken[i];
-		}
-		
-		var aTheme = [];
-		
-		for (var sClass in oTheme) {
-			aTheme.push(sClass + ' { ' + oTheme[sClass].map(function(t) { 
-				return oCSS[t];
-			}).join('; ') + '; }');
-		}
-	
-		if (this._oStyle) {
-			this._oStyle.remove();
-			this._oStyle = null;
-		}
-		var oStyle = document.createElement('style');
-		oStyle.setAttribute('type', 'text/css');
-		oStyle.innerHTML = aTheme.join('\n').replace(/\$color/g, sName);
-		this._oStyle = oStyle;
-		document.getElementsByTagName('head')[0].appendChild(oStyle);
-	}
-});
 /**
  * Outil d'exploitation de requete Ajax
  * Permet de chainer les requete ajax avec un système de file d'attente.
