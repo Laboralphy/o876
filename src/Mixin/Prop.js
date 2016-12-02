@@ -17,10 +17,18 @@ O2.createClass('O876.Mixin.Prop', {
 
 	mixin: function(p) {
 		var pProto = {
+			prop: function(variable, value) {
+				if (value === undefined) {
+					return this[variable];
+				} else {
+					this[variable] = value;
+					return this;
+				}
+			}
 		};
 		for (var i in p.prototype) {
 			if (i.match(/^_/)) {
-				if (typeof p.prototype[i] !== 'function') {
+				if (!(i.substr(1) in p.prototype) && typeof p.prototype[i] !== 'function') {
 					pProto[i.substr(1)] = this.buildPropFunction(i);
 				}
 			}

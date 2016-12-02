@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Canvas Tests</title>
+	<script type="text/javascript" src="../src/o2.js"></script>
+	<script type="text/javascript" src="../src/Mixin/Data.js"></script>
+	<script type="text/javascript" src="../src/Mixin/Events.js"></script>
+	<script type="text/javascript" src="../src/Mixin/Prop.js"></script>
+
+	<script type="text/javascript" src="../src/Fairies/Vector.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Flight.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Shape.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Rect.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Mobile.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Sprite.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Sector.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Collider.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Wing.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Wings/Linear.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Wings/Gravity.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Wings/BumpFloor.js"></script>
+	<script type="text/javascript" src="../src/Fairies/Wings/Shock.js"></script>
+	<script type="text/javascript">
+
+
+var oCanvas;
+var oContext;
+var oSquare;
+var oSquare2;
+
+var aSquares;
+
+
+
+function doomloop() {
+	oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
+
+	aSquares.forEach(function(s) {
+	if (oSquare.shape().hits(oSquare2.shape())) {
+		var s2pos = oSquare2.flight().position().clone();
+		var s1pos = oSquare.flight().position().clone();
+		
+		var s = s1pos.add(s2pos.scale(-1));
+		var sxx = s.clone().scale(-1);
+		
+		console.log(oSquare.flight().forces().push(s.scale(0.3)));
+		oSquare2.flight().forces().push(sxx.scale(0.3));
+	}
+
+	oSquare.flap();
+	oSquare2.flap();
+	oSquare.render(oContext);
+	oSquare2.render(oContext);
+}
+
+
+function createSprite() {
+	var s = new Fairy.Sprite();
+	var m = new Fairy.Mobile();
+	var f = new Fairy.Flight();
+	m
+		.flight(f)
+		.shape(new Fairy.Rect())
+		.sprite(s)
+		.shape()
+		.p1(new Fairy.Vector(-16, -16))
+		.p2(new Fairy.Vector(16, 16));
+	s.center().set(16, 16);
+	
+	f.position().set(Math.random() * 800 | 0, Math.random() * 400 | 0);
+	
+	s.color('hsl(' + Math.random() * 360 + 'Deg, 0.5, 0.5)');
+	
+	var lm = new Fairy.Wings.Linear();
+	lm.speed().set(Math.random() * 4, 0);
+	if (f.position().x < 400) {
+		lm.speed().scale(-1);
+	}
+	m.flight().wings().push(lm);
+	
+	var g = new Fairy.Wings.Gravity();
+	g.force().set(0, 0.7);
+	m.flight().wings().push(g);
+	
+	var b = new Fairy.Wings.BumpFloor();
+	b.bottom(600 - 32);
+	m.flight().wings().push(b);
+	return m;
+}
+	
+
+
+function main() {
+	oCanvas = document.getElementById('canvas');
+	oContext = oCanvas.getContext('2d');
+	
+	aSquares = [];
+	var s;
+	
+	s = createSprite();
+	aSquares.push(s);
+	
+	
+	setInterval(doomloop, 32);
+}
+
+window.addEventListener('load', main);
+
+	</script>
+</head>
+<body>
+	<canvas id="canvas" width="800" height="600"></canvas>
+</body>
+</html>
