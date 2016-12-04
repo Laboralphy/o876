@@ -85,4 +85,4 @@ O2.createClass('Fairy.Collider',	{
 });
 
 O2.mixin(Fairy.Collider, O876.Mixin.Prop);
-O2.mixin(Fairy.Collider, Fairy.GridContainer);
+O2.mixin(Fairy.Collider, Fairy.Mixin.GridProxy);

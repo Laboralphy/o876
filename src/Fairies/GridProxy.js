@@ -1,4 +1,4 @@
-O2.createObject('Fairy.GridContainer', {
+O2.createObject('Fairy.Mixin.GridProxy', {
 	width: function(w) {
 		if (w === undefined) {
 			return this._grid.width();
