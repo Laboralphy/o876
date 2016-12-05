@@ -22,6 +22,7 @@ O2.createClass('Fairy.Mobile', {
 	},
 	
 	flap: function(nTime) {
+		this._sprite.process(nTime);
 		this._flight.flap(this, nTime);
 	}
 });

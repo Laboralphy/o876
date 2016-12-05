@@ -9,6 +9,9 @@
 	<script type="text/javascript" src="../src/Mixin/Events.js"></script>
 	<script type="text/javascript" src="../src/Mixin/Prop.js"></script>
 
+	<script type="text/javascript" src="../src/Fairies/Mixin/GridProxy.js"></script>
+
+	<script type="text/javascript" src="../src/Fairies/Tileset.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Animation.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Vector.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Flight.js"></script>
@@ -29,10 +32,7 @@
 
 var oCanvas;
 var oContext;
-var oSquare;
-var oSquare2;
-
-var aSquares;
+var aSquares = [];
 
 
 
@@ -40,25 +40,14 @@ function doomloop() {
 	oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
 
 	aSquares.forEach(function(s) {
-	if (oSquare.shape().hits(oSquare2.shape())) {
-		var s2pos = oSquare2.flight().position().clone();
-		var s1pos = oSquare.flight().position().clone();
-		
-		var s = s1pos.add(s2pos.scale(-1));
-		var sxx = s.clone().scale(-1);
-		
-		console.log(oSquare.flight().forces().push(s.scale(0.3)));
-		oSquare2.flight().forces().push(sxx.scale(0.3));
-	}
+		s.flap(32);
+		s.render(oContext);
+	});
 
-	oSquare.flap();
-	oSquare2.flap();
-	oSquare.render(oContext);
-	oSquare2.render(oContext);
 }
 
 
-function createSprite() {
+function createMobile() {
 	var s = new Fairy.Sprite();
 	var m = new Fairy.Mobile();
 	var f = new Fairy.Flight();
@@ -71,24 +60,25 @@ function createSprite() {
 		.p2(new Fairy.Vector(16, 16));
 	s.origin().set(16, 16);
 	
-	f.position().set(Math.random() * 800 | 0, Math.random() * 400 | 0);
+	f.position().set(400, 300);
 	
-	s.color('hsl(' + Math.random() * 360 + 'Deg, 0.5, 0.5)');
 	
-	var lm = new Fairy.Wings.Linear();
-	lm.speed().set(Math.random() * 4, 0);
-	if (f.position().x < 400) {
-		lm.speed().scale(-1);
-	}
-	m.flight().wings().push(lm);
+	var oImage = new Image();
+	oImage.src = 'wdspr_xp.png';
+	var ts = new Fairy.Tileset();
+	ts.tiles(oImage).tileWidth(32).tileHeight(32);
+	s.tileset(ts);
 	
-	var g = new Fairy.Wings.Gravity();
-	g.force().set(0, 0.7);
-	m.flight().wings().push(g);
+	var oAnim = new Fairy.Animation();
+	oAnim.start(0).count(26).duration(32).loop(1);
+	s.animations().push(oAnim);
+	s.animation(0);
+
+	oAnim = new Fairy.Animation();
+	oAnim.start(32).count(9).duration(96).loop(1);
+	s.animations().push(oAnim);
+	//s.animation(0);
 	
-	var b = new Fairy.Wings.BumpFloor();
-	b.bottom(600 - 32);
-	m.flight().wings().push(b);
 	return m;
 }
 	
@@ -97,11 +87,7 @@ function createSprite() {
 function main() {
 	oCanvas = document.getElementById('canvas');
 	oContext = oCanvas.getContext('2d');
-	
-	aSquares = [];
-	var s;
-	
-	s = createSprite();
+	var s = createMobile();
 	aSquares.push(s);
 	
 	
