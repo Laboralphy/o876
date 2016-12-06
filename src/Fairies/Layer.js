@@ -4,26 +4,18 @@
  
  
 O2.createClass('Fairy.Layer', {
-	
-	_origin: null, // point de la grille qui sera affiché en haut à gauche du canvas
-	_grid: null,
-	_tileset: null,
+	_origin: null, // vector origine du layer
+	_view: null, // vecteur de début du rendu
+	_width: 0,
+	_height: 0,
 	
 	__construct: function() {
 		this._origin = new Fairy.Vector();
-		this._grid = new Fairy.Grid();
+		this._view = new Fairy.Vector();
 	},
 	
-		
-	
 	render: function(oContext) {
-		var xOri = this.origin().x | 0;
-		var yOri = this.origin().y | 0;
 	}
-	
 });
 
-
-
-O2.mixin(Fairy.Collider, O876.Mixin.Prop);
-O2.mixin(Fairy.Collider, Fairy.GridProxy);
+O2.mixin(Fairy.Layer, O876.Mixin.Prop);

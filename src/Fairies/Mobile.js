@@ -2,6 +2,8 @@ O2.createClass('Fairy.Mobile', {
 	_shape: null,
 	_sprite: null,
 	_flight: null,
+	_dead: false, // les mobile noté "dead" doivent être retiré du jeu
+	_collider: null,
 
 	flight: function(f) {
 		if (this._shape && f !== undefined) {
@@ -17,13 +19,16 @@ O2.createClass('Fairy.Mobile', {
 		return this.prop('_shape', s);
 	},
 	
-	render: function(oContext) {
-		this._sprite.render(oContext, this._flight);
+	render: function(oContext, vOffset) {
+		this._sprite.render(oContext, this._flight, vOffset);
 	},
 	
-	flap: function(nTime) {
+	process: function(nTime) {
 		this._sprite.process(nTime);
 		this._flight.flap(this, nTime);
+		if (this._collider) {
+			this._collider.track(this);
+		}
 	}
 });
 

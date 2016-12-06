@@ -6,12 +6,14 @@
  * est temps de calculer les collisions
  */
 O2.createClass('Fairy.Collider',	{
+	_origin: null, // vector origine du layer
 	_grid: null,
 	_cellWidth : 0,
 	_cellHeight : 0,
 
 
 	__construct: function() {
+		this._collider = new Fairy.Vector();
 		this._grid = new Fairy.Grid();
 		this._grid.on('rebuild', function(data) {
 			var oSector = new Fairy.Sector();
@@ -40,8 +42,8 @@ O2.createClass('Fairy.Collider',	{
 	 */
 	track: function(oObject) {
 		var oOldSector = oObject.data('__colliderSector');
-		var v = oObject.flight().position();
-		var s = this.sector(v);
+		var v = oObject.flight().position().sub(this.origin());
+		var s = oObject.dead() ? null : this.sector(v);
 		if (s && oOldSector && s == oOldSector) {
 			return;
 		}
@@ -63,7 +65,7 @@ O2.createClass('Fairy.Collider',	{
 	 */
 	collides: function(oObject) {
 		var aObjects = [];
-		var oSector = this.sector(oObject.flight().position());
+		var oSector = this.sector(oObject.flight().position().sub(this.origin()));
 		if (!oSector) {
 			return aObjects;
 		}
