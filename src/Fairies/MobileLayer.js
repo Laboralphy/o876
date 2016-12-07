@@ -1,5 +1,5 @@
 /**
- * Le layer doit etre rendu dans une surface, à une position données
+ * Le layer doit etre rendu dans une surface, à une position donnée
  */
  
  
