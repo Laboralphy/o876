@@ -13,7 +13,7 @@ O2.createClass('Fairy.Collider',	{
 
 
 	__construct: function() {
-		this._collider = new Fairy.Vector();
+		this._origin = new Fairy.Vector();
 		this._grid = new Fairy.Grid();
 		this._grid.on('rebuild', function(data) {
 			var oSector = new Fairy.Sector();

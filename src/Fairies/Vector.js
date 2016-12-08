@@ -74,5 +74,4 @@ O2.createClass('Fairy.Vector', {
 	}
 });
 
-
 Fairy.Vector.ZERO = new Fairy.Vector(0, 0);

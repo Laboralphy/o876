@@ -1,5 +1,8 @@
 /**
- * Le layer doit etre rendu dans une surface, à une position données
+ * Un layer est une surface de rendu
+ * Il dispose d'un vecteur "origin" : position du coin supérieur gauche du layer
+ * par rapport au référentiel absolu
+ * un vecteur "view"
  * */
  
  
@@ -11,7 +14,7 @@ O2.createClass('Fairy.Layer', {
 	
 	__construct: function() {
 		this._origin = new Fairy.Vector();
-		this._view = new Fairy.Vector();
+		this._view = new Fairy.View();
 	},
 	
 	render: function(oContext) {

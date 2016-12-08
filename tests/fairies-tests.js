@@ -404,7 +404,6 @@ QUnit.module('Collider');
 
 QUnit.test('grid', function(assert) {
 	var c = new Fairy.Collider();
-	console.log(c.width(20).height(10));
 	c.width(20).height(10).cellWidth(32).cellHeight(32);
 	var g = c.grid();
 	assert.equal(g.cells().length, 10);
@@ -562,4 +561,91 @@ QUnit.test('collisions', function(assert) {
 	a = c.collides(m);
 	assert.equal(a.length, 0);
 	assert.equal(m.flight().position().x, 60);
+});
+
+/*
+ #    #     #    ######  #    #
+ #    #     #    #       #    #
+ #    #     #    #####   #    #
+ #    #     #    #       # ## #
+  #  #      #    #       ##  ##
+   ##       #    ######  #    #
+*/
+
+
+QUnit.module('View');
+
+QUnit.test('basic', function(assert) {
+	var v = new Fairy.View();
+	v.width(640).height(480);
+	var f = new Fairy.Flight();
+	f.position(new Fairy.Vector(200, 300));
+	
+	v.flight(f).center();
+	var p = v.points();
+	
+	assert.equal(v.offset().x, 320);
+	assert.equal(v.offset().y, 240);
+	assert.equal(p[0].x, -120);
+	assert.equal(p[0].y, 60);
+	assert.equal(p[1].x, -120 + 640 - 1);
+	assert.equal(p[1].y, 60 + 480 - 1);
+	
+	
+});
+
+
+
+/*
+
+                                         #####
+ #    #   ####   #####   #       #####  #     #  #####      #    #####
+ #    #  #    #  #    #  #       #    # #        #    #     #    #    #
+ #    #  #    #  #    #  #       #    # #  ####  #    #     #    #    #
+ # ## #  #    #  #####   #       #    # #     #  #####      #    #    #
+ ##  ##  #    #  #   #   #       #    # #     #  #   #      #    #    #
+ #    #   ####   #    #  ######  #####   #####   #    #     #    #####
+
+*/
+
+
+QUnit.module('WorldGrid');
+
+QUnit.test('basic', function(assert) {
+	var f = new Fairy.Flight();
+	f.position(new Fairy.Vector(0, 0));
+	var v = new Fairy.View();
+	v.width(640).height(480);
+	var wg = new Fairy.WorldGrid();
+	wg.view(v);
+	v.flight(f);
+	wg.zoneWidth(1024).zoneHeight(1024);
+	
+	
+	wg.on('zone', function(oEvent) {
+		aLog.push(([oEvent.op, oEvent.x, oEvent.y]).join(' '));
+	});
+
+	var aLog = [];
+	wg.update();
+	assert.deepEqual(aLog, ['n 0 0']);
+	assert.deepEqual(wg.zones(), {'0:0': [0, 0]});
+
+	aLog = [];
+	//f.move(new Fairy.Vector()
+	wg.update();
+	assert.deepEqual(aLog, ['a 0 0']);
+	assert.deepEqual(wg.zones(), {'0:0': [0, 0]});
+
+	aLog = [];
+	f.move(new Fairy.Vector(500, 0));
+	wg.update();
+	assert.deepEqual(aLog, ['n 1 0', 'a 0 0']);
+	assert.deepEqual(wg.zones(), {'1:0': [1, 0], '0:0': [0, 0]});
+
+	aLog = [];
+	f.move(new Fairy.Vector(2048 + 512, 2048 + 512));
+	wg.update();
+	assert.deepEqual(aLog, ['d 0 0', 'd 1 0', 'n 2 2', 'n 3 2']);
+	assert.deepEqual(wg.zones(), {'2:2': [2, 2], '3:2': [3, 2]});
 });
