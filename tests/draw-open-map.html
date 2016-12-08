@@ -38,86 +38,48 @@
 
 var oCanvas;
 var oContext;
-var oSprLayer = null;
-var aHorde = null;
 
+var wg, fAngle = 0, vMove = new Fairy.Vector();
+var oCVS = {};
 
 function doomloop() {
+	fAngle += Math.random() / 100;
+	var vx = 4*Math.sin(fAngle);
+	var vy = 4*Math.cos(fAngle);
+	vMove.set(vx, vy);
+	wg.view().flight().move(vMove);
 	oContext.fillStyle = '#AAA';
 	oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
-	aHorde.forEach(m => m.process(32));
-	oSprLayer.process(32);
-	oSprLayer.render(oContext);
+	wg.update();
+	wg.render(oContext);
 }
-
-
-function createMobile() {
-	var s = new Fairy.Sprite();
-	var m = new Fairy.Mobile();
-	var f = new Fairy.Flight();
-	m
-		.flight(f)
-		.shape(new Fairy.Rect())
-		.sprite(s)
-		.shape()
-		.p1(new Fairy.Vector(-16, -16))
-		.p2(new Fairy.Vector(16, 16));
-	s.origin().set(16, 16);
-
-	
-	/*
-	var oImage = new Image();
-	oImage.src = 'wdspr_xp.png';
-	var ts = new Fairy.Tileset();
-	ts.tiles(oImage).tileWidth(32).tileHeight(32);
-	s.tileset(ts);
-	
-	var oAnim = new Fairy.Animation();
-	oAnim.start(0).count(26).duration(32).loop(1);
-	s.animations().push(oAnim);
-	s.animation(0);
-
-	oAnim = new Fairy.Animation();
-	oAnim.start(32).count(9).duration(96).loop(1);
-	s.animations().push(oAnim);
-	//s.animation(0);
-	*/
-	
-	var oImage = new Image();
-	oImage.src = 'sprite1.png';
-	var ts = new Fairy.Tileset();
-	ts.tiles(oImage).tileWidth(32).tileHeight(32);
-	s.tileset(ts);
-
-	var oAnim = new Fairy.Animation();
-	oAnim.start(0).count(1).duration(100).loop(0);
-	s.animations().push(oAnim);
-	s.animation(0);
-	
-	
-	return m;
-}
-	
-
 
 function main() {
 	oCanvas = document.getElementById('canvas');
 	oContext = oCanvas.getContext('2d');
-	var s = createMobile();
-	oSprLayer = new Fairy.MobileLayer();
-	oSprLayer.width(1024).height(1024);
-	oSprLayer.mobiles().push(s);
-	oSprLayer
+	wg = new Fairy.WorldGrid();
+	wg
+		.zoneWidth(256)
+		.zoneHeight(256)
 		.view()
-		.width(800)
-		.height(600);
-	oSprLayer.origin().set(-50, -50);
-	s.flight().position().set(0, 0);
-
-	aHorde = [];
-	aHorde.push(s);
-	
+		.width(oCanvas.width)
+		.height(oCanvas.height)
+	wg.on('zone.n', function(oEvent) {
+		var cvs, ctx, fColor = 180 * Math.sin(oEvent.x / 3 + oEvent.y / 5) + 180;
+		cvs = document.createElement('canvas');
+		cvs.width = wg.zoneWidth();
+		cvs.height = wg.zoneHeight();
+		ctx = cvs.getContext('2d');
+		ctx.fillStyle = 'hsl(' + fColor + ', 50%, 50%)';
+		ctx.strokeStyle = 'black';
+		ctx.fillRect(0, 0, cvs.width, cvs.height);
+		ctx.strokeRect(4, 4, cvs.width - 8, cvs.height - 8);
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+		ctx.fillText(oEvent.x.toString() + ' : ' + oEvent.y.toString(), 16, 32);
+		oEvent.canvas = cvs;
+	});
 	setInterval(doomloop, 32);
+
 }
 
 window.addEventListener('load', main);

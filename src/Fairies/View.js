@@ -11,7 +11,8 @@ O2.extendClass('Fairy.View', Fairy.Rect, {
 	
 	__construct: function() {
 		__inherited();
-		this._offset = new Fairy.Vector();
+		this.flight(new Fairy.Flight());
+		this.offset(new Fairy.Vector());
 		this.p1(new Fairy.Vector(0, 0));
 		this.p2(new Fairy.Vector(0, 0));
 	},

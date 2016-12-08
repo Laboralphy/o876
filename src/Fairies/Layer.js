@@ -2,8 +2,8 @@
  * Un layer est une surface de rendu
  * Il dispose d'un vecteur "origin" : position du coin supérieur gauche du layer
  * par rapport au référentiel absolu
- * un vecteur "view"
- * */
+ * un fenetre View rectangulaire permet de déterminer les entité qui seront affichée
+ */
  
  
 O2.createClass('Fairy.Layer', {

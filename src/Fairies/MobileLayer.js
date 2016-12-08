@@ -1,5 +1,6 @@
 /**
- * Le layer doit etre rendu dans une surface, à une position donnée
+ * Ce layer gère une collection de mobiles
+ * 
  */
  
  
@@ -7,6 +8,8 @@ O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 	
 	_mobiles: null,
 	_collider: null,
+	_sorted: true,
+	_visibleMobiles: null,
 	
 	__construct: function() {
 		__inherited();
@@ -32,15 +35,27 @@ O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 		this._sort = f;
 		return this;
 	},
-	
+
+	/**
+	 * Tri les mobiles selon s'ils sont dans le view ou non
+	 * Pour les mobiles visible, ont les tri par position y
+	 * @param nTime interval de temps...
+	 */
 	process: function(nTime) {
-		this._mobiles.sort(this._sort);
+		var view = this.view();
+		this.visibleMobiles(
+			this.mobiles().filter(m => view.hits(m.shape()))
+		).visibleMobiles().sort(this._sort);
 		return this;
 	},
 	
+	/**
+	 * Affiche les mobiles visibles
+	 * @param oContext context 2D de rendu
+	 */
 	render: function(oContext) {
-		var vRender = Fairy.Vector.ZERO.sub(this.origin().add(this.view()));
-		this._mobiles.forEach(m => m.render(oContext, vRender));
+		var vRender = Fairy.Vector.ZERO.sub(this.origin().add(this.view().offset()));
+		this.visibleMobiles().forEach(m => m.render(oContext, vRender));
 		return this;
 	}
 });

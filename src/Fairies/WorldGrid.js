@@ -11,17 +11,19 @@ O2.createClass('Fairy.WorldGrid',	{
 	},
 	
 	/**
-	 * Renvoie la liste des cellule balayées par la vue
+	 * Calcule la liste des cellule balayées par la vue
 	 */
 	update: function() {
 		var a = [];
 		var p = this.view().points();
 		var cw = this.zoneWidth();
 		var ch = this.zoneHeight();
-		var xs = p[0].x / cw | 0;
-		var ys = p[0].y / ch | 0;
-		var xe = p[1].x / cw | 0;
-		var ye = p[1].y / ch | 0;
+		var vx = p[0].x;
+		var vy = p[0].y;
+		var xs = Math.floor(vx / cw);
+		var ys = Math.floor(vy / ch);
+		var xe = Math.floor(p[1].x / cw);
+		var ye = Math.floor(p[1].y / ch);
 		var sKey, oNow = {};
 		var oPrev = this.zones();
 		var a = {
@@ -33,31 +35,47 @@ O2.createClass('Fairy.WorldGrid',	{
 		for (var x, y = ys; y <= ye; ++y) {
 			for (x = xs; x <= xe; ++x) {
 				sKey = x.toString() + ':' + y.toString();
-				oNow[sKey] = [x, y];
 				if (oPrev[sKey]) {
-					// pas de changement
-					a.a.push(oNow[sKey]);
+					a.a.push(sKey);
+					oNow[sKey] = oPrev[sKey];
 					delete oPrev[sKey];
 				} else {
 					// ajout
-					a.n.push(oNow[sKey]);
+					oNow[sKey] = {
+						x: x, 
+						y: y, 
+						key: sKey, 
+						canvas: null
+					};
+					a.n.push(sKey);
 				}
 			}
 		}
 		for (sKey in oPrev) {
-			a.d.push(oPrev[sKey]);
+			a.d.push(sKey);
 		}
 		this.zones(oNow);
 		for (var s in a) {
-			a[s].forEach(xy => this.trigger('zone', {op: s, x: xy[0], y: xy[1]}) );
+			a[s].forEach((function(key) {
+				this.trigger('zone.' + s, oNow[key]);
+			}).bind(this));
 		}
 		return this;
 	},
 	
-	render: function() {
-		var vc = this.zones();
-		for (var c in vc) {
-			//this.
+	render: function(oContext) {
+		var zc;
+		var z = this.zones();
+		var p = this.view().points();
+		var cw = this.zoneWidth();
+		var ch = this.zoneHeight();
+		var vx = p[0].x;
+		var vy = p[0].y;
+		for (var c in z) {
+			zc = z[c];
+			if (zc.canvas) {
+				oContext.drawImage(zc.canvas, zc.x * cw - vx, zc.y * cw - vy);
+			}
 		}
 	}
 });

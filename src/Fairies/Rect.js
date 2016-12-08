@@ -27,6 +27,9 @@ O2.extendClass('Fairy.Rect', Fairy.Shape, {
 	},
 
 	points: function() {
+		if (!this._flight) {
+			throw new Error('flight is not defined in this rect');
+		}
 		var p1 = this._p1;
 		var p2 = this._p2;
 		var x1 = Math.min(p1.x, p2.x);
