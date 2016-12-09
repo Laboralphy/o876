@@ -3,7 +3,6 @@
  * 
  */
  
- 
 O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 	
 	_mobiles: null,
@@ -16,7 +15,7 @@ O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 		this._mobiles = [];
 		this._collider = new Fairy.Collider();
 	},
-	
+
 	/**
 	 * Fonction de tri utilisée en callback par mobiles.sort
 	 * @param a Fairy.Mobile
@@ -44,7 +43,7 @@ O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 	process: function(nTime) {
 		var view = this.view();
 		this.visibleMobiles(
-			this.mobiles().filter(m => view.hits(m.shape()))
+			this.mobiles().filter(m => this.view().hits(m.shape()))
 		).visibleMobiles().sort(this._sort);
 		return this;
 	},

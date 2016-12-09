@@ -622,30 +622,67 @@ QUnit.test('basic', function(assert) {
 	wg.zoneWidth(1024).zoneHeight(1024);
 	
 	
-	wg.on('zone', function(oEvent) {
-		aLog.push(([oEvent.op, oEvent.x, oEvent.y]).join(' '));
+	wg.on('zone.n', function(oEvent) {
+		aLog.push(([oEvent.x, oEvent.y]).join(' '));
 	});
 
 	var aLog = [];
 	wg.update();
-	assert.deepEqual(aLog, ['n 0 0']);
-	assert.deepEqual(wg.zones(), {'0:0': [0, 0]});
+	assert.deepEqual(aLog, ['0 0']);
+	assert.deepEqual(wg.zones(), {'0:0': {
+    "canvas": null,
+    "key": "0:0",
+    "x": 0,
+    "y": 0
+  }});
 
 	aLog = [];
 	//f.move(new Fairy.Vector()
 	wg.update();
-	assert.deepEqual(aLog, ['a 0 0']);
-	assert.deepEqual(wg.zones(), {'0:0': [0, 0]});
+	assert.deepEqual(wg.zones(), {
+  "0:0": {
+    "canvas": null,
+    "key": "0:0",
+    "x": 0,
+    "y": 0
+  }
+});
 
 	aLog = [];
 	f.move(new Fairy.Vector(500, 0));
 	wg.update();
-	assert.deepEqual(aLog, ['n 1 0', 'a 0 0']);
-	assert.deepEqual(wg.zones(), {'1:0': [1, 0], '0:0': [0, 0]});
+	assert.deepEqual(wg.zones(), {
+  "0:0": {
+    "canvas": null,
+    "key": "0:0",
+    "x": 0,
+    "y": 0
+  },
+  "1:0": {
+    "canvas": null,
+    "key": "1:0",
+    "x": 1,
+    "y": 0
+  }
+});
 
 	aLog = [];
 	f.move(new Fairy.Vector(2048 + 512, 2048 + 512));
 	wg.update();
-	assert.deepEqual(aLog, ['d 0 0', 'd 1 0', 'n 2 2', 'n 3 2']);
-	assert.deepEqual(wg.zones(), {'2:2': [2, 2], '3:2': [3, 2]});
+	assert.deepEqual(wg.zones(), 	
+
+{
+  "2:2": {
+    "canvas": null,
+    "key": "2:2",
+    "x": 2,
+    "y": 2
+  },
+  "3:2": {
+    "canvas": null,
+    "key": "3:2",
+    "x": 3,
+    "y": 2
+  }
+});
 });
