@@ -609,14 +609,14 @@ QUnit.test('basic', function(assert) {
 */
 
 
-QUnit.module('WorldGrid');
+QUnit.module('WorldLayer');
 
 QUnit.test('basic', function(assert) {
 	var f = new Fairy.Flight();
 	f.position(new Fairy.Vector(0, 0));
 	var v = new Fairy.View();
 	v.width(640).height(480);
-	var wg = new Fairy.WorldGrid();
+	var wg = new Fairy.WorldLayer();
 	wg.view(v);
 	v.flight(f);
 	wg.zoneWidth(1024).zoneHeight(1024);

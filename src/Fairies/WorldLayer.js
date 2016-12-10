@@ -1,8 +1,20 @@
-O2.createClass('Fairy.WorldGrid',	{
+/**
+ * WorldLayer est capable de gérer une infinité de portion de terrain
+ * Ces portion ne sont pas toutes affichées.
+ * Seules les portions a l'interieur de la zone de vue sont affichée.
+ * L'instance prévien l'appli des portion dont elle à besoin
+ * C'est à l'appli, en réponse aux divers évènements de fournir les portion
+ * sous forme d'un canvas ou d'une image
+ */ 
+O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	_view: null, // vector de vue Rect
 	_zoneWidth : 0,
 	_zoneHeight : 0,
 	_zones: null,
+	_moreZones: false,  // a true ce flag permet de gérer également les zone
+		// adjacentes aux zones qui sont partiellement visible dans la vue
+		// utile pour permettre au système d'eventuellement préchjarger les zones
+		//si la conception des zone dépend d'un résultat ajax.
 
 
 	__construct: function() {
@@ -11,7 +23,14 @@ O2.createClass('Fairy.WorldGrid',	{
 	},
 	
 	/**
-	 * Calcule la liste des cellule balayées par la vue
+	 * Calcule la liste des zones balayées par la vue
+	 * Renvoi des évèbnements
+	 * zone.(a|d|n) {
+	 *	x, coordonnée x de la portion
+	 *	y, coordonnée y de la portion
+	 *	key, clé d'identification de la portion
+	 * 	canvas: canvas/image qu'il faudra fournir en retour
+	 * }
 	 */
 	update: function() {
 		var a = [];
@@ -24,12 +43,18 @@ O2.createClass('Fairy.WorldGrid',	{
 		var ys = Math.floor(vy / ch);
 		var xe = Math.floor(p[1].x / cw);
 		var ye = Math.floor(p[1].y / ch);
+		if (this.moreZones()) {
+			--xs;
+			--ys;
+			++xe;
+			++ye;
+		}
 		var sKey, oNow = {};
 		var oPrev = this.zones();
 		var a = {
-			d: [],
-			n: [],
-			a: []
+			d: [], // zone à décharger (ne sert plus car sort de la zone de vue)
+			n: [], // nouvelle zone à charger, vien d'apparaitre dans la vue
+			a: [] // zone toucjourr affichée
 		};
 		
 		for (var x, y = ys; y <= ye; ++y) {
@@ -63,6 +88,9 @@ O2.createClass('Fairy.WorldGrid',	{
 		return this;
 	},
 	
+	/**
+	 * Rendu du layer
+	 */
 	render: function(oContext) {
 		var zc;
 		var z = this.zones();
@@ -80,5 +108,5 @@ O2.createClass('Fairy.WorldGrid',	{
 	}
 });
 
-O2.mixin(Fairy.WorldGrid, O876.Mixin.Prop);
-O2.mixin(Fairy.WorldGrid, O876.Mixin.Events);
+O2.mixin(Fairy.WorldLayer, O876.Mixin.Prop);
+O2.mixin(Fairy.WorldLayer, O876.Mixin.Events);

@@ -23,7 +23,7 @@ QUnit.test('A simple class', function(assert) {
 	});
 
 	assert.ok(TEST.Class1, 'Class1 has been created');
-	assert.equal(TEST.Class1, O2._loadObject('TEST.Class1'), 'loadObjet is working');
+	assert.equal(TEST.Class1, O2.loadObject('TEST.Class1'), 'loadObjet is working');
 	assert.equal(typeof TEST.Class1, 'function', 'Class1 is a function');
 	assert.ok('prop1' in TEST.Class1.prototype, 'prop1 is defined in Class1 prototype');
 	assert.ok('prop2' in TEST.Class1.prototype, 'prop2 is defined in Class1 prototype');
@@ -496,15 +496,15 @@ QUnit.test('getInstance', function(assert) {
 QUnit.test('get', function(assert) {
 	var xhr = new O876.XHR();
 	var done = assert.async(3);
-	xhr.get('tests.js', function(data, err) {
+	xhr.get('o876-tests.js', function(data, err) {
 		assert.ok(data.length > 0, 'there should be data');
 		done();
 	});
-	xhr.get('tests.js', function(data, err) {
+	xhr.get('o876-tests.js', function(data, err) {
 		assert.ok(data.length > 0, 'there should be data');
 		done();
 	});
-	xhr.get('index.html', function(data, err) {
+	xhr.get('o876.html', function(data, err) {
 		assert.ok(data.length > 0, 'there should be data');
 		done();
 	});

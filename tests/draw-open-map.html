@@ -9,6 +9,11 @@
 	<script type="text/javascript" src="../src/Mixin/Events.js"></script>
 	<script type="text/javascript" src="../src/Mixin/Prop.js"></script>
 
+	<script type="text/javascript" src="../src/Rainbow.js"></script>
+	<script type="text/javascript" src="../src/CanvasFactory.js"></script>
+	<script type="text/javascript" src="../src/Random.js"></script>
+	<script type="text/javascript" src="../src/Perlin.js"></script>
+
 	<script type="text/javascript" src="../src/Fairies/Mixin/GridProxy.js"></script>
 
 	<script type="text/javascript" src="../src/Fairies/Grid.js"></script>
@@ -30,7 +35,7 @@
 	<script type="text/javascript" src="../src/Fairies/Wings/Air.js"></script>
 	<script type="text/javascript" src="../src/Fairies/Layer.js"></script>
 	<script type="text/javascript" src="../src/Fairies/MobileLayer.js"></script>
-	<script type="text/javascript" src="../src/Fairies/WorldGrid.js"></script>
+	<script type="text/javascript" src="../src/Fairies/WorldLayer.js"></script>
 	<script type="text/javascript" src="../src/Fairies/View.js"></script>
 	
 	<script type="text/javascript">
@@ -38,43 +43,68 @@
 
 var oCanvas;
 var oContext;
+var vMove;
+var kMask = {};
 
 var wg, fAngle = 0, vMove = new Fairy.Vector();
 var oCVS = {};
 
 function doomloop() {
-	fAngle += Math.random() / 100;
-	var vx = 4*Math.sin(fAngle);
-	var vy = 4*Math.cos(fAngle);
-	vMove.set(vx, vy);
-	wg.view().flight().move(vMove);
-	oContext.fillStyle = '#AAA';
-	oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
+	var x = 0;
+	var y = 0;
+	if (kMask['37']) {
+		x -= 1;
+	}
+	if (kMask['39']) {
+		x += 1;
+	}
+	if (kMask['38']) {
+		y -= 1;
+	}
+	if (kMask['40']) {
+		y += 1;
+	}
+	vMove.set(x * 4, y * 4);
 	wg.update();
 	wg.render(oContext);
+	wg.view().flight().move(vMove);
 }
 
+
 function main() {
+	window.addEventListener('keydown', function(e) {
+		kMask[e.which] = true;
+	});
+	window.addEventListener('keyup', function(e) {
+		kMask[e.which] = false;
+	});
+	O876.CanvasFactory.setImageSmoothing(false);
 	oCanvas = document.getElementById('canvas');
 	oContext = oCanvas.getContext('2d');
-	wg = new Fairy.WorldGrid();
+	var p = new O876.Perlin();
+	p.width(64).height(64).octaves(6);
+	wg = new Fairy.WorldLayer();
 	wg
-		.zoneWidth(256)
-		.zoneHeight(256)
+		.zoneWidth(512)
+		.zoneHeight(512)
 		.view()
 		.width(oCanvas.width)
 		.height(oCanvas.height)
 	wg.on('zone.n', function(oEvent) {
 		var cvs, ctx, fColor = 180 * Math.sin(oEvent.x / 3 + oEvent.y / 5) + 180;
-		cvs = document.createElement('canvas');
-		cvs.width = wg.zoneWidth();
-		cvs.height = wg.zoneHeight();
+		cvs = O876.CanvasFactory.getCanvas(wg.zoneWidth(), wg.zoneHeight());
 		ctx = cvs.getContext('2d');
-		ctx.fillStyle = 'hsl(' + fColor + ', 50%, 50%)';
+		var aNoise = p.generate(oEvent.x, oEvent.y);
+		cvs2 = document.createElement('canvas');
+		cvs2.width = p.width();
+		cvs2.height = p.height();
+		var ctx2 = cvs2.getContext('2d');
+		p.render(aNoise, ctx2);		
+		ctx.drawImage(cvs2, 0, 0, cvs2.width, cvs2.height, 0, 0, cvs.width, cvs.height);
 		ctx.strokeStyle = 'black';
-		ctx.fillRect(0, 0, cvs.width, cvs.height);
-		ctx.strokeRect(4, 4, cvs.width - 8, cvs.height - 8);
-		ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+		ctx.strokeRect(0, 0, cvs.width + 10, cvs.height + 10);
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+		ctx.font = '24px bold monospace';
 		ctx.fillText(oEvent.x.toString() + ' : ' + oEvent.y.toString(), 16, 32);
 		oEvent.canvas = cvs;
 	});
