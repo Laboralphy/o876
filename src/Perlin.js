@@ -195,18 +195,13 @@ O2.createClass('O876.Perlin', {
 	},
 
 
-	render: function(aNoise, oContext) {
+	render: function(aNoise, oContext, aPalette) {
 		var oRainbow = new O876.Rainbow();
-		var aPalette = [
+		var aPalette = aPalette || [
 			...oRainbow.spectrum('#008', '#00F', 50), 
 			...oRainbow.spectrum('#840', '#0A0', 35),
 			...oRainbow.spectrum('#888', '#FFF', 15)];
 		var h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
-		if (oContext === null) {
-			var oCanvas = O876.CanvasFactory.getCanvas(w, h);
-			oContext = oCanvas.getContext("2d");
-			document.body.appendChild(oCanvas);
-		}
 		var oImageData = oContext.createImageData(w, h);
 		var data = oImageData.data;
 		var oRainbow = new O876.Rainbow();

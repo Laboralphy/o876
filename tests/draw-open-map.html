@@ -45,11 +45,42 @@ var oCanvas;
 var oContext;
 var vMove;
 var kMask = {};
+var oRainbow = new O876.Rainbow();
+var PALETTE = {
+	zea: [
+	...oRainbow.spectrum('#008', '#00F', 50), 
+	...oRainbow.spectrum('#840', '#0A0', 25),
+	...oRainbow.spectrum('#888', '#FFF', 15)
+	],
+	fire: [
+	...oRainbow.spectrum('#000', '#F00', 20), 
+	...oRainbow.spectrum('#F00', '#FF0', 20),
+	...oRainbow.spectrum('#FF0', '#FFF', 20),
+	...oRainbow.spectrum('#FFF', '#FF0', 20), 
+	...oRainbow.spectrum('#FF0', '#F00', 20),
+	...oRainbow.spectrum('#F00', '#000', 20)
+	],
+	zea2: [
+	...oRainbow.spectrum('#FFF', '#888', 20),
+	...oRainbow.spectrum('#888', '#0A0', 20),
+	...oRainbow.spectrum('#0A0', '#840', 20),
+	...oRainbow.spectrum('#00F', '#008', 30),
+	...oRainbow.spectrum('#008', '#00F', 30), 
+	...oRainbow.spectrum('#840', '#0A0', 20),
+	...oRainbow.spectrum('#0A0', '#888', 20),
+	...oRainbow.spectrum('#888', '#FFF', 20),
+	],
+
+};
+
+
 
 var wg, fAngle = 0, vMove = new Fairy.Vector();
 var oCVS = {};
 
-function doomloop() {
+var fPrevTime = null;
+
+function doomloop(fTime) {
 	var x = 0;
 	var y = 0;
 	if (kMask['37']) {
@@ -64,10 +95,13 @@ function doomloop() {
 	if (kMask['40']) {
 		y += 1;
 	}
-	vMove.set(x * 4, y * 4);
+	var fInter = fTime - (fPrevTime || fTime);
+	fPrevTime = fTime;
+	vMove.set(x * fInter * 4 / 32, y * fInter * 4 / 32);
 	wg.update();
 	wg.render(oContext);
 	wg.view().flight().move(vMove);
+	requestAnimationFrame(doomloop);
 }
 
 
@@ -99,7 +133,7 @@ function main() {
 		cvs2.width = p.width();
 		cvs2.height = p.height();
 		var ctx2 = cvs2.getContext('2d');
-		p.render(aNoise, ctx2);		
+		p.render(aNoise, ctx2, PALETTE.zea2);		
 		ctx.drawImage(cvs2, 0, 0, cvs2.width, cvs2.height, 0, 0, cvs.width, cvs.height);
 		ctx.strokeStyle = 'black';
 		ctx.strokeRect(0, 0, cvs.width + 10, cvs.height + 10);
@@ -108,7 +142,7 @@ function main() {
 		ctx.fillText(oEvent.x.toString() + ' : ' + oEvent.y.toString(), 16, 32);
 		oEvent.canvas = cvs;
 	});
-	setInterval(doomloop, 32);
+	doomloop(32);
 
 }
 
