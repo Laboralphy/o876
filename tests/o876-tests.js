@@ -316,6 +316,77 @@ QUnit.test('spectrum', function(assert) {
 	assert.equal(a.length, 4);
 });
 
+QUnit.test('gradient', function(assert) {
+	var r = new O876.Rainbow();
+	var a;
+	
+	a = r.gradient({
+		0: 'red',
+		2: 'navy',
+		4: 'yellow'
+	});
+	assert.deepEqual(a, [
+	  "rgb(255, 0, 0)",
+	  "rgb(127, 0, 64)",
+	  "rgb(0, 0, 128)",
+	  "rgb(127, 127, 64)",
+	  "rgb(255, 255, 0)"
+	]);
+	assert.equal(a.length, 5);
+
+	a = r.gradient({
+		0: 'red',
+		1: 'navy',
+		2: 'yellow'
+	});
+	assert.deepEqual(a, [
+	  "rgb(255, 0, 0)",
+	  "rgb(0, 0, 128)",
+	  "rgb(255, 255, 0)"
+	]);
+	assert.equal(a.length, 3);
+	
+	a = r.gradient({
+		0: 'red',
+		15: 'navy',
+		30: 'yellow'
+	});
+	assert.deepEqual(a, [
+	  "rgb(255, 0, 0)",
+	  "rgb(223, 0, 16)",
+	  "rgb(207, 0, 24)",
+	  "rgb(191, 0, 32)",
+	  "rgb(175, 0, 40)",
+	  "rgb(159, 0, 48)",
+	  "rgb(143, 0, 56)",
+	  "rgb(127, 0, 64)",
+	  "rgb(111, 0, 72)",
+	  "rgb(95, 0, 80)",
+	  "rgb(79, 0, 88)",
+	  "rgb(63, 0, 96)",
+	  "rgb(47, 0, 104)",
+	  "rgb(31, 0, 112)",
+	  "rgb(15, 0, 120)",
+	  "rgb(0, 0, 128)",
+	  "rgb(31, 31, 112)",
+	  "rgb(47, 47, 104)",
+	  "rgb(63, 63, 96)",
+	  "rgb(79, 79, 88)",
+	  "rgb(95, 95, 80)",
+	  "rgb(111, 111, 72)",
+	  "rgb(127, 127, 64)",
+	  "rgb(143, 143, 56)",
+	  "rgb(159, 159, 48)",
+	  "rgb(175, 175, 40)",
+	  "rgb(191, 191, 32)",
+	  "rgb(207, 207, 24)",
+	  "rgb(223, 223, 16)",
+	  "rgb(239, 239, 8)",
+	  "rgb(255, 255, 0)"
+	]);
+	assert.equal(a.length, 31);
+});
+
 
 /*
  ######    ##     ####      #    #    #   ####

@@ -1,10 +1,10 @@
 O2.createClass('O876.Perlin', {
 
-	_rand: null,
-	_width: 0,
-	_height: 0,
-	_octaves: 0,
-	_interpolate: null,
+	_rand: null,	// pseudo random generator
+	_width: 0,		// tile width
+	_height: 0,		// tile height
+	_octaves: 0,	// octave counts
+	_interpolate: null,	// string : interpolation function. Allowed values are 'cosine', 'linear', defualt is 'cosine'
 
 
 	__construct: function() {
@@ -30,28 +30,49 @@ O2.createClass('O876.Perlin', {
 		return a;
 	},
 
+	/**
+	 * Linear interpolation
+	 * @param x1 minimum
+	 * @param x2 maximum
+	 * @param alpha value between 0 and 1
+	 * @return float, interpolation result
+	 */
 	linearInterpolate: function(x0, x1, alpha) {
 		return x0 * (1 - alpha) + alpha * x1;
 	},
 
+	/**
+	 * Cosine Interpolation
+	 */
 	cosineInterpolate: function(x0, x1, mu) {
 		var mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
    		return x0 * (1 - mu2) + x1 * mu2;
 	},
 
+	/**
+	 * selects an interpolation
+	 * @param f string | function the new interpolation function
+	 * f can be either a string ('cosine', 'linear') or a custom function
+	 */
 	interpolation: function(f) {
-		if (f !== undefined) {
-			if ((f + 'Interpolate') in this) {
-				this._interpolate = this[f + 'Interpolate'];
-			} else {
-				throw new Error('only "linear" or "cosine" interpolation');
-			}
-			return this;
-		} else {
-			return this._interpolate;
+		switch (typeof f) {
+			case 'string':
+				if ((f + 'Interpolate') in this) {
+					this._interpolate = this[f + 'Interpolate'];
+				} else {
+					throw new Error('only "linear" or "cosine" interpolation');
+				}
+				return this;
+				
+			case 'function':
+				this._interpolate = f;
+				return this;
+				
+			case 'undefined':
+				return this._interpolate;
 		}
+		return this;
 	},
-
 
 	generateSmoothNoise: function(aBaseNoise, nOctave) {
 		var w = aBaseNoise.length;
@@ -197,10 +218,14 @@ O2.createClass('O876.Perlin', {
 
 	render: function(aNoise, oContext, aPalette) {
 		var oRainbow = new O876.Rainbow();
-		var aPalette = aPalette || [
-			...oRainbow.spectrum('#008', '#00F', 50), 
-			...oRainbow.spectrum('#840', '#0A0', 35),
-			...oRainbow.spectrum('#888', '#FFF', 15)];
+		var aPalette = aPalette || oRainbow.gradient({
+			0: '#008',
+			49: '#00F',
+			50: '#840',
+			84: '#0A0',
+			85: '#888',
+			99: '#FFF'
+		});
 		var h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
 		var oImageData = oContext.createImageData(w, h);
 		var data = oImageData.data;

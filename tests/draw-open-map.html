@@ -133,7 +133,7 @@ function main() {
 		cvs2.width = p.width();
 		cvs2.height = p.height();
 		var ctx2 = cvs2.getContext('2d');
-		p.render(aNoise, ctx2, PALETTE.zea2);		
+		p.render(aNoise, ctx2, PALETTE.zea);		
 		ctx.drawImage(cvs2, 0, 0, cvs2.width, cvs2.height, 0, 0, cvs.width, cvs.height);
 		ctx.strokeStyle = 'black';
 		ctx.strokeRect(0, 0, cvs.width + 10, cvs.height + 10);
