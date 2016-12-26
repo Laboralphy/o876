@@ -779,3 +779,307 @@ QUnit.test('getRandomSound', function(assert) {
 
 	a.process(1);
 });
+
+
+
+/*
+ #####     ##    #    #  #####
+ #    #   #  #   ##   #  #    #
+ #    #  #    #  # #  #  #    #
+ #####   ######  #  # #  #    #
+ #   #   #    #  #   ##  #    #
+ #    #  #    #  #    #  #####
+*/
+
+QUnit.module('Random');
+
+QUnit.test('simple', function(assert) {
+	var r = new O876.Random();
+	assert.equal(r.rand(1, 1), 1, 'forced random 1');
+	assert.equal(r.rand(0, 0), 0, 'forced random 0');
+	assert.equal(r.rand(-1, -1), -1, 'forced non-sense random -1');
+	assert.ok(r.rand() < 1, 'always < 0');
+	assert.equal(r.rand({'mytest': 123}), 'mytest', 'returns the only key');
+	assert.equal(r.rand(['ABC']), 'ABC', 'returns the only item');
+	assert.strictEqual(r.rand([]), undefined, 'returns undefined when no item in array');
+	assert.strictEqual(r.rand({}), undefined, 'returns undefined when no item in objects');
+});
+
+
+/*
+  ####   #    #    ##       #    #
+ #       ##   #   #  #      #    #
+  ####   # #  #  #    #     #    #
+      #  #  # #  ######     #    #
+ #    #  #   ##  #    #     #    #
+  ####   #    #  #    #     #    ######
+*/
+
+
+
+QUnit.module('Snail');
+
+QUnit.test('4x4', function(assert) {
+	var snail = new O876.Snail();
+	assert.deepEqual(snail.crawl(0), [{x: 0, y: 0}]);
+	assert.deepEqual(snail.crawl(1), [
+		{
+		  "x": -1,
+		  "y": -1
+		},
+		{
+		  "x": 0,
+		  "y": -1
+		},
+		{
+		  "x": 1,
+		  "y": -1
+		},
+		{
+		  "x": -1,
+		  "y": 0
+		},
+		{
+		  "x": 1,
+		  "y": 0
+		},
+		{
+		  "x": -1,
+		  "y": 1
+		},
+		{
+		  "x": 0,
+		  "y": 1
+		},
+		{
+		  "x": 1,
+		  "y": 1
+		}
+	  ]);
+	assert.deepEqual(snail.crawl(3, 4), [
+	  {
+		"x": -4,
+		"y": -4
+	  },
+	  {
+		"x": -3,
+		"y": -4
+	  },
+	  {
+		"x": -2,
+		"y": -4
+	  },
+	  {
+		"x": -1,
+		"y": -4
+	  },
+	  {
+		"x": 0,
+		"y": -4
+	  },
+	  {
+		"x": 1,
+		"y": -4
+	  },
+	  {
+		"x": 2,
+		"y": -4
+	  },
+	  {
+		"x": 3,
+		"y": -4
+	  },
+	  {
+		"x": 4,
+		"y": -4
+	  },
+	  {
+		"x": -4,
+		"y": -3
+	  },
+	  {
+		"x": -3,
+		"y": -3
+	  },
+	  {
+		"x": -2,
+		"y": -3
+	  },
+	  {
+		"x": -1,
+		"y": -3
+	  },
+	  {
+		"x": 0,
+		"y": -3
+	  },
+	  {
+		"x": 1,
+		"y": -3
+	  },
+	  {
+		"x": 2,
+		"y": -3
+	  },
+	  {
+		"x": 3,
+		"y": -3
+	  },
+	  {
+		"x": 4,
+		"y": -3
+	  },
+	  {
+		"x": -4,
+		"y": -2
+	  },
+	  {
+		"x": -3,
+		"y": -2
+	  },
+	  {
+		"x": 3,
+		"y": -2
+	  },
+	  {
+		"x": 4,
+		"y": -2
+	  },
+	  {
+		"x": -4,
+		"y": -1
+	  },
+	  {
+		"x": -3,
+		"y": -1
+	  },
+	  {
+		"x": 3,
+		"y": -1
+	  },
+	  {
+		"x": 4,
+		"y": -1
+	  },
+	  {
+		"x": -4,
+		"y": 0
+	  },
+	  {
+		"x": -3,
+		"y": 0
+	  },
+	  {
+		"x": 3,
+		"y": 0
+	  },
+	  {
+		"x": 4,
+		"y": 0
+	  },
+	  {
+		"x": -4,
+		"y": 1
+	  },
+	  {
+		"x": -3,
+		"y": 1
+	  },
+	  {
+		"x": 3,
+		"y": 1
+	  },
+	  {
+		"x": 4,
+		"y": 1
+	  },
+	  {
+		"x": -4,
+		"y": 2
+	  },
+	  {
+		"x": -3,
+		"y": 2
+	  },
+	  {
+		"x": 3,
+		"y": 2
+	  },
+	  {
+		"x": 4,
+		"y": 2
+	  },
+	  {
+		"x": -4,
+		"y": 3
+	  },
+	  {
+		"x": -3,
+		"y": 3
+	  },
+	  {
+		"x": -2,
+		"y": 3
+	  },
+	  {
+		"x": -1,
+		"y": 3
+	  },
+	  {
+		"x": 0,
+		"y": 3
+	  },
+	  {
+		"x": 1,
+		"y": 3
+	  },
+	  {
+		"x": 2,
+		"y": 3
+	  },
+	  {
+		"x": 3,
+		"y": 3
+	  },
+	  {
+		"x": 4,
+		"y": 3
+	  },
+	  {
+		"x": -4,
+		"y": 4
+	  },
+	  {
+		"x": -3,
+		"y": 4
+	  },
+	  {
+		"x": -2,
+		"y": 4
+	  },
+	  {
+		"x": -1,
+		"y": 4
+	  },
+	  {
+		"x": 0,
+		"y": 4
+	  },
+	  {
+		"x": 1,
+		"y": 4
+	  },
+	  {
+		"x": 2,
+		"y": 4
+	  },
+	  {
+		"x": 3,
+		"y": 4
+	  },
+	  {
+		"x": 4,
+		"y": 4
+	  }
+	]);
+});
