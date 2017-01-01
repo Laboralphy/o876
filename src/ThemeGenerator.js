@@ -1,4 +1,5 @@
 /**
+ * @class O876.ThemeGenerator
  * Générateur de Thème CSS
  * Permet de définir un theme dynamiquement à partir d'une couleur.
  * L'objet theme fournit est un objet associatif dont les clé sont des selecteur CSS 
