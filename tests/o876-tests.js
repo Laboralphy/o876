@@ -1083,3 +1083,89 @@ QUnit.test('4x4', function(assert) {
 	  }
 	]);
 });
+
+
+
+
+/*
+   #
+  # #    #    #   #####   ####
+ #   #   #    #     #    #    #
+#     #  #    #     #    #    #
+#######  #    #     #    #    #
+#     #  #    #     #    #    #
+#     #   ####      #     ####
+*/
+
+QUnit.module('Auto.Trans');
+
+QUnit.test('adding tests', function(assert) {
+	var t1 = new O876.Auto.Trans();
+	var s1 = new O876.Auto.State();
+	var s2 = new O876.Auto.State();
+	s1.name('s1');
+	s2.name('s2');
+	s1.trans(t1);
+	t1.state(s2);
+	t1.test('test-xyz');
+	
+	assert.equal(s1._trans.length, 1, 'one trans is declare in s1');
+	assert.equal(t1._state, s2);
+	assert.equal(s1.name(), 's1');
+	assert.equal(s2.name(), 's2');
+	assert.equal(t1.test(), 'test-xyz');
+
+	var iRun = 0;
+	var sTest = '';
+	var sExit = '';
+	var sEnter = '';
+	s1.on('run', function() {
+		++iRun;
+	});
+	t1.on('test', function(oEvent) {
+		sTest = oEvent.test;
+		oEvent.result = true;
+	});
+	s1.on('exit', function(sState) {
+		sExit = sState;
+	});
+	s2.on('enter', function(sState) {
+		sEnter = sState;
+	});
+	s1.process();
+	assert.equal(iRun, 1, '"run" has been triggered');
+	assert.equal(sTest, 'test-xyz', '"test" has been triggered');
+	assert.equal(sExit, 's1', '"exit" (s1) has been triggered');
+	assert.equal(sEnter, 's2', '"enter" (s2) has been triggered');
+});
+
+
+QUnit.test('parse', function(assert) {
+	var s1 = new O876.Auto.State();
+	var s = s1.parse({
+		's1': {
+			's2': 'test-s1-s2',
+			's3': 'test-s1-s3'
+		},
+		's2': {
+			's1': 'restart'
+		},
+		's3': {
+			's2': 'test-s2-s3'
+		}
+	});
+	assert.ok('s1' in s, 'state s1 is initialized');
+	assert.ok('s2' in s, 'state s2 is initialized');
+	assert.ok('s3' in s, 'state s3 is initialized');
+	assert.equal(s.s1.trans()[0].state(), 's2', 's1 t0 -> s2');
+	assert.equal(s.s1.trans()[0].test(), 'test-s1-s2', 's1 t0 -> test s1 to s2');
+	assert.equal(s.s1.trans()[1].state(), 's3', 'test');
+	assert.equal(s.s1.trans()[1].test(), 'test-s1-s3', 'test');
+
+	assert.equal(s.s2.trans()[0].state(), 's1', 'test');
+	assert.equal(s.s2.trans()[0].test(), 'restart', 'test');
+
+	assert.equal(s.s3.trans()[0].state(), 's2', 'test');
+	assert.equal(s.s3.trans()[0].test(), 'test-s2-s3', 'test');
+});
+
