@@ -8,6 +8,7 @@
 #######  #####    #      #####
 */
 
+/* global QUnit */
 
 QUnit.module('O2');
 
@@ -474,7 +475,7 @@ QUnit.test('find', function(assert) {
 	assert.deepEqual(aMoves, [
 		{x: 3, y: 3},
 		{x: 2, y: 3},
-		{x: 1, y: 3},
+		{x: 1, y: 3}
 	], '3 step move');
 
 	aMoves = ast.find(4, 3, 1, 1);
@@ -483,7 +484,7 @@ QUnit.test('find', function(assert) {
 		{x: 2, y: 3},
 		{x: 1, y: 3},
 		{x: 1, y: 2},
-		{x: 1, y: 1},
+		{x: 1, y: 1}
 	], '5 or 6 step move');
 
 	aMoves = ast.find(4, 3, 5, 1);
@@ -496,7 +497,7 @@ QUnit.test('find', function(assert) {
 		{x: 2, y: 1},
 		{x: 3, y: 1},
 		{x: 4, y: 1},
-		{x: 5, y: 1},
+		{x: 5, y: 1}
 	], 'lot of move');
 
 	aMoves = ast.find(4, 3, 5, 2);
@@ -510,7 +511,7 @@ QUnit.test('find', function(assert) {
 		{x: 3, y: 1},
 		{x: 4, y: 1},
 		{x: 5, y: 1},
-		{x: 5, y: 2},
+		{x: 5, y: 2}
 	], 'complete move');
 
 	aMoves = ast.find(4, 3, 5, 2);
@@ -524,7 +525,7 @@ QUnit.test('find', function(assert) {
 		{x: 3, y: 1},
 		{x: 4, y: 1},
 		{x: 5, y: 1},
-		{x: 5, y: 2},
+		{x: 5, y: 2}
 	], 'complete move second pass');
 
 	ast.init({
@@ -538,7 +539,7 @@ QUnit.test('find', function(assert) {
 		{x: 2, y: 1},
 		{x: 3, y: 1},
 		{x: 4, y: 1},
-		{x: 5, y: 2},
+		{x: 5, y: 2}
 	], 'complete move with diagonals');
 
 
@@ -1174,18 +1175,19 @@ QUnit.test('parse tokens', function(assert) {
 	var oStart = new O876.Auto.State();
 	var aTokens = [];
 	var sToken = '';
-	var sInput = 'abc & ert | (tyu && dcvxb | zetrze( x';
+	var sInput = 'abc & ert | (tyu && dcvxb | zetrze )';
 	var iInput = 0;
 	var iTurn = 0;
-	var s = oStart.parse({
+	var bEnd = false;
+	oStart.parse({
 		'start': {
+            'last': 'isEmpty',
 			'whitespace': 'isWhiteSpace',
 			'identifier': 'isAlpha',
 			'number': 'isDigit',
 			'operator': 'isSymbol',
 			'rightpar': 'isRightPar',
-			'leftpar': 'isLeftPar',
-			'last': 'isEmpty'
+			'leftpar': 'isLeftPar'
 		},
 		
 		'whitespace': {
@@ -1221,10 +1223,11 @@ QUnit.test('parse tokens', function(assert) {
 
 		'test': function(oEvent) {
 			var c = sInput.substr(iInput, 1);
-			if (c === '') {
-				return oEvent.test === 'isEmtpy';
-			}
 			switch (oEvent.test) {
+				case 'isEmpty':
+					oEvent.result = c === '';
+					break;
+
 				case 'isWhiteSpace':
 					oEvent.result = c <= ' '; 
 					break;
@@ -1250,11 +1253,11 @@ QUnit.test('parse tokens', function(assert) {
 					break;
 					
 				case 'isSymbol':
-					oEvent.result = ('&|').indexOf(c) >= 0;
+					oEvent.result = ('!&|').indexOf(c) >= 0;
 					break;
 					
 				case 'isNotSymbol':
-					oEvent.result = ('&|').indexOf(c) < 0;
+					oEvent.result = ('!&|').indexOf(c) < 0;
 					break;
 					
 				case 'isLeftPar':
@@ -1264,15 +1267,13 @@ QUnit.test('parse tokens', function(assert) {
 				case 'isRightPar':
 					oEvent.result = c === ')';
 					break;
-					
-				case 'isEmpty':
-					oEvent.result = c === '';
-					break;
-					
+
 				case 'always':
 					oEvent.result = true;
 					break;
-					
+
+				default:
+					throw new Error('unknown test : ' + oEvent.test);
 			}
 		},
 		
@@ -1290,7 +1291,7 @@ QUnit.test('parse tokens', function(assert) {
 					break;
 				
 				case 'end':
-					iTurn = 1000;
+                    bEnd = true;
 					break;
 				
 				case 'whitespace':
@@ -1302,8 +1303,6 @@ QUnit.test('parse tokens', function(assert) {
 		'exit': function(oState) {
 			switch (oState.name()) {
 				case 'last':
-				console.log('LAST');
-				
 				case 'identifier':
 				case 'number':
 				case 'operator':
@@ -1318,16 +1317,19 @@ QUnit.test('parse tokens', function(assert) {
 			sToken = '';
 		}
 	});
+
 	
-	var iTurn = 0;
-	
-	s = s.start;
-	while (iTurn < 100) {
-		s = s.process();
+	while (!bEnd && iTurn < 1000) {
+        oStart.run();
 		++iTurn;
 	}
-	
-	console.log(aTokens.map(t => t.token + '"' + t.value + '"').join(' '));
-	
-	assert.ok(1);
+
+    assert.notEqual(iTurn, 1000);
+    assert.ok(bEnd);
+
+	var sResult = aTokens.map(function(t) {
+        return t.token + '"' + t.value + '"';
+    }).join(' ');
+
+	assert.equal(sResult, 'identifier"abc" operator"&" identifier"ert" operator"|" leftpar"(" identifier"tyu" operator"&&" identifier"dcvxb" operator"|" identifier"zetrze" rightpar")" last""');
 });

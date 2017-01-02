@@ -49,7 +49,7 @@ O2.createClass('O876.Mixin.Events', {
 			 * If pCallback is specified, this pCallback only will be remove
 			 * if no callback is specified, all the handlers will be removed for that
 			 * event.
-			 * if neither sEvent nor pCallback are spécified, all events and all handler
+			 * if neither sEvent nor pCallback are specified, all events and all handler
 			 * will be removed.
              * @param sEvent event name
              * @param pCallback function to be called when the event is triggered
@@ -83,7 +83,7 @@ O2.createClass('O876.Mixin.Events', {
             /**
 			 * Triggers an event.
 			 * Will call all callback associated with that event.
-			 * All parameters following sEvent will be passe"d to
+			 * All parameters following sEvent will be passed to
 			 * the event handler.
              * @param sEvent event name
              * @returns {trigger}
