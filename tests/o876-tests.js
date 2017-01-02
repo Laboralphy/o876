@@ -756,10 +756,10 @@ QUnit.test('buildShadowCanvas', function(assert) {
 #     #  #    #  #####      #    ######  #    #   ####   ######
 */
 
-QUnit.module('Ambience');
+QUnit.module('Ambiance');
 
 QUnit.test('getRandomSound', function(assert) {
-	var a = new O876.Ambience();
+	var a = new O876.Ambiance();
 	a.load({
 		period: 10,
 		variation: 0,
@@ -1126,11 +1126,11 @@ QUnit.test('adding tests', function(assert) {
 		sTest = oEvent.test;
 		oEvent.result = true;
 	});
-	s1.on('exit', function(sState) {
-		sExit = sState;
+	s1.on('exit', function(oState) {
+		sExit = oState.name();
 	});
-	s2.on('enter', function(sState) {
-		sEnter = sState;
+	s2.on('enter', function(oState) {
+		sEnter = oState.name();
 	});
 	s1.process();
 	assert.equal(iRun, 1, '"run" has been triggered');
@@ -1157,15 +1157,177 @@ QUnit.test('parse', function(assert) {
 	assert.ok('s1' in s, 'state s1 is initialized');
 	assert.ok('s2' in s, 'state s2 is initialized');
 	assert.ok('s3' in s, 'state s3 is initialized');
-	assert.equal(s.s1.trans()[0].state(), 's2', 's1 t0 -> s2');
+	assert.equal(s.s1.trans()[0].state(), s.s2, 's1 t0 -> s2');
 	assert.equal(s.s1.trans()[0].test(), 'test-s1-s2', 's1 t0 -> test s1 to s2');
-	assert.equal(s.s1.trans()[1].state(), 's3', 'test');
+	assert.equal(s.s1.trans()[1].state(), s.s3, 'test');
 	assert.equal(s.s1.trans()[1].test(), 'test-s1-s3', 'test');
 
-	assert.equal(s.s2.trans()[0].state(), 's1', 'test');
+	assert.equal(s.s2.trans()[0].state(), s.s1, 'test');
 	assert.equal(s.s2.trans()[0].test(), 'restart', 'test');
 
-	assert.equal(s.s3.trans()[0].state(), 's2', 'test');
+	assert.equal(s.s3.trans()[0].state(), s.s2, 'test');
 	assert.equal(s.s3.trans()[0].test(), 'test-s2-s3', 'test');
 });
 
+QUnit.test('parse tokens', function(assert) {
+	
+	var oStart = new O876.Auto.State();
+	var aTokens = [];
+	var sToken = '';
+	var sInput = 'abc & ert | (tyu && dcvxb | zetrze( x';
+	var iInput = 0;
+	var iTurn = 0;
+	var s = oStart.parse({
+		'start': {
+			'whitespace': 'isWhiteSpace',
+			'identifier': 'isAlpha',
+			'number': 'isDigit',
+			'operator': 'isSymbol',
+			'rightpar': 'isRightPar',
+			'leftpar': 'isLeftPar',
+			'last': 'isEmpty'
+		},
+		
+		'whitespace': {
+			'start': 'isNotWhiteSpace'
+		},
+		
+		'identifier': {
+			'start': 'isNotAlphaNum'
+		},
+		
+		'number': {
+			'start': 'isNotDigit'
+		},
+		
+		'operator': {
+			'start': 'isNotSymbol'
+		},
+		
+		'leftpar': {
+			'start': 'always'
+		},
+
+		'rightpar': {
+			'start': 'always'
+		},
+		
+		'last': {
+			'end': 'always'
+		},
+		
+		'end': {}
+	}, {
+
+		'test': function(oEvent) {
+			var c = sInput.substr(iInput, 1);
+			if (c === '') {
+				return oEvent.test === 'isEmtpy';
+			}
+			switch (oEvent.test) {
+				case 'isWhiteSpace':
+					oEvent.result = c <= ' '; 
+					break;
+					
+				case 'isNotWhiteSpace':
+					oEvent.result = c > ' '; 
+					break;
+					
+				case 'isDigit':
+					oEvent.result = c.match(/^[0-9]$/);
+					break;
+					
+				case 'isNotDigit':
+					oEvent.result = !c.match(/^[0-9]$/);
+					break;
+					
+				case 'isAlpha':
+					oEvent.result = c.match(/^[a-z]$/i);
+					break;
+					
+				case 'isNotAlphaNum':
+					oEvent.result = !c.match(/^[a-z0-9]$/i);
+					break;
+					
+				case 'isSymbol':
+					oEvent.result = ('&|').indexOf(c) >= 0;
+					break;
+					
+				case 'isNotSymbol':
+					oEvent.result = ('&|').indexOf(c) < 0;
+					break;
+					
+				case 'isLeftPar':
+					oEvent.result = c === '(';
+					break;
+					
+				case 'isRightPar':
+					oEvent.result = c === ')';
+					break;
+					
+				case 'isEmpty':
+					oEvent.result = c === '';
+					break;
+					
+				case 'always':
+					oEvent.result = true;
+					break;
+					
+			}
+		},
+		
+		'enter': function(oState) {
+		},
+		
+		'run': function(oState) {
+			switch (oState.name()) {
+				case 'identifier':
+				case 'number':
+				case 'operator':
+				case 'leftpar':
+				case 'rightpar':
+					sToken += sInput.substr(iInput++, 1);
+					break;
+				
+				case 'end':
+					iTurn = 1000;
+					break;
+				
+				case 'whitespace':
+					++iInput;
+					break;
+			}
+		},
+
+		'exit': function(oState) {
+			switch (oState.name()) {
+				case 'last':
+				console.log('LAST');
+				
+				case 'identifier':
+				case 'number':
+				case 'operator':
+				case 'leftpar':
+				case 'rightpar':
+				aTokens.push({
+					token: oState.name(),
+					value: sToken
+				});
+				break;
+			}
+			sToken = '';
+		}
+	});
+	
+	var iTurn = 0;
+	
+	s = s.start;
+	while (iTurn < 100) {
+		s = s.process();
+		++iTurn;
+	}
+	
+	console.log(aTokens.map(t => t.token + '"' + t.value + '"').join(' '));
+	
+	assert.ok(1);
+});
