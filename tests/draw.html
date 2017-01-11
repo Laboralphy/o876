@@ -31,6 +31,7 @@
 	<script type="text/javascript" src="../src/Fairies/Layer.js"></script>
 	<script type="text/javascript" src="../src/Fairies/MobileLayer.js"></script>
 	<script type="text/javascript" src="../src/Fairies/WorldLayer.js"></script>
+	<script type="text/javascript" src="../src/Fairies/LandLayer.js"></script>
 	<script type="text/javascript" src="../src/Fairies/View.js"></script>
 	
 	<script type="text/javascript">
@@ -40,6 +41,7 @@ var oCanvas;
 var oContext;
 var oSprLayer = null;
 var aHorde = null;
+var oWorldLayer = null;
 
 
 function doomloop() {
@@ -116,6 +118,9 @@ function main() {
 
 	aHorde = [];
 	aHorde.push(s);
+	
+	
+	oWorldLayer = new Fairy.WorldLayer();
 	
 	setInterval(doomloop, 32);
 }

@@ -6,6 +6,9 @@
 O2.extendClass('Fairy.LandLayer', Fairy.Layer, {
 	
 	_grid: null,
+	_tileset: null,
+	_view: null, // vector de vue Rect
+	
 	
 	__construct: function() {
 		__inherited();
@@ -13,6 +16,18 @@ O2.extendClass('Fairy.LandLayer', Fairy.Layer, {
 	},
 
 	render: function(oContext) {
+		var p = this.view().points();
+		var tw = this._tileset.tileWidth();
+		var th = this._tileset.tileHeight();
+		
+		var xStart = p[0].x / tw | 0;
+		var yStart = p[0].y / th | 0;
+		
+		var x, y;
+		
+		
+		
+		
 		
 		return this;
 	}
