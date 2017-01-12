@@ -25,13 +25,13 @@ O2.createClass('Fairy.Grid', {
 		x |= 0;
 		y |= 0;
 		if (v === undefined) {
-			if (y < 0 || x < 0 || y >= this._height || x > this._width) {
-				return null;
-			} else {
+			if (y >= 0 && y >= 0 && y < this._height && x < this._width) {
 				return this._cells[y][x];
+			} else {
+				return null;
 			}
 		} else {
-			if (y < 0 || x < 0 || y >= this._height || x > this._width) {
+			if (y >= 0 && y >= 0 && y < this._height && x < this._width) {
 				this._cells[y][x] = v;
 			}
 			return this;

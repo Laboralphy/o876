@@ -42,11 +42,15 @@ var oContext;
 var oSprLayer = null;
 var aHorde = null;
 var oWorldLayer = null;
+var ll;
+
 
 
 function doomloop() {
-	oContext.fillStyle = '#AAA';
-	oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
+	ll.view().offset().trans(new Fairy.Vector(Math.random() * 2 | 0, Math.random() * 3 | 0));
+	ll.render(oContext);
+//	oContext.fillStyle = '#AAA';
+//	oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
 	aHorde.forEach(m => m.process(32));
 	oSprLayer.process(32);
 	oSprLayer.render(oContext);
@@ -105,6 +109,7 @@ function createMobile() {
 function main() {
 	oCanvas = document.getElementById('canvas');
 	oContext = oCanvas.getContext('2d');
+
 	var s = createMobile();
 	oSprLayer = new Fairy.MobileLayer();
 	oSprLayer.width(1024).height(1024);
@@ -122,6 +127,23 @@ function main() {
 	
 	oWorldLayer = new Fairy.WorldLayer();
 	
+	
+	ll = new Fairy.LandLayer();
+	var oTiles = new Image();
+	oTiles.src = "arena2.png";
+	console.log(ll);
+	ll.view().offset(new Fairy.Vector(10, 5)).width(800).height(600);
+	ll.tileset().tiles(oTiles).tileWidth(64).tileHeight(64);
+	var g = ll.grid();
+	g.width(100).height(100);
+	var x, y;
+	for (y = 0; y < g.height(); ++y) {
+		for (x = 0; x < g.width(); ++x) {
+			g.cell(x, y, (y * 36 + x) % (36*36));
+		}
+	}
+	ll.view().offset().set(10, 0);
+	ll.render(oContext);
 	setInterval(doomloop, 32);
 }
 

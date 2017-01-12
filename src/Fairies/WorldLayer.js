@@ -1,10 +1,10 @@
 /**
  * WorldLayer est capable de gérer une infinité de portion de terrain
- * Ces portion ne sont pas toutes affichées.
  * Seules les portions a l'interieur de la zone de vue sont affichée.
- * L'instance prévien l'appli des portion dont elle à besoin
- * C'est à l'appli, en réponse aux divers évènements de fournir les portion
- * sous forme d'un canvas ou d'une image
+ * lors de la phase de rendu, le WorldPlayer génère des évènements
+ * indiquant les coordonnées des portions qu'il souhaite afficher
+ * C'est à l'appli, en réponse à ces évènements, de fournir les portions
+ * sous forme d'un canvas ou d'une image.
  */ 
 O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	_view: null, // vector de vue Rect
@@ -13,8 +13,8 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	_zones: null,
 	_moreZones: false,  // a true ce flag permet de gérer également les zone
 		// adjacentes aux zones qui sont partiellement visible dans la vue
-		// utile pour permettre au système d'eventuellement préchjarger les zones
-		//si la conception des zone dépend d'un résultat ajax.
+		// utile pour permettre au système d'eventuellement précharger les zones
+		// si la conception des zone dépend d'un résultat ajax ou d'un Worker.
 
 
 	__construct: function() {

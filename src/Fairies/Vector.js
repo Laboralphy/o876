@@ -48,7 +48,7 @@ O2.createClass('Fairy.Vector', {
 	 * @return nouveau Fairy.Vector
 	 */
 	add: function(v) {
-		return this.clone().trans(v);;
+		return this.clone().trans(v);
 	},
 	
 	/**
