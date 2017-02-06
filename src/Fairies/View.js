@@ -1,4 +1,7 @@
 /**
+ * @class Fairy.View
+ * @extends Fairy.Rect
+ *
  * Une vue est une zone rectangulaire correspondant généralement à un écran.
  * La vue dispose d'une propriété flight permettant de tracker un mobile
  * La vue dispose également d'une position-écran virtuelle pour positionner l'objet tracké

@@ -1,3 +1,7 @@
+/**
+ * @class Fairy.Rect
+ * @extends Fairy.Shape
+ */
 O2.extendClass('Fairy.Rect', Fairy.Shape, {
 	_p1: null,
 	_p2: null,

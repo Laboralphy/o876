@@ -1,10 +1,14 @@
 /**
+ * @class Fairy.WorldLayer
  * WorldLayer est capable de gérer une infinité de portion de terrain
  * Seules les portions a l'interieur de la zone de vue sont affichée.
  * lors de la phase de rendu, le WorldPlayer génère des évènements
  * indiquant les coordonnées des portions qu'il souhaite afficher
  * C'est à l'appli, en réponse à ces évènements, de fournir les portions
  * sous forme d'un canvas ou d'une image.
+ *
+ *
+ *
  */ 
 O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	_view: null, // vector de vue Rect
@@ -21,8 +25,62 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 		this._view = new Fairy.View();
 		this._zones = {};
 	},
-	
-	/**
+
+    /**
+	 * Setter / getter d'un objet Fairy.View
+	 * Cet objet permet de définir la fenetre de vue du world layer
+	 * @param v {Fairy.View=}
+     * @return {Fairy.View|Fairy.WorldLayer}
+     */
+    view: function(v) {
+    	return this.prop('_view', v);
+	},
+
+    /**
+     * Setter / Getter de la largeur des zones.
+     * On considère le monde infini. Une zone est une portion de ce monde infini.
+     *
+     * @param z {int=} largeur d'une zone
+     * @return {object|Fairy.WorldLayer}
+     */
+    zoneWidth: function(z) {
+        return this.prop('_zoneWidth', z);
+    },
+
+    /**
+     * Setter / Getter de la hauteur des zones.
+     * On considère le monde infini. Une zone est une portion de ce monde infini.
+     *
+     * @param z {int=} hauteur d'une zone
+     * @return {int|Fairy.WorldLayer}
+     */
+    zoneHeight: function(z) {
+        return this.prop('_zoneHeight', z);
+    },
+
+    /**
+	 * Setter / Getter de zones
+	 * C'est une collection de Zones : celle qui sont actuellement chargée et qui peuvent etre affichées à tout moement
+	 * Généralement cet accesseur n'est utilisé qu'en tant que getter.
+     * @param a {Array=} liste des zone
+	 * @return {Array|Fairy.WorldLayer}
+     */
+	zones: function(a) {
+		return this.prop('_zones', a);
+	},
+
+    /**
+	 * Setter / Getter du flag moreZone
+	 * Quand la fenetre de View penetre dans une zone, cela déclenche immédiatemennt un évènement
+	 * réclamenet le chargement de la zone. avec ce Flag l'évènement est déclenché pour toutes les zones contigues.
+     * @param b {boolean=}
+	 * @return {boolean|Fairy.WorldLayer}
+     */
+	moreZones: function(b) {
+        return this.prop('_moreZone', b);
+	},
+
+    /**
 	 * Calcule la liste des zones balayées par la vue
 	 * Renvoi des évèbnements
 	 * zone.(a|d|n) {
@@ -33,31 +91,30 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	 * }
 	 */
 	update: function() {
-		var a = [];
-		var p = this.view().points();
-		var cw = this.zoneWidth();
-		var ch = this.zoneHeight();
-		var vx = p[0].x;
-		var vy = p[0].y;
-		var xs = Math.floor(vx / cw);
-		var ys = Math.floor(vy / ch);
-		var xe = Math.floor(p[1].x / cw);
-		var ye = Math.floor(p[1].y / ch);
+		let p = this.view().points();
+		let cw = this.zoneWidth();
+		let ch = this.zoneHeight();
+		let vx = p[0].x;
+		let vy = p[0].y;
+		let xs = Math.floor(vx / cw);
+		let ys = Math.floor(vy / ch);
+		let xe = Math.floor(p[1].x / cw);
+		let ye = Math.floor(p[1].y / ch);
 		if (this.moreZones()) {
 			--xs;
 			--ys;
 			++xe;
 			++ye;
 		}
-		var sKey, oNow = {};
-		var oPrev = this.zones();
-		var a = {
+		let sKey, oNow = {};
+		let oPrev = this.zones();
+		let a = {
 			d: [], // zone à décharger (ne sert plus car sort de la zone de vue)
 			n: [], // nouvelle zone à charger, vien d'apparaitre dans la vue
 			a: [] // zone toucjourr affichée
 		};
 		
-		for (var x, y = ys; y <= ye; ++y) {
+		for (let x, y = ys; y <= ye; ++y) {
 			for (x = xs; x <= xe; ++x) {
 				sKey = x.toString() + ':' + y.toString();
 				if (oPrev[sKey]) {
@@ -80,7 +137,7 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 			a.d.push(sKey);
 		}
 		this.zones(oNow);
-		for (var s in a) {
+		for (let s in a) {
 			a[s].forEach((function(key) {
 				this.trigger('zone.' + s, oNow[key]);
 			}).bind(this));
@@ -90,16 +147,16 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	
 	/**
 	 * Rendu du layer
+	 * @param oContext {HTMLContext2D}
 	 */
 	render: function(oContext) {
-		var zc;
-		var z = this.zones();
-		var p = this.view().points();
-		var cw = this.zoneWidth();
-		var ch = this.zoneHeight();
-		var vx = p[0].x;
-		var vy = p[0].y;
-		for (var c in z) {
+		let zc;
+		let z = this.zones();
+		let p = this.view().points();
+		let cw = this.zoneWidth();
+		let vx = p[0].x;
+		let vy = p[0].y;
+		for (let c in z) {
 			zc = z[c];
 			if (zc.canvas) {
 				oContext.drawImage(zc.canvas, zc.x * cw - vx, zc.y * cw - vy);

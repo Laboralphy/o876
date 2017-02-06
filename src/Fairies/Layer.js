@@ -1,4 +1,6 @@
 /**
+ * @class Fairy.Layer
+ *
  * Un layer est une surface de rendu
  * Il dispose d'un vecteur "origin" : position du coin supérieur gauche du layer
  * par rapport au référentiel absolu

@@ -1,3 +1,9 @@
+/**
+ * @class Fairy.Shape
+ *
+ * Cette classe est un abstract de forme. Contient quelque methode de calcule pour les collision entre formes.
+ *
+ */
 O2.createClass('Fairy.Shape', {
 	_flight : null,
 	_tangibility : 1,
