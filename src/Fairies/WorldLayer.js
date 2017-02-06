@@ -62,11 +62,11 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	 * Setter / Getter de zones
 	 * C'est une collection de Zones : celle qui sont actuellement chargée et qui peuvent etre affichées à tout moement
 	 * Généralement cet accesseur n'est utilisé qu'en tant que getter.
-     * @param a {Array=} liste des zone
-	 * @return {Array|Fairy.WorldLayer}
+     * @param o {object=} liste des zone
+	 * @return {object|Fairy.WorldLayer}
      */
-	zones: function(a) {
-		return this.prop('_zones', a);
+	zones: function(o) {
+		return this.prop('_zones', o);
 	},
 
     /**
@@ -147,7 +147,7 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	
 	/**
 	 * Rendu du layer
-	 * @param oContext {HTMLContext2D}
+	 * @param oContext {object}
 	 */
 	render: function(oContext) {
 		let zc;
