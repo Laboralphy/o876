@@ -1,2 +1,4 @@
 # WebStorm directory
 .idea/*
+node_modules
+src/o876.js

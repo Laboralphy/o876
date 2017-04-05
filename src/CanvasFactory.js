@@ -15,8 +15,8 @@ O2.createObject('O876.CanvasFactory', {
 	 * @return {*}
 	 */
 	getCanvas: function(w, h, bImageSmoothing) {
-		let oCanvas = document.createElement('canvas');
-		let oContext = oCanvas.getContext('2d');
+		var oCanvas = document.createElement('canvas');
+		var oContext = oCanvas.getContext('2d');
 		if (w && h) {
 			oCanvas.width = w;
 			oCanvas.height = h;
@@ -52,7 +52,7 @@ O2.createObject('O876.CanvasFactory', {
 	 * @return  HTMLCanvasElement
 	 */
 	cloneCanvas: function(oCanvas) {
-		let c = O876.CanvasFactory.getCanvas(
+		var c = O876.CanvasFactory.getCanvas(
 			oCanvas.width, 
 			oCanvas.height, 
 			O876.CanvasFactory.getImageSmoothing(oCanvas.getContext('2d'))

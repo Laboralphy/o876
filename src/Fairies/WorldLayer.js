@@ -91,30 +91,30 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	 * }
 	 */
 	update: function() {
-		let p = this.view().points();
-		let cw = this.zoneWidth();
-		let ch = this.zoneHeight();
-		let vx = p[0].x;
-		let vy = p[0].y;
-		let xs = Math.floor(vx / cw);
-		let ys = Math.floor(vy / ch);
-		let xe = Math.floor(p[1].x / cw);
-		let ye = Math.floor(p[1].y / ch);
+		var p = this.view().points();
+		var cw = this.zoneWidth();
+		var ch = this.zoneHeight();
+		var vx = p[0].x;
+		var vy = p[0].y;
+		var xs = Math.floor(vx / cw);
+		var ys = Math.floor(vy / ch);
+		var xe = Math.floor(p[1].x / cw);
+		var ye = Math.floor(p[1].y / ch);
 		if (this.moreZones()) {
 			--xs;
 			--ys;
 			++xe;
 			++ye;
 		}
-		let sKey, oNow = {};
-		let oPrev = this.zones();
-		let a = {
+		var sKey, oNow = {};
+		var oPrev = this.zones();
+		var a = {
 			d: [], // zone à décharger (ne sert plus car sort de la zone de vue)
 			n: [], // nouvelle zone à charger, vien d'apparaitre dans la vue
 			a: [] // zone toucjourr affichée
 		};
 		
-		for (let x, y = ys; y <= ye; ++y) {
+		for (var x, y = ys; y <= ye; ++y) {
 			for (x = xs; x <= xe; ++x) {
 				sKey = x.toString() + ':' + y.toString();
 				if (oPrev[sKey]) {
@@ -137,7 +137,7 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 			a.d.push(sKey);
 		}
 		this.zones(oNow);
-		for (let s in a) {
+		for (var s in a) {
 			a[s].forEach((function(key) {
 				this.trigger('zone.' + s, oNow[key]);
 			}).bind(this));
@@ -150,13 +150,13 @@ O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
 	 * @param oContext {object}
 	 */
 	render: function(oContext) {
-		let zc;
-		let z = this.zones();
-		let p = this.view().points();
-		let cw = this.zoneWidth();
-		let vx = p[0].x;
-		let vy = p[0].y;
-		for (let c in z) {
+		var zc;
+		var z = this.zones();
+		var p = this.view().points();
+		var cw = this.zoneWidth();
+		var vx = p[0].x;
+		var vy = p[0].y;
+		for (var c in z) {
 			zc = z[c];
 			if (zc.canvas) {
 				oContext.drawImage(zc.canvas, zc.x * cw - vx, zc.y * cw - vy);

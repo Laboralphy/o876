@@ -633,63 +633,18 @@ QUnit.test('typeMap', function(assert) {
 
 
 
+
+
+
 /*
- #    #  ######  #####      #      ##     #####   ####   #####
- ##  ##  #       #    #     #     #  #      #    #    #  #    #
- # ## #  #####   #    #     #    #    #     #    #    #  #    #
- #    #  #       #    #     #    ######     #    #    #  #####
- #    #  #       #    #     #    #    #     #    #    #  #   #
- #    #  ######  #####      #    #    #     #     ####   #    #
+######
+#     #  #    #     #    #        #####  ######  #####
+#     #  #    #     #    #          #    #       #    #
+######   ######     #    #          #    #####   #    #
+#        #    #     #    #          #    #       #####
+#        #    #     #    #          #    #       #   #
+#        #    #     #    ######     #    ######  #    #
 */
-
-QUnit.module('Mediator');
-QUnit.test('basic', function(assert) {
-	O2.extendClass('CustomPlugin', O876.Mediator.Plugin, {
-		_NAME: 'CustomPlugin1',
-		sLog: '',
-		
-		init: function() {
-			this.register('testSig1');
-			this.register('testSig2');
-		},
-		
-		testSig1: function(x) {
-			this.sLog += '(sig1-' + x + ')';
-		},
-
-		testSig2: function(x) {
-			this.sLog += '(sig2-' + x + ')';
-		}
-	});
-	O2.extendClass('CustomPlugin2', O876.Mediator.Plugin, {
-		_NAME: 'CustomPlugin2',
-		sLog: '',
-		
-		init: function() {
-			this.register('testSig1');
-		},
-		
-		testSig1: function(x) {
-			this.sLog += '(sig1-' + x + ')';
-		}
-	});
-	
-	var oMediator = new O876.Mediator.Mediator();
-	var p = new CustomPlugin();
-	var p2 = new CustomPlugin2();
-	oMediator.addPlugin(p);
-	oMediator.addPlugin(p2);
-	assert.equal(p.sLog, '');
-	oMediator.sendPluginSignal('testSig1', 'abc');
-	oMediator.sendPluginSignal('testSig2', 'def');
-	assert.equal(p.sLog, '(sig1-abc)(sig2-def)');
-	assert.equal(p2.sLog, '(sig1-abc)');
-	p2.sendSignal('testSig2', 'xxx');
-	assert.equal(p.sLog, '(sig1-abc)(sig2-def)(sig2-xxx)');
-	assert.equal(p2.sLog, '(sig1-abc)');
-});
-
-
 
 QUnit.module('Philter');
 
@@ -744,42 +699,6 @@ QUnit.test('buildShadowCanvas', function(assert) {
 
 
 
-
-
-/*
-
-   #
-  # #    #    #  #####      #    ######  #    #   ####   ######
- #   #   ##  ##  #    #     #    #       ##   #  #    #  #
-#     #  # ## #  #####      #    #####   # #  #  #       #####
-#######  #    #  #    #     #    #       #  # #  #       #
-#     #  #    #  #    #     #    #       #   ##  #    #  #
-#     #  #    #  #####      #    ######  #    #   ####   ######
-*/
-
-QUnit.module('Ambiance');
-
-QUnit.test('getRandomSound', function(assert) {
-	var a = new O876.Ambiance();
-	a.load({
-		period: 10,
-		variation: 0,
-		sounds: ['snd1']
-	});
-
-	assert.equal(a.period, 10, 'period ini success');
-	assert.equal(a.variation, 0, 'variation ini success');
-	assert.deepEqual(a.sounds, ['snd1'], 'sounds ini success');
-	assert.equal(a.getRandomSound(), 'snd1', 'will return snd1');
-
-	var aLog = [];
-
-	a.on('sound', function(oEvent) {
-		aLog.push(oEvent.sound);
-	});
-
-	a.process(1);
-});
 
 
 
