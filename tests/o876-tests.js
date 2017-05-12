@@ -420,16 +420,16 @@ QUnit.test('setFunction', function(assert) {
 	assert.equal(e.xEnd, 17, 'the ending value is 17');
 	assert.equal(e.nTime, 10, 'the max time value is 10');
 	assert.equal(e.iTime, 0, 'the index time value is 0');
-	e.f();
-	assert.equal(e.x * 10 | 0, 66, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 92, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 117, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 144, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 170, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 66, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 92, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 117, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 144, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 170, 'advancing t1');
 });
 
 
@@ -463,7 +463,7 @@ QUnit.test('find', function(assert) {
 	ast.init({
 		grid: aGrid,
 		diagonals: false,
-		walkable: ' ',
+		walkable: ' '
 	});
 	var aMoves = ast.find(4, 3, 4, 3);
 	assert.deepEqual(aMoves, [], 'no move');
@@ -576,7 +576,7 @@ QUnit.test('get', function(assert) {
 		assert.ok(data.length > 0, 'there should be data');
 		done();
 	});
-	xhr.get('o876.html', function(data, err) {
+	xhr.get('index.html', function(data, err) {
 		assert.ok(data.length > 0, 'there should be data');
 		done();
 	});

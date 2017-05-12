@@ -1,5 +1,7 @@
 /**
  * Air resistance
+ * @class Fairy.Wings.Air
+ * @extends Fairy.Wing
  */
 
 O2.extendClass('Fairy.Wings.Air', Fairy.Wing, {
@@ -10,7 +12,7 @@ O2.extendClass('Fairy.Wings.Air', Fairy.Wing, {
 		__inherited();
 	},
 
-	flap: function(oMobile, nTime) {
+	flap: function(oMobile) {
 		oMobile.flight().speed().scale(this.factor());
 	}
 });

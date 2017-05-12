@@ -5,6 +5,9 @@
  * ver 1.1 28.04.2013 : ajout d'un support namespace  
  * ver 1.2 01.07.2016 : mixin et test unitaire / O2.parent
  * good to GIT
+ *
+ * @function __inherited
+ * calls inherited method
  */
 
 var O2 = {};

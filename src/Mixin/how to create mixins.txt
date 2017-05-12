@@ -1,0 +1,41 @@
+HOW TO CREATE MIXINS
+
+
+1) create a classe
+
+2) create a "mixin" method in this class
+	this method must accept a single parameter (a prototype)
+	this method may do whatever it wants on the given prototype.
+
+3) do whatever you want in the "mixin" method, but the real purpose is
+	to extend the given prototype with new methods and properties.
+	
+4) Use your new mixin : O2.mixin(ClientClass, MixinClass)
+	ClientClass : the prototype to be augmented
+	MixinClass : the mixin you've just created
+
+
+
+example :
+
+O2.createClass('Mixin.ISayHello', {
+	mixin: function(p) {
+		p.extendPrototype({
+			helloWorld: {
+				alert('hello world');
+				// alert is bad, don't use alert.
+			}
+		});
+	}
+});
+
+
+O2.createClass('NOOPClass', {
+	// this class will do nothing
+});
+
+
+O2.mixin(NOOPClass, Mixin.ISayHello);
+
+var oInst = new NOOPClass();
+oInst.helloWorld(); // this should display an alert box

@@ -11,7 +11,7 @@ O2.extendClass('Fairy.View', Fairy.Rect, {
 	_offset: null,	// Vecteur position du flight dans le contexte de la vue.
 	_width: 0,		// taille de la vue
 	_height: 0,
-	
+
 	__construct: function() {
 		__inherited();
 		this.flight(new Fairy.Flight());
@@ -19,17 +19,21 @@ O2.extendClass('Fairy.View', Fairy.Rect, {
 		this.p1(new Fairy.Vector(0, 0));
 		this.p2(new Fairy.Vector(0, 0));
 	},
-	
+
+    /**
+	 * returns an array of vectors
+     * @return {Array}
+     */
 	points: function() {
 		// retirer screen
 		this._p2.x = this._width; 
 		this._p2.y = this._height; 
-		return __inherited().map(v => v.sub(this._offset));
+		return __inherited().map(function(v) { return v.sub(this._offset); }, this);
 	},
 	
 	center: function() {
 		this.offset(new Fairy.Vector(this.width() >> 1, this.height() >> 1));
-	},
+	}
 });
 
 O2.mixin(Fairy.View, O876.Mixin.Prop);

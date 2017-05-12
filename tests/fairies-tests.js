@@ -34,17 +34,17 @@ QUnit.test('Operations', function(assert) {
 	v1.trans(v2);
 	assert.equal(v1.x, 110);
 	assert.equal(v1.y, 220);
-	
+
 	v1.set(v0);
 	v1.scale(2);
 	assert.equal(v1.x, 20);
 	assert.equal(v1.y, 40);
-	
+
 	v1.set(v0);
 	v1.scale(1/2);
 	assert.equal(v1.x, 5);
 	assert.equal(v1.y, 10);
-	
+
 	v1.set(v0);
 	v1.trans(v2.clone().scale(-1));
 	assert.equal(v1.x, -90);

@@ -1,11 +1,46 @@
+/**
+ * @class Fairy.Tileset
+ */
 O2.createClass('Fairy.Tileset', {
-	_tiles: null,	// image
+    /**
+     * @method tileWidth
+     * @return {number}
+     */
+    /**
+     * @property {number}
+     */
 	_tileWidth: 0,
+    /**
+     * @method tileHeight
+     * @return {number}
+     */
+    /**
+     * @property {number}
+     */
 	_tileHeight: 0,
+    /**
+     * @method tileWidth
+     * @return {Array.<Fairy.Rect>}
+     */
+    /**
+     * @property {Array.<Fairy.Rect>}
+     */
 	_rects: null,
-	
+    /**
+     * @property {HTMLImageElement}
+     */
+    _tiles: null,	// image
+
 	__construct: function() {
 		this._rects = [];
+	},
+
+    /**
+     * @param [t] {Image}
+     * @return {Image|Fairy.Tileset}
+     */
+	tiles: function(t) {
+    	return this.prop('_tiles', t);
 	},
 	
 	/**

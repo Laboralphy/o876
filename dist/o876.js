@@ -204,8 +204,30 @@ O2.mixin = function(pPrototype, pMixin) {
 	}
 };
 
-/**
- * good to GIT
+;O2.createObject('Fairy.Mixin.GridProxy', {
+	width: function(w) {
+		if (w === undefined) {
+			return this._grid.width();
+		} else {
+			this._grid.width(w);
+			return this;
+		}
+	},
+
+	height: function(h) {
+		if (h === undefined) {
+			return this._grid.height();
+		} else {
+			this._grid.height(h);
+			return this;
+		}
+	}
+});
+;/**
+ * @class O876.Mixin.Data
+ * This is a mixin.
+ * It adds custom "data" management functions to an existing prototype
+ * it adds "getData", "setData", and "data" methods
  */
 O2.createClass('O876.Mixin.Data', {
 	
@@ -214,14 +236,33 @@ O2.createClass('O876.Mixin.Data', {
 		
 			_DataContainer: null,
 
+            /**
+			 * Sets a custom variable
+             * @param s variable name
+             * @param v new value
+             * @returns {*}
+             */
 			setData: function(s, v) {
 				return this.data(s, v);
 			},
 
+            /**
+			 * Get a previously set value
+             * @param s variable name
+             * @returns {*}
+             */
 			getData: function(s) {
 				return this.data(s);
 			},
-			
+
+            /**
+			 * This method is a synthesis between getData and setData
+			 * with 2 parameters the setData method will be called
+			 * with 1 parameter the getData method will be called
+             * @param s variable name
+             * @param v (optional) value
+             * @returns {*}
+             */
 			data: function(s, v) {
 				if (this._DataContainer === null) {
 					this._DataContainer = {};
@@ -248,15 +289,23 @@ O2.createClass('O876.Mixin.Data', {
 		});
 	}
 });
-/**
- * good to GIT
+;/**
+ * @class O876.Mixin.Events
+ * This class is a mixin
+ * it will add custom events management functions to an existing prototype
  */
 O2.createClass('O876.Mixin.Events', {
 	mixin: function(p) {
 		p.extendPrototype({
 			
 			_WeirdEventHandlers: null,
-		
+
+            /**
+			 * Will declare an event handler
+             * @param sEvent event name
+             * @param pCallback function to be called when the event is triggered
+             * @returns {*}
+             */
 			on: function(sEvent, pCallback) {
 				if (this._WeirdEventHandlers === null) {
 					this._WeirdEventHandlers = {};
@@ -269,6 +318,13 @@ O2.createClass('O876.Mixin.Events', {
 				return this;
 			},
 
+            /**
+             * Will declare an event handler. The handler will be called
+			 * at most one time.
+             * @param sEvent event name
+             * @param pCallback function to be called when the event is triggered
+             * @returns {*}
+             */
 			one: function(sEvent, pCallback) {
 				var pCallbackOnce;
 				pCallbackOnce = (function() {
@@ -279,6 +335,17 @@ O2.createClass('O876.Mixin.Events', {
 				return this.on(sEvent, pCallbackOnce);
 			},
 
+            /**
+             * Will remove an event handler.
+			 * If pCallback is specified, this pCallback only will be remove
+			 * if no callback is specified, all the handlers will be removed for that
+			 * event.
+			 * if neither sEvent nor pCallback are specified, all events and all handler
+			 * will be removed.
+             * @param sEvent event name
+             * @param pCallback function to be called when the event is triggered
+             * @returns {*}
+             */
 			off: function(sEvent, pCallback) {
 				if (this._WeirdEventHandlers === null) {
 					throw new Error('no event "' + sEvent + '" defined');
@@ -304,6 +371,14 @@ O2.createClass('O876.Mixin.Events', {
 				return this;
 			},
 
+            /**
+			 * Triggers an event.
+			 * Will call all callback associated with that event.
+			 * All parameters following sEvent will be passed to
+			 * the event handler.
+             * @param sEvent event name
+             * @returns {trigger}
+             */
 			trigger: function(sEvent) {
 				if (this._WeirdEventHandlers === null) {
 					return this;
@@ -321,13 +396,13 @@ O2.createClass('O876.Mixin.Events', {
 		});
 	}
 });
-/**
- * good to GIT
+;/**
+ * @class O876.Mixin.Prop
  * Provide jquery like function to access private properties
  */
 O2.createClass('O876.Mixin.Prop', {
 
-	buildPropFunction: function(sProp) {
+	_buildPropFunction: function(sProp) {
 		return function(value) {
 			if (value === undefined) {
 				return this[sProp];
@@ -340,11 +415,19 @@ O2.createClass('O876.Mixin.Prop', {
 
 	mixin: function(p) {
 		var pProto = {
+			prop: function(variable, value) {
+				if (value === undefined) {
+					return this[variable];
+				} else {
+					this[variable] = value;
+					return this;
+				}
+			}
 		};
 		for (var i in p.prototype) {
 			if (i.match(/^_/)) {
-				if (typeof p.prototype[i] !== 'function') {
-					pProto[i.substr(1)] = this.buildPropFunction(i);
+				if (!(i.substr(1) in p.prototype) && typeof p.prototype[i] !== 'function') {
+					pProto[i.substr(1)] = this._buildPropFunction(i);
 				}
 			}
 		}
@@ -352,7 +435,7 @@ O2.createClass('O876.Mixin.Prop', {
 		p.extendPrototype(pProto);
 	}
 });
-O2.createClass('O876.Astar.Point', {
+;O2.createClass('O876.Astar.Point', {
 	x : 0,
 	y : 0,
 	__construct : function(x, y) {
@@ -646,7 +729,148 @@ O2.createClass('O876.Astar.Grid', {
 });
 
 
-O2.mixin(O876.Astar.Grid, O876.Mixin.Events);/**
+O2.mixin(O876.Astar.Grid, O876.Mixin.Events);;/**
+ * @class O876.Auto.State
+ * A simple state machine that triggers events.
+ * "enter" when enter a state
+ * "run" when running/looping a state
+ * "exit" when exiting a state
+ * "state" when a state is parsed from an input plain-object
+ * "trans" when a transition is parsed from an input plain-object
+ *
+ */
+O2.createClass('O876.Auto.State', {
+
+	_name: '',
+	_trans: null,
+	_current: null,
+	_start: null,
+
+	__construct: function() {
+		this._trans = [];
+	},
+
+	run: function() {
+		this._current = this._current.process();
+	},
+
+	reset: function() {
+		this._current = this._start;
+	},
+	
+	/**
+	 * Adds a new transition
+	 */
+	trans: function(t) {
+		if (t !== undefined) {
+			this._trans.push(t);
+			return this;
+		} else {
+			return this._trans;
+		}
+	},
+
+	process: function() {
+		// runs the states
+		if (this.name()) {
+			this.trigger('run', this);
+		}
+		// check all transition associated with the current states
+		var oState = this;
+		this._trans.some(function(t) {
+			if (t.pass(this)) {
+				this.trigger('exit', this);
+				oState = t.state();
+				oState.trigger('enter', oState);
+				return true;
+			} else {
+				return false;
+			}
+		}, this);
+		return oState;
+	},
+	
+	
+	parse: function(oData, oEvents) {
+		var sState, oState, oStates = {}, sTrans, oTrans, sTest;
+		this._start = null;
+		for (sState in oData) {
+			if (oData.hasOwnProperty(sState)) {
+                oState = new O876.Auto.State();
+                if (this._start === null) {
+                    this._start = oState;
+                }
+                oState.name(sState);
+                oStates[sState] = oState;
+                if (oEvents && 'exit' in oEvents) {
+                    oState.on('exit', oEvents.exit);
+                }
+                if (oEvents && 'enter' in oEvents) {
+                    oState.on('enter', oEvents.enter);
+                }
+                if (oEvents && 'run' in oEvents) {
+                    oState.on('run', oEvents.run);
+                }
+                this.trigger('state', oState);
+            }
+		}
+		for (sState in oData) {
+			if (oData.hasOwnProperty(sState)) {
+                oState = oData[sState];
+                for (sTrans in oState) {
+                    if ((sTrans in oStates) && oState.hasOwnProperty(sTrans)) {
+                        sTest = oState[sTrans];
+                        oTrans = new O876.Auto.Trans();
+                        if (oEvents && 'test' in oEvents) {
+                            oTrans.on('test', oEvents.test);
+                        }
+                        oTrans.test(sTest).state(oStates[sTrans]);
+                        oStates[sState].trans(oTrans);
+                        this.trigger('trans', oTrans);
+                    } else {
+                        throw new Error('unknown next-state "' + sTrans + '" in state "' + sState + '"');
+                    }
+                }
+            }
+		}
+		this.reset();
+		return oStates;
+	}
+});
+
+O2.mixin(O876.Auto.State, O876.Mixin.Prop);
+O2.mixin(O876.Auto.State, O876.Mixin.Events);
+;/**
+ * @class O876.Auto.Trans
+ * Transition for the Automaton
+ * This class is a Transition.
+ * A test is done, and if a "true" boolean value is return then
+ * the automaton switches to another State
+ */
+
+O2.createClass('O876.Auto.Trans', {
+	_test: null,
+	_state: null,
+	
+	/**
+	 * Returns true if all tests pass
+	 * @return boolean
+	 */
+	pass: function(oState) {
+		var ev = {
+			state: oState,
+			test: this._test,
+			result: null
+		};
+		this.trigger('test', ev);
+		return !!ev.result;
+	}
+});
+
+
+O2.mixin(O876.Auto.Trans, O876.Mixin.Prop);
+O2.mixin(O876.Auto.Trans, O876.Mixin.Events);
+;/**
  * This class implements the bresenham algorithm
  * and extend its use for other purpose than drawing pixel lines
  * good to GIT
@@ -702,7 +926,7 @@ O2.createClass('O876.Bresenham', {
 		return true;
 	}
 });
-/**
+;/**
  * good to GIT
  */
 
@@ -811,14 +1035,21 @@ O2.createObject('O876.Browser', {
 		return oHTML5.all;
 	},
 });
-/**
+;/**
  * Canvas factory
- * good to GIT
+ * @class O876.CanvasFactory
  */
 O2.createObject('O876.CanvasFactory', {
-	
+
+
+	defaultImageSmoothing: false,
+
 	/**
 	 * Create a new canvas
+     * @param w {int} width of the new canvas
+     * @param h {int} height of the new canvas
+	 * @param bImageSmoothing {boolean} default : true. if true, the new canvas will be smooth when resized
+	 * @return {*}
 	 */
 	getCanvas: function(w, h, bImageSmoothing) {
 		var oCanvas = document.createElement('canvas');
@@ -828,19 +1059,21 @@ O2.createObject('O876.CanvasFactory', {
 			oCanvas.height = h;
 		}
 		if (bImageSmoothing === undefined) {
-			bImageSmoothing = false;
+			bImageSmoothing = O876.CanvasFactory.defaultImageSmoothing;
 		}
-		O876.CanvasFactory.setImageSmoothing(oContext, false);
+		O876.CanvasFactory.setImageSmoothing(oContext, bImageSmoothing);
+		if (bImageSmoothing) {
+			oCanvas.style.imageRendering = 'pixelated';
+		}
 		return oCanvas;
 	},
 	
 	/**
 	 * Set canvas image smoothing flag on or off
-	 * @param Context2D oContext
-	 * @param bool b on = smoothing on // false = smoothing off
+	 * @param oContext HTMLContext2D
+	 * @param b {boolean} on = smoothing on // false = smoothing off
 	 */
 	setImageSmoothing: function(oContext, b) {
-		oContext.webkitImageSmoothingEnabled = b;
 		oContext.mozImageSmoothingEnabled = b;
 		oContext.msImageSmoothingEnabled = b;
 		oContext.imageSmoothingEnabled = b;
@@ -852,8 +1085,8 @@ O2.createObject('O876.CanvasFactory', {
 
 	/**
 	 * Clones a canvas into a new one
-	 * @param oCanvas to be cloned
-	 * @return  Canvas
+	 * @param oCanvas {HTMLCanvasElement} to be cloned
+	 * @return  HTMLCanvasElement
 	 */
 	cloneCanvas: function(oCanvas) {
 		var c = O876.CanvasFactory.getCanvas(
@@ -865,8 +1098,9 @@ O2.createObject('O876.CanvasFactory', {
 		return c;
 	}
 });
-/** Interface de controle des mobile 
+;/** Interface de controle des mobile 
  * O876 Raycaster project
+ * @class O876.Easing
  * @date 2013-03-04
  * @author Raphaël Marandet 
  * Fait bouger un mobile de manière non-lineaire
@@ -877,22 +1111,40 @@ O2.createObject('O876.CanvasFactory', {
 O2.createClass('O876.Easing', {	
 	xStart: 0,
 	xEnd: 0,
+    /**
+	 * @property x {number}
+     */
 	x: 0,
 	nTime: 0,
 	iTime: 0,
 	fWeight: 1,
 	pFunction: null,
-	
+
+    /**
+	 * Will define de starting value
+     * @param x {number}
+     * @returns {O876.Easing}
+     */
 	from: function(x) {
 		this.xStart = this.x = x;
 		return this;
 	},
 
+    /**
+	 * Will define the ending value
+     * @param x {number}
+     * @returns {O876.Easing}
+     */
 	to: function(x) {
 		this.xEnd = x;
 		return this;
 	},
 
+    /**
+	 * Will define the duration of the transition
+     * @param t {number} arbitrary unit
+     * @returns {O876.Easing}
+     */
 	during: function(t) {
 		this.nTime = t;
 		this.iTime = 0;
@@ -936,19 +1188,27 @@ O2.createClass('O876.Easing', {
 	 * @param int t temps
 	 * si "t" est indéfini, utilise le timer interne 
 	 */
-	f: function(t) {
+	next: function(t) {
 		if (t === undefined) {
 			t = ++this.iTime;
 		} else {
 			this.iTime = t;
 		}
 		var p = this.pFunction;
-		if (typeof p != 'function') {
+		if (typeof p !== 'function') {
 			throw new Error('easing function is invalid : ' + p);
 		}
 		var v = p(t / this.nTime);
 		this.x = this.xEnd * v + (this.xStart * (1 - v));
-		return t >= this.nTime;
+		return this;
+	},
+
+	val: function() {
+		return this.x;
+	},
+
+	over: function() {
+		return this.iTime >= this.nTime;
 	},
 
 	_linear: function(v) {
@@ -1014,187 +1274,1589 @@ O2.createClass('O876.Easing', {
 		return 4 * tc - 9 * ts + 6 * v;
 	}
 });
-/**
- * An implementation of the Mediator Design Pattern
- * This pattern allows application to communicate with plugins
- * The Client Application instanciate Mediator
- * The plugins are extends of the Plugin Class
- *
- * good to GIT
+;/** 
+ * Animation : Classe chargée de calculer les frames d'animation
+ * O876 raycaster project
+ * 2012-01-01 Raphaël Marandet
  */
- 
- 
+O2.createClass('Fairy.Animation',  {
+	_start : 0, // frame de début
+	_index : 0, // index de la frame en cours d'affichage
+	_count : 0, // nombre total de frames
+	_duration : 0, // durée de chaque frame, plus la valeur est grande plus l'animation est lente
+	_time : 0, // temps
+	_loop : 0, // type de boucle 1: boucle forward; 2: boucle yoyo 3: random
+	_frame: 0, // Frame (absolue) actuellement achifée
+	
+	nDirLoop: 1,  // direction de la boucle (pour yoyo)
+	
+	animate : function(nInc) {
+		if (this._count <= 1 || this._duration === 0) {
+			return this._index + this._start;
+		}
+		this._time += nInc;
+		// Dépassement de duration (pour une seule fois)
+		if (this._time >= this._duration) {
+			this._time -= this._duration;
+			if (this._loop == 3) {
+				this._index = Math.random() * this._count | 0;
+			} else {
+				this._index += this.nDirLoop;
+			}
+		}
+		// pour les éventuels très gros dépassement de duration (pas de boucle)
+		if (this._time >= this._duration) {
+			this._index += this.nDirLoop * (this._time / this._duration | 0);
+			this._time %= this._duration;
+		}
+		
+		switch (this._loop) {
+			case 1:
+				if (this._index >= this._count) {
+					this._index = 0;
+				}
+			break;
+				
+			case 2:
+				if (this._index >= this._count) {
+					this._index = this._count - 2;
+					this.nDirLoop = -1;
+				}
+				if (this._index <= 0) {
+					this.nDirLoop = 1;
+					this._index = 0;
+				}
+			break;
 
-O2.createClass('O876.Mediator.Plugin', {
-	_oMediator: null,
-	_NAME: '',
-	
-	getName: function() {
-		return this._NAME;
-	},
-	
-	register: function(sType) {
-		this._oMediator.registerPluginSignal(sType, this);
-	},
-	
-	unregister: function(sType) {
-		this._oMediator.unregisterPluginSignal(sType, this);
+			default:
+				if (this._index >= this._count) {
+					this._index = this._count - 1;
+				}
+		}
+		this._frame = this._index + this._start;
+		return this;
 	},
 
-	setMediator: function(m) {
-		this._oMediator = m;
-	},
-	
-	getPlugin: function(s) {
-		return this._oMediator.getPlugin(s);
-	},
-	
-	sendSignal: function() {
-		var aArgs = Array.prototype.slice.call(arguments, 0);
-		return this._oMediator.sendPluginSignal.apply(this._oMediator, aArgs);
+	reset : function() {
+		this._index = 0;
+		this._time = 0;
+		this.nDirLoop = 1;
+		return this;
 	}
 });
 
-O2.createClass('O876.Mediator.Mediator', {
+O2.mixin(Fairy.Animation, O876.Mixin.Prop);;/**
+ * Le collisioneur permet de calculer les collision entre les sprites
+ * Le principe : Les sprites, quand ils sont positionnés , s'enregistrent dans
+ * les secteurs d'une grille appliquée au monde.
+ * Chaque sprite est confronté aux autres sprites de son secteur lorsqu'il
+ * est temps de calculer les collisions
+ */
+O2.createClass('Fairy.Collider',	{
+	_origin: null, // vector origine du layer
+	_grid: null,
+	_cellWidth : 0,
+	_cellHeight : 0,
 
-	_oPlugins: null,
-	_oRegister: null,
-	_oApplication: null,
-	
-	/**
-	 * Constructeur
-	 */
+
 	__construct: function() {
-		this._oPlugins = {};
-		this._oRegister = {};
+		this._origin = new Fairy.Vector();
+		this._grid = new Fairy.Grid();
+		this._grid.on('rebuild', function(data) {
+			var oSector = new Fairy.Sector();
+			oSector.x = data.x;
+			oSector.y = data.y;
+			data.cell = oSector;
+		});
 	},
-	
-	
-	setApplication: function(a) {
-		return this._oApplication = a;		
-	},
-	
-	getApplication: function() {
-		return this._oApplication;		
-	},
-	
-	
-	
+
 	/**
-	 * Ajoute un plugin
-	 * @param oPlugin instance du plugin ajouté
-	 * @return instance du plugin ajouté
+	 * Renvoie le secteur désigné par les coordonnées spécifiée
+	 * @param x position x
+	 * @param y position y
+	 * @return une cellule de la grille
 	 */
-	addPlugin: function(oPlugin) {
-		if (!('getName' in oPlugin)) {
-			throw new Error('O876.Mediator : anonymous plugin');
-		}
-		var sName = oPlugin.getName();
-		if (sName === '') {
-			throw new Error('O876.Mediator : undefined plugin name');
-		}
-		if (!('setMediator' in oPlugin)) {
-			throw new Error('O876.Mediator : no Mediator setter in plugin ' + sName);
-		}
-		if (sName in this._oPlugins) {
-			throw new Error('O876.Mediator : duplicate plugin entry ' + sName);
-		}
-		this._oPlugins[sName] = oPlugin;
-		oPlugin.setMediator(this);
-		if ('init' in oPlugin) {
-			oPlugin.init();
-		}
-		return oPlugin;
-	},
-	
-	removePlugin: function(x) {
-		if (typeof x != 'string') {
-			x = x.getName();
-		}
-		this._oPlugins[x] = null;
-	},
-	
-	/**
-	 * Renvoie le plugin dont le nom est spécifié
-	 * Renvoie undefined si pas trouvé
-	 * @param sName string
-	 * @return instance de plugin
-	 */
-	getPlugin: function(sName) {
-		return this._oPlugins[sName];
-	},
-	
-	/**
-	 * Enregistrer un plugin pour qu'il réagisse aux signaux de type spécifié
-	 * @param sSignal type de signal
-	 * @param oPlugin plugin concerné
-	 */
-	registerPluginSignal: function(sSignal, oPlugin) {
-		if (this._oRegister === null) {
-			this._oRegister = {};
-		}
-		if (sSignal in oPlugin) {
-			if (!(sSignal in this._oRegister)) {
-				this._oRegister[sSignal] = [];
-			}
-			if (this._oRegister[sSignal].indexOf(oPlugin) < 0) {
-				this._oRegister[sSignal].push(oPlugin);
-			}
+	sector: function(x, y) {
+		if (y === undefined) {
+			return this.grid().cell(x.x / this.cellWidth(), x.y / this.cellHeight());
 		} else {
-			throw new Error('O876.Mediator : no ' + sSignal + ' function in plugin ' + oPlugin.getName());
+			return this.grid().cell(x, y);
 		}
+	},
+
+	/**
+	 * Enregistre ou desenregistre un objet dans les sectoeurs
+	 */
+	track: function(oObject) {
+		var oOldSector = oObject.data('__colliderSector');
+		var v = oObject.flight().position().sub(this.origin());
+		var s = oObject.dead() ? null : this.sector(v);
+		if (s && oOldSector && s == oOldSector) {
+			return;
+		}
+		if (oOldSector) {
+			oOldSector.remove(oObject);
+		}
+		if (s) {
+			s.add(oObject);
+		}
+		oObject.data('__colliderSector', s);
+		return this;
+	},
+
+	/**
+	 * Effectue tous les test de collision entre un objet et tous les autres objets
+	 * contenus dans les secteur adjacent a celui de l'objet
+	 * @param oObject
+	 * @return liste d'objet collisionnant
+	 */
+	collides: function(oObject) {
+		var aObjects = [];
+		var oSector = this.sector(oObject.flight().position().sub(this.origin()));
+		if (!oSector) {
+			return aObjects;
+		}
+		var x = oSector.x;
+		var y = oSector.y;
+		var a = [];
+		var xMin = Math.max(0, x - 1);
+		var yMin = Math.max(0, y - 1);
+		var xMax = Math.min(this.width() - 1, x + 1);
+		var yMax = Math.min(this.height() - 1, y + 1);
+		var ix, iy;
+		for (iy = yMin; iy <= yMax; ++iy) {
+			for (ix = xMin; ix <= xMax; ++ix) {
+				a = a.concat(this.sector(ix, iy).collides(oObject));
+			}
+		}
+		return a;
+	}
+});
+
+O2.mixin(Fairy.Collider, O876.Mixin.Prop);
+O2.mixin(Fairy.Collider, Fairy.Mixin.GridProxy);
+;/**
+ * O876 Fairies Sprite Engine
+ * Flight
+ * Cette classe vise à gérer les mouvement des mobile
+ * On peut adjoindre des composante nomméees Wings
+ * Chaque Wing à pour but d'agir sur un aspect du mouvement
+ * Les instance de flight sont là pour gérer les execution des wings
+ */
+O2.createClass('Fairy.Flight', {
+	_position: null,	// Position du mobile
+	_wings: null,		// Collection de Fairy.Wing
+	_forces: null,		// Collection des forces qui agissent sur le mouvement
+	_speed: null,		// Dernière vitesse calculée. Ce vecteur permet de conserver le mouvement
+						// lors les forces externent disparaissent
+
+	oWingRegistry: null,
+	
+
+	__construct: function() {
+		this._position = new Fairy.Vector(0, 0);
+		this._wings = [];
+		this._forces = [];
+		this._speed = new Fairy.Vector()
+		this.oWingRegistry = {};
+	},
+
+	/**
+	 * Effectue la somme des vecteur force
+	 * @return Fairy.Vector
+	 */
+	_applyForces: function() {
+		var v = this._speed;
+		var vs = this._forces;
+		while (vs.length) {
+			v.trans(vs.shift());
+		}
+		this.move(v);
+	},
+
+	/**
+	 * Assigner ou obtenir une instance Wing
+	 * @param w instance wing ou paramètre de recherche
+	 * @param sId identifiant de wing optionel
+	 * @return this ou instance wing
+	 */
+	wing: function(w, sId) {
+		switch (typeof w) {
+			case 'undefined':
+				return this;
+
+			case 'object':
+				this.wings().push(w);
+				if (sId) {
+					this.oWingRegistry[sId] = w;
+				}
+				return this;
+
+			case 'string':
+				return this.oWingRegistry[w];
+
+			case 'number':
+				return this.wings()[w];
+		}
+	},
+
+	/**
+	 * Effectue le déplacement forcé du mobile
+	 * @param v vecteur de déplacement souhaité
+	 */
+	move: function(v) {
+		this._position.trans(v);
 	},
 	
 	/** 
-	 * Retire le plugin de la liste des plugin signalisés
-	 * @param sSignal type de signal
-	 * @param oPlugin plugin concerné
+	 * Exécute la méthoe flap() de chaque instance de la collection de wings
 	 */
-	unregisterPluginSignal: function(sSignal, oPlugin) {
-		if (this._oRegister === null) {
-			return;
-		}
-		if (!(sSignal in this._oRegister)) {
-			return;
-		}
-		var n = this._oRegister[sSignal].indexOf(oPlugin);
-		if (n >= 0) {
-			ArrayTools.removeItem(this._oRegister[sSignal], n);
-		}
-	},
-	
-	
+	flap: function(oMobile, nTime) {
+		this._wings.forEach(function(w) {
+			w.flap(oMobile, nTime);
+		});
+		this._applyForces();
+		return this;
+	}
+});
+
+O2.mixin(Fairy.Flight, O876.Mixin.Prop);
+;O2.createClass('Fairy.Grid', {
+	_cells: null,
+	_width: 0,
+	_height: 0,
 	
 	/**
-	 * Envoie un signal à tous les plugins enregistré pour ce signal
-	 * signaux supportés
-	 * 
-	 * damage(oAggressor, oVictim, nAmount) : lorsqu'une créature en blesse une autre
-	 * key(nKey) : lorsqu'une touche est enfoncée ou relachée
-	 * time : lorsqu'une unité de temps s'est écoulée
-	 * block(nBlockCode, oMobile, x, y) : lorsqu'un block a été activé
+	 * Reconstruit la grille d'après les dimensions
 	 */
-	sendPluginSignal: function(s) {
-		var i, p, pi, n;
-		if (this._oRegister && (s in this._oRegister)) {
-			p = this._oRegister[s];
-			n = p.length;
-			if (n) {
-				var aArgs;
-				if (arguments.length > 1) {
-					aArgs = Array.prototype.slice.call(arguments, 1);
+	_rebuild: function(w, h) {
+		var g = [];
+		var x, y, aRow, oCell, data;
+		for (y = 0; y < h; y++) {
+			aRow = [];
+			for (x = 0; x < w; x++) {
+				data = {x: x, y: y, width: w, height: h, cell: null};
+				this.trigger('rebuild', data);
+				aRow.push(data.cell);
+			}
+			g.push(aRow);
+		}
+		this.cells(g);
+	},
+	
+	cell: function(x, y, v) {
+		x |= 0;
+		y |= 0;
+		if (v === undefined) {
+			if (y >= 0 && y >= 0 && y < this._height && x < this._width) {
+				return this._cells[y][x];
+			} else {
+				return null;
+			}
+		} else {
+			if (y >= 0 && y >= 0 && y < this._height && x < this._width) {
+				this._cells[y][x] = v;
+			}
+			return this;
+		}
+	},
+
+	width: function(w) {
+		if (w !== undefined) {
+			this._rebuild(w, this._height);
+		}
+		return this.prop('_width', w);
+	},
+
+	height: function(h) {
+		if (h !== undefined) {
+			this._rebuild(this._width, h);
+		}
+		return this.prop('_height', h);
+	},
+});
+
+O2.mixin(Fairy.Grid, O876.Mixin.Events);
+O2.mixin(Fairy.Grid, O876.Mixin.Prop);
+;/**
+ * Le layer doit etre rendu dans une surface, à une position données
+ * */
+ 
+ 
+O2.extendClass('Fairy.LandLayer', Fairy.Layer, {
+	
+	_grid: null,
+	_tileset: null,
+	_view: null, // vector de vue Rect
+	
+	__construct: function() {
+		__inherited();
+		this._tileset = new Fairy.Tileset();
+		this._grid = new Fairy.Grid();
+		this._view = new Fairy.View();
+	},
+
+	render: function(oContext) {
+		var ts = this.tileset();
+		var p = this.view().points();
+		var tw = ts.tileWidth();
+		var th = ts.tileHeight();
+		var xStart = p[0].x;
+		var yStart = p[0].y;
+		var xEnd = p[1].x;
+		var yEnd = p[1].y;
+		var xStartTile = xStart / tw | 0;
+		var yStartTile = yStart / th | 0;
+		var xEndTile = xEnd / tw | 0;
+		var yEndTile = yEnd / th | 0;
+		var wView = xEnd - xStart;
+		var hView = yEnd - yStart;
+		var wTiles = wView / tw | 0;
+		var hTiles = hView / th | 0;
+		var xOfs = (tw - xStart) % tw;
+		var yOfs = (th - yStart) % th;
+		var x, y, r, yth, xth;
+		var oTiles = ts.tiles();
+		for (y = 0; y <= hTiles + 1; ++y) {
+			yth = y * th;
+			for (x = 0; x <= wTiles + 1; ++x) {
+				r = ts.rect(this._grid.cell(x - xStartTile, y - yStartTile));
+				oContext.drawImage(oTiles, r.x, r.y, r.width, r.height, x * tw - xOfs, yth - yOfs, tw, th);
+			}
+		}		
+		return this;
+	}
+
+});
+
+O2.mixin(Fairy.LandLayer, O876.Mixin.Prop);
+O2.mixin(Fairy.LandLayer, Fairy.Mixin.GridProxy);
+;/**
+ * @class Fairy.Layer
+ *
+ * Un layer est une surface de rendu
+ * Il dispose d'un vecteur "origin" : position du coin supérieur gauche du layer
+ * par rapport au référentiel absolu
+ * un fenetre View rectangulaire permet de déterminer les entité qui seront affichée
+ */
+ 
+ 
+O2.createClass('Fairy.Layer', {
+	_origin: null, // vector origine du layer
+	_view: null, // vecteur de début du rendu
+	_width: 0,
+	_height: 0,
+	
+	__construct: function() {
+		this._origin = new Fairy.Vector();
+		this._view = new Fairy.View();
+	},
+	
+	render: function(oContext) {
+	}
+});
+
+O2.mixin(Fairy.Layer, O876.Mixin.Prop);
+;O2.createClass('Fairy.Mobile', {
+	_shape: null,
+	_sprite: null,
+	_flight: null,
+	_dead: false, // les mobile noté "dead" doivent être retiré du jeu
+	_collider: null,
+
+	flight: function(f) {
+		if (this._shape && f !== undefined) {
+			this._shape.flight(f);
+		}
+		return this.prop('_flight', f);
+	},
+
+	shape: function(s) {
+		if (this._shape) {
+			this._shape.flight(this._flight);
+		}
+		return this.prop('_shape', s);
+	},
+	
+	render: function(oContext, vOffset) {
+		this._sprite.render(oContext, this._flight, vOffset);
+	},
+	
+	process: function(nTime) {
+		this._sprite.process(nTime);
+		this._flight.flap(this, nTime);
+		if (this._collider) {
+			this._collider.track(this);
+		}
+	}
+});
+
+O2.mixin(Fairy.Mobile, O876.Mixin.Data);
+O2.mixin(Fairy.Mobile, O876.Mixin.Prop);
+;/**
+ * Ce layer gère une collection de mobiles
+ * 
+ */
+ 
+O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
+	
+	_mobiles: null,
+	_collider: null,
+	_sorted: true,
+	_visibleMobiles: null,
+	
+	__construct: function() {
+		__inherited();
+		this._mobiles = [];
+		this._collider = new Fairy.Collider();
+	},
+
+	/**
+	 * Fonction de tri utilisée en callback par mobiles.sort
+	 * @param a Fairy.Mobile
+	 * @param b Fairy.Mobile
+	 * @return int résultat exploitable par la fonction Array.sort
+	 */
+	_sort: function(a, b) {
+		return a.flight().position().y - b.flight().position().y;
+	},
+	
+	/**
+	 * Défini le call back pour la fonction de tri des mobile
+	 * @param f fonction compatible avec Array.sort
+	 */
+	sort: function(f) {
+		this._sort = f;
+		return this;
+	},
+
+	/**
+	 * Tri les mobiles selon s'ils sont dans le view ou non
+	 * Pour les mobiles visible, ont les tri par position y
+	 * @param nTime interval de temps...
+	 */
+	process: function(nTime) {
+		var view = this.view();
+		this.visibleMobiles(
+			this.mobiles().filter(function(m) { return this.view().hits(m.shape()); }, this)
+		).visibleMobiles().sort(this._sort);
+		return this;
+	},
+	
+	/**
+	 * Affiche les mobiles visibles
+	 * @param oContext context 2D de rendu
+	 */
+	render: function(oContext) {
+		var vRender = Fairy.Vector.ZERO.sub(this.origin().add(this.view().offset()));
+		this.visibleMobiles().forEach(function(m) { m.render(oContext, vRender); });
+		return this;
+	}
+});
+
+O2.mixin(Fairy.MobileLayer, O876.Mixin.Prop);
+;/**
+ * @class Fairy.Rect
+ * @extends Fairy.Shape
+ */
+O2.extendClass('Fairy.Rect', Fairy.Shape, {
+	_p1: null,
+	_p2: null,
+
+	__construct: function() {
+		__inherited();
+		this._p1 = new Fairy.Vector();
+		this._p2 = new Fairy.Vector();
+	},
+
+	p1: function(p) {
+		if (p === undefined) {
+			return this._p1;
+		} else {
+			this._p1 = p;
+			return this;
+		}
+	},
+
+	p2: function(p) {
+		if (p === undefined) {
+			return this._p2;
+		} else {
+			this._p2 = p;
+			return this;
+		}
+	},
+
+	points: function() {
+		if (!this._flight) {
+			throw new Error('flight is not defined in this rect');
+		}
+		var p1 = this._p1;
+		var p2 = this._p2;
+		var x1 = Math.min(p1.x, p2.x);
+		var y1 = Math.min(p1.y, p2.y);
+		var x2 = Math.max(p1.x, p2.x);
+		var y2 = Math.max(p1.y, p2.y);
+		var p = this.flight().position();
+		return [
+			(new Fairy.Vector(x1, y1)).trans(p),
+			(new Fairy.Vector(x2 - 1, y2 - 1)).trans(p)
+		];
+	},
+
+
+	_getCollisionAxis: function(f, fMin, fMax) {
+		if (f < fMin) {
+			return 1;
+		}
+		if (f > fMax) {
+			return 3;
+		}
+		return 2;
+	},
+
+
+	/**
+	 * Renvoie un code secteur correspondant au point spécifié
+	 * Permet de resoudre les collision
+	 * @param p vector
+	 */
+	_getCollisionSector: function(v) {
+		var p = this.points();
+		var p1 = p[0]; 
+		var p2 = p[1]; 
+		var a = this._getCollisionAxis(v.x, p1.x, p2.x);
+		var b = this._getCollisionAxis(v.y, p1.y, p2.y);
+		/*
+		1 2 3
+		4 5 6
+		7 8 9
+		*/
+		switch ((a << 4) | b) {
+			case 0x11: return 1;
+			case 0x12: return 4;
+			case 0x13: return 7;
+
+			case 0x21: return 2;
+			case 0x22: return 5;
+			case 0x23: return 8;
+
+			case 0x31: return 3;
+			case 0x32: return 6;
+			case 0x33: return 9;
+		}
+	},
+
+	inside: function(v) {
+		var p = this.points();
+		return this.between(v.x, p[0].x, p[1].x) && this.between(v.y, p[0].y, p[1].y);
+	},
+
+	/**
+	 * Renvoie true si la forme superpose même partiellement l'autre forme spécifiée en param
+	 * @param oShape autre forme
+	 * @return boolean
+	 */
+	hits: function(oShape) {
+		/*
+		1 2 3
+		4 5 6
+		7 8 9
+		*/
+		if (!__inherited(oShape)) {
+			return false;
+		}
+		var pMine = this.points();
+		var pIts = oShape.points();;
+		var s1 = this._getCollisionSector(pIts[0]);
+		var s2 = this._getCollisionSector(pIts[1]);
+		if (s2 < s1) {
+			throw new Error('weird error : unexpected collision case ' + s2 + ' > ' + s1);
+		}
+		switch ((s1 << 4) | s2) {
+			case 0x11:
+			case 0x12:
+			case 0x13:
+			case 0x14:
+			case 0x17:
+
+			case 0x22:
+			case 0x23:
+
+			case 0x33:
+			case 0x36:
+			case 0x39:
+
+			case 0x44:
+			case 0x47:
+
+			case 0x66:
+			case 0x69:
+
+			case 0x77:
+			case 0x78:
+			case 0x79:
+
+			case 0x88:
+			case 0x89:
+
+			case 0x99:
+				return false;
+
+			default:
+				return true;
+		} 
+ 	}
+});
+
+O2.mixin(Fairy.Rect, O876.Mixin.Prop);
+;/**
+ * Classe enregistrant les mobile qui s'aventure dans un secteur particulier
+ * du monde. LEs Mobile d'un même secteurs sont testé entre eux pour savoir
+ * Qui entre en collision avec qui. */
+O2.createClass('Fairy.Sector', {
+	_objects : null,
+	x: -1,
+	y: -1,
+
+	__construct : function() {
+		this._objects = [];
+	},
+
+	add: function(oObject) {
+		this._objects.push(oObject);
+	},
+
+	remove: function(oObject) {
+		var objects = this._objects;
+		var n = objects.indexOf(oObject);
+		if (n >= 0) {
+			objects.splice(n, 1);
+		}
+	},
+
+	/**
+	 * Renvoie le nombre d'objet enregistrer dans le secteur
+	 * @return int
+	 */
+	count: function() {
+		return this._objects.length;
+	},
+
+	/** Renvoie l'objet désigné par son rang */
+	get: function(i) {
+		return this._objects[i] || null;
+	},
+
+	/** Renvoie les objets qui collisione avec l'objet spécifié */
+	collides : function(oObject) {
+		var oShape = oObject.shape();
+		return this._objects
+			.filter(function(o) { 
+				return o != oObject && 
+				oShape.hits(o.shape())
+			});
+	}
+});
+
+O2.mixin(Fairy.Sector, O876.Mixin.Prop);
+;/**
+ * @class Fairy.Shape
+ *
+ * Cette classe est un abstract de forme. Contient quelque methode de calcule pour les collision entre formes.
+ *
+ */
+O2.createClass('Fairy.Shape', {
+	_flight : null,
+	_tangibility : 1,
+
+	__construct: function() {
+	},
+
+	// Pour savoir si l'objet A percute l'objet B on fait (A.nTangibilityMask &
+	// B.nTangibilityMask) si le résultat
+	// Si le resultat est différent de 0, les deux objet sont susceptible de
+	// collision (si leurs shapes se recouvrent)
+
+	/**
+	 * Renvoie true si x est entre x1 et x2
+	 * @param float x valeur à tester
+	 * @param float x1 borne inf
+	 * @param float x2 borne sup
+	 * @return boolean
+	 */
+	between : function(x, x1, x2) {
+		if (x1 == x2) {
+			return x == x1;
+		} else if (x1 < x2) {
+			return x >= x1 && x <= x2;
+		} else {
+			return x >= x2 && x <= x1;
+		}
+	},
+
+	/**
+	 * Renvoie la distance au carré entre deux points
+	 * @param Vector2D v1 
+	 * @param Vector3D v2
+	 * @return float
+	 */
+	squareDistance : function(v1, v2) {
+		var x1 = v1.x;
+		var y1 = v1.y;
+		var x2 = v2.x;
+		var y2 = v2.y;
+		return ((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1));
+	},
+
+	/**
+	 * Renvoie la distance entre deux points, tsoin, tsoin
+	 * @param Vector2D v1 
+	 * @param Vector3D v2
+	 * @return float
+	 */
+	distance: function(v1, v2) {
+		return Math.sqrt(this.squareDistance(v1, v2));
+	},
+
+	/**
+	 * renvoie TRUE si v1 et v2 sont à une distance max de d
+	 * @param Vector2D v1 
+	 * @param Vector3D v2
+	 * @return boolean
+	 */
+	nearer: function(v1, v2, d) {
+		return (d * d) > this.squareDistance(v1, v2);
+	},
+
+	/**
+	 * Renvoie true si le point spécifé est dans la forme
+	 */
+	inside: function(v) {
+		return false;
+	},
+
+	/**
+	 * Renvoie un tableau de points clé
+	 * Permettant de déterminer les collision
+	 */
+	points: function() {
+		return [];
+	},
+
+	/**
+	 * Renvoie TRUE si oShape percute this
+	 * @param CollisionShape oShape
+	 * @return boolean
+	 */
+	hits: function(oShape) {
+		return (oShape.tangibility() & this.tangibility()) !== 0;
+	}
+});
+
+
+O2.mixin(Fairy.Shape, O876.Mixin.Prop);
+;O2.createClass('Fairy.Sprite', {
+	_origin: null,
+	_color: 'red',
+	_tileset: null,
+	_animations: null,
+	_animation: null,
+	_zoom: 1,
+	
+	__construct: function() {
+		this._origin = new Fairy.Vector();
+		this._animations = [];
+	},
+
+	process: function(nTime) {
+		this._animation.animate(nTime);
+	},
+	
+	animation: function(n) {
+		if (n === undefined) {
+			return this._animation;
+		} else {
+			this._animation = this.animations()[n];
+			return this;
+		}
+	},
+
+	render: function(oContext, oFlight, vOffset) {
+		var vx = 0;
+		var vy = 0;
+		if (vOffset) {
+			vx += vOffset.x;
+			vy += vOffset.y;
+		}
+		var c = this._origin;
+		var p = oFlight.position();
+		var iFrame = this.animation().frame();
+		var ts = this.tileset();
+		var tw = ts.tileWidth();
+		var th = ts.tileHeight();
+		var r = ts.rect(iFrame);
+		var z = this._zoom;
+		
+		oContext.drawImage(
+			ts.tiles(),
+			r.x,
+			r.y,
+			r.width, 
+			r.height, 
+			p.x - (c.x - vx) * z, 
+			p.y - (c.y - vy) * z, 
+			r.width * z, 
+			r.height * z
+		);
+	}
+});
+
+O2.mixin(Fairy.Sprite, O876.Mixin.Prop);
+;O2.createClass('Fairy.Tileset', {
+	_tiles: null,	// image
+	_tileWidth: 0,
+	_tileHeight: 0,
+	_rects: null,
+	
+	__construct: function() {
+		this._rects = [];
+	},
+	
+	/**
+	 * Renvoie le rect du tile dont l'indice est spécifié
+	 * @param n numéro du tile demandé
+	 * @return {x, y, width, height}
+	 */
+	rect: function(n) {
+		var r = this._rects[n];
+		if (!r) {
+			var wImage = this._tiles.width;
+			var hImage = this._tiles.height;
+			var nx = n * this._tileWidth;
+			var x = nx % wImage;
+			var y = (nx / wImage | 0) * this._tileHeight;
+			r = {
+				x: x,
+				y: y,
+				width: this._tileWidth,
+				height:this._tileHeight
+			};
+			this._rects[n] = r;
+		}
+		return r;
+	}
+});
+
+O2.mixin(Fairy.Tileset, O876.Mixin.Prop);
+;/**
+ * @class Fairy.Vector
+ */
+O2.createClass('Fairy.Vector', {
+    /**
+	 * @property x {number}
+     */
+	x: 0,
+    /**
+     * @property y {number}
+     */
+	y: 0,
+
+    /**
+	 * constructor
+     * @param x {number|Fairy.Vector}
+     * @param y {number|undefined}
+	 * @constructor
+     */
+	__construct: function(x, y) {
+		this.set(x, y);
+	},
+
+    /**
+     * sets vector components
+     * @param x {number|Fairy.Vector}
+     * @param y {number|undefined}
+     * @return {Fairy.Vector}
+     */
+	set: function(x, y) {
+        if (x !== undefined) {
+            if (y === undefined) {
+                this.x = x.x;
+                this.y = x.y;
+            } else {
+                this.x = x;
+                this.y = y;
+            }
+        }
+        return this;
+	},
+
+	/**
+	 * translates the vector
+	 * MUTABLE version
+	 * use add() if you need immutability
+	 * @param v {Fairy.Vector}
+	 * @return {Fairy.Vector}
+	 */
+	trans: function(v) {
+		this.x += v.x;
+		this.y += v.y;
+		return this;
+	},
+
+    /**
+     * scales the vector
+     * MUTABLE version
+     * use mul() if you need immutability
+     * @param n {number}
+     * @return {Fairy.Vector}
+     */
+	scale: function(n) {
+		this.x *= n;
+		this.y *= n;
+		return this;
+	},
+	
+
+	/**
+	 * reduce vector to norm 1
+	 * MUTABLE version
+	 * use vector.div(vector.norm()) for immutability
+	 * @return {Fairy.Vector}
+	 */
+	normalize: function() {
+		return this.scale(1 / this.norm());
+	},
+
+	////// IMMUTABLE ZONE //////  IMMUTABLE ZONE //////  IMMUTABLE ZONE ////// 
+	////// IMMUTABLE ZONE //////  IMMUTABLE ZONE //////  IMMUTABLE ZONE ////// 
+	////// IMMUTABLE ZONE //////  IMMUTABLE ZONE //////  IMMUTABLE ZONE ////// 
+
+	// all methods below are IMMUTABLE
+
+	/**
+	 * adds two vectors.
+	 * immutable version : no vectors are modified by this method
+	 * a new vector is returned
+	 * @param v {Fairy.Vector}
+	 * @return {Fairy.Vector}
+	 */
+	add: function(v) {
+		return this.clone().trans(v);
+	},
+
+	/**
+     * subtracts two vectors.
+     * immutable version : no vectors are modified by this method
+     * a new vector is returned
+	 * @param v {Fairy.Vector}
+	 * @return {Fairy.Vector}
+	 */
+	sub: function(v) {
+		var r = this.clone();
+		r.x -= v.x;
+		r.y -= v.y;
+		return r;
+	},
+	
+	/**
+     * multiply a vector by a number.
+     * immutable version : vector is not modified by this method
+     * a new vector is returned
+	 * @param f {number}
+	 * @return {Fairy.Vector}
+	 */
+	mul: function(f) {
+		return this.clone().scale(f);
+	},
+
+	/**
+     * divides a vector by a number.
+     * immutable version : vector is not modified by this method
+     * a new vector is returned
+	 * @param f {number}
+	 * @return {Fairy.Vector}
+	 */
+	div: function(f) {
+		return this.mul(1 / f);
+	},
+	
+	/**
+	 * clones the vector into a new one
+	 * @return {Fairy.Vector}
+	 */
+	clone: function() {
+		return new Fairy.Vector(this);
+	},
+
+	/**
+	 * renvoie la norme du vecteur
+	 * @return {number}
+	 */
+	norm: function() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+});
+
+Fairy.Vector.ZERO = new Fairy.Vector(0, 0);
+;/**
+ * @class Fairy.View
+ * @extends Fairy.Rect
+ *
+ * Une vue est une zone rectangulaire correspondant généralement à un écran.
+ * La vue dispose d'une propriété flight permettant de tracker un mobile
+ * La vue dispose également d'une position-écran virtuelle pour positionner l'objet tracké
+ */
+ 
+O2.extendClass('Fairy.View', Fairy.Rect, {
+	_offset: null,	// Vecteur position du flight dans le contexte de la vue.
+	_width: 0,		// taille de la vue
+	_height: 0,
+
+	__construct: function() {
+		__inherited();
+		this.flight(new Fairy.Flight());
+		this.offset(new Fairy.Vector());
+		this.p1(new Fairy.Vector(0, 0));
+		this.p2(new Fairy.Vector(0, 0));
+	},
+
+    /**
+	 * returns an array of vectors
+     * @return {Array}
+     */
+	points: function() {
+		// retirer screen
+		this._p2.x = this._width; 
+		this._p2.y = this._height; 
+		return __inherited().map(function(v) { return v.sub(this._offset); }, this);
+	},
+	
+	center: function() {
+		this.offset(new Fairy.Vector(this.width() >> 1, this.height() >> 1));
+	}
+});
+
+O2.mixin(Fairy.View, O876.Mixin.Prop);
+;O2.createClass('Fairy.Wing', {
+	__construct: function() {
+	},
+
+	flap: function(oMobile) {
+	}
+});
+
+
+O2.mixin(Fairy.Wing, O876.Mixin.Prop);
+;/**
+ * Air resistance
+ */
+
+O2.extendClass('Fairy.Wings.Air', Fairy.Wing, {
+
+	_factor: 1,
+	
+	__construct: function() {
+		__inherited();
+	},
+
+	flap: function(oMobile, nTime) {
+		oMobile.flight().speed().scale(this.factor());
+	}
+});
+
+
+O2.mixin(Fairy.Wings.Air, O876.Mixin.Prop);
+;O2.extendClass('Fairy.Wings.BumpFloor', Fairy.Wing, {
+
+	_bottom: 0,
+	
+	__construct: function() {
+		__inherited();
+	},
+
+	flap: function(oMobile, nTime) {
+		var f = oMobile.flight();
+		if (f.position().y > this._bottom) {
+			f.position().y = this._bottom;
+			f.speed().y *= -0.80;
+		}
+	}
+});
+
+
+O2.mixin(Fairy.Wings.BumpFloor, O876.Mixin.Prop);
+;O2.extendClass('Fairy.Wings.Gravity', Fairy.Wing, {
+
+	_force: null,
+	
+	__construct: function() {
+		__inherited();
+		this._force = new Fairy.Vector();
+	},
+
+	flap: function(oMobile, nTime) {
+		oMobile.flight().forces().push(this.force());
+	}
+});
+
+
+O2.mixin(Fairy.Wings.Gravity, O876.Mixin.Prop);
+;O2.extendClass('Fairy.Wings.Linear', Fairy.Wing, {
+
+	_speed: null,
+	
+	__construct: function() {
+		__inherited();
+		this._speed = new Fairy.Vector();
+	},
+
+	flap: function(oMobile, nTime) {
+		oMobile.flight().move(this.speed());
+	}
+});
+
+
+O2.mixin(Fairy.Wings.Linear, O876.Mixin.Prop);
+;O2.extendClass('Fairy.Wings.Shock', Fairy.Wing, {
+
+	_shock: null,
+	
+	__construct: function() {
+		__inherited();
+	},
+	
+
+	flap: function(oMobile, nTime) {
+		var f = oMobile.flight();
+		if (this.shock()) {
+			f.forces().push(this.shock().clone());
+			this.shock(null);
+		}
+	}
+});
+
+
+O2.mixin(Fairy.Wings.Shock, O876.Mixin.Prop);
+;/**
+ * @class Fairy.WorldLayer
+ * WorldLayer est capable de gérer une infinité de portion de terrain
+ * Seules les portions a l'interieur de la zone de vue sont affichée.
+ * lors de la phase de rendu, le WorldPlayer génère des évènements
+ * indiquant les coordonnées des portions qu'il souhaite afficher
+ * C'est à l'appli, en réponse à ces évènements, de fournir les portions
+ * sous forme d'un canvas ou d'une image.
+ *
+ *
+ *
+ */ 
+O2.extendClass('Fairy.WorldLayer', Fairy.Layer, {
+	_view: null, // vector de vue Rect
+	_zoneWidth : 0,
+	_zoneHeight : 0,
+	_zones: null,
+	_moreZones: false,  // a true ce flag permet de gérer également les zone
+		// adjacentes aux zones qui sont partiellement visible dans la vue
+		// utile pour permettre au système d'eventuellement précharger les zones
+		// si la conception des zone dépend d'un résultat ajax ou d'un Worker.
+
+
+	__construct: function() {
+		this._view = new Fairy.View();
+		this._zones = {};
+	},
+
+    /**
+	 * Setter / getter d'un objet Fairy.View
+	 * Cet objet permet de définir la fenetre de vue du world layer
+	 * @param v {Fairy.View=}
+     * @return {Fairy.View|Fairy.WorldLayer}
+     */
+    view: function(v) {
+    	return this.prop('_view', v);
+	},
+
+    /**
+     * Setter / Getter de la largeur des zones.
+     * On considère le monde infini. Une zone est une portion de ce monde infini.
+     *
+     * @param z {int=} largeur d'une zone
+     * @return {object|Fairy.WorldLayer}
+     */
+    zoneWidth: function(z) {
+        return this.prop('_zoneWidth', z);
+    },
+
+    /**
+     * Setter / Getter de la hauteur des zones.
+     * On considère le monde infini. Une zone est une portion de ce monde infini.
+     *
+     * @param z {int=} hauteur d'une zone
+     * @return {int|Fairy.WorldLayer}
+     */
+    zoneHeight: function(z) {
+        return this.prop('_zoneHeight', z);
+    },
+
+    /**
+	 * Setter / Getter de zones
+	 * C'est une collection de Zones : celle qui sont actuellement chargée et qui peuvent etre affichées à tout moement
+	 * Généralement cet accesseur n'est utilisé qu'en tant que getter.
+     * @param o {object=} liste des zone
+	 * @return {object|Fairy.WorldLayer}
+     */
+	zones: function(o) {
+		return this.prop('_zones', o);
+	},
+
+    /**
+	 * Setter / Getter du flag moreZone
+	 * Quand la fenetre de View penetre dans une zone, cela déclenche immédiatemennt un évènement
+	 * réclamenet le chargement de la zone. avec ce Flag l'évènement est déclenché pour toutes les zones contigues.
+     * @param b {boolean=}
+	 * @return {boolean|Fairy.WorldLayer}
+     */
+	moreZones: function(b) {
+        return this.prop('_moreZone', b);
+	},
+
+    /**
+	 * Calcule la liste des zones balayées par la vue
+	 * Renvoi des évèbnements
+	 * zone.(a|d|n) {
+	 *	x, coordonnée x de la portion
+	 *	y, coordonnée y de la portion
+	 *	key, clé d'identification de la portion
+	 * 	canvas: canvas/image qu'il faudra fournir en retour
+	 * }
+	 */
+	update: function() {
+		var p = this.view().points();
+		var cw = this.zoneWidth();
+		var ch = this.zoneHeight();
+		var vx = p[0].x;
+		var vy = p[0].y;
+		var xs = Math.floor(vx / cw);
+		var ys = Math.floor(vy / ch);
+		var xe = Math.floor(p[1].x / cw);
+		var ye = Math.floor(p[1].y / ch);
+		if (this.moreZones()) {
+			--xs;
+			--ys;
+			++xe;
+			++ye;
+		}
+		var sKey, oNow = {};
+		var oPrev = this.zones();
+		var a = {
+			d: [], // zone à décharger (ne sert plus car sort de la zone de vue)
+			n: [], // nouvelle zone à charger, vien d'apparaitre dans la vue
+			a: [] // zone toucjourr affichée
+		};
+		
+		for (var x, y = ys; y <= ye; ++y) {
+			for (x = xs; x <= xe; ++x) {
+				sKey = x.toString() + ':' + y.toString();
+				if (oPrev[sKey]) {
+					a.a.push(sKey);
+					oNow[sKey] = oPrev[sKey];
+					delete oPrev[sKey];
 				} else {
-					aArgs = [];
+					// ajout
+					oNow[sKey] = {
+						x: x, 
+						y: y, 
+						key: sKey, 
+						canvas: null
+					};
+					a.n.push(sKey);
 				}
-				for (i = 0; i < n; i++) {
-					pi = p[i];
-					pi[s].apply(pi, aArgs);
-				}
+			}
+		}
+		for (sKey in oPrev) {
+			a.d.push(sKey);
+		}
+		this.zones(oNow);
+		for (var s in a) {
+			a[s].forEach((function(key) {
+				this.trigger('zone.' + s, oNow[key]);
+			}).bind(this));
+		}
+		return this;
+	},
+	
+	/**
+	 * Rendu du layer
+	 * @param oContext {object}
+	 */
+	render: function(oContext) {
+		var zc;
+		var z = this.zones();
+		var p = this.view().points();
+		var cw = this.zoneWidth();
+		var vx = p[0].x;
+		var vy = p[0].y;
+		for (var c in z) {
+			zc = z[c];
+			if (zc.canvas) {
+				oContext.drawImage(zc.canvas, zc.x * cw - vx, zc.y * cw - vy);
 			}
 		}
 	}
 });
-/**
+
+O2.mixin(Fairy.WorldLayer, O876.Mixin.Prop);
+O2.mixin(Fairy.WorldLayer, O876.Mixin.Events);
+;O2.createClass('O876.Perlin', {
+
+	_rand: null,	// pseudo random generator
+	_width: 0,		// tile width
+	_height: 0,		// tile height
+	_octaves: 0,	// octave counts
+	_interpolate: null,	// string : interpolation function. Allowed values are 'cosine', 'linear', defualt is 'cosine'
+
+
+	__construct: function() {
+		this._rand = new O876.Random();
+		this.interpolation('cosine');
+	},
+
+	/**
+	 * Generate white noise on a matrix
+	 * @param w matrix width
+	 * @param h matrix height
+	 * @return matrix
+	 */
+	generateWhiteNoise: function(w, h) {
+		var r, a = [];
+		for (var x, y = 0; y < h; ++y) {
+			r = []; 
+			for (x = 0; x < w; ++x) {
+				r.push(this._rand.rand());
+			}
+			a.push(r);
+		}
+		return a;
+	},
+
+	/**
+	 * Linear interpolation
+	 * @param x1 minimum
+	 * @param x2 maximum
+	 * @param alpha value between 0 and 1
+	 * @return float, interpolation result
+	 */
+	linearInterpolate: function(x0, x1, alpha) {
+		return x0 * (1 - alpha) + alpha * x1;
+	},
+
+	/**
+	 * Cosine Interpolation
+	 */
+	cosineInterpolate: function(x0, x1, mu) {
+		var mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
+   		return x0 * (1 - mu2) + x1 * mu2;
+	},
+
+	/**
+	 * selects an interpolation
+	 * @param f string | function the new interpolation function
+	 * f can be either a string ('cosine', 'linear') or a custom function
+	 */
+	interpolation: function(f) {
+		switch (typeof f) {
+			case 'string':
+				if ((f + 'Interpolate') in this) {
+					this._interpolate = this[f + 'Interpolate'];
+				} else {
+					throw new Error('only "linear" or "cosine" interpolation');
+				}
+				return this;
+				
+			case 'function':
+				this._interpolate = f;
+				return this;
+				
+			case 'undefined':
+				return this._interpolate;
+		}
+		return this;
+	},
+
+	generateSmoothNoise: function(aBaseNoise, nOctave) {
+		var w = aBaseNoise.length;
+		var h = aBaseNoise[0].length;
+		var aSmoothNoise = [];
+		var r;
+		var nSamplePeriod = 1 << nOctave;
+		var fSampleFreq = 1 / nSamplePeriod;
+		var xs = [], ys = []
+		var hBlend, vBlend, fTop, fBottom;
+		for (var x, y = 0; y < h; ++y) {
+      		ys[0] = (y / nSamplePeriod | 0) * nSamplePeriod;
+      		ys[1] = (ys[0] + nSamplePeriod) % h;
+      		hBlend = (y - ys[0]) * fSampleFreq;
+      		r = [];
+      		for (x = 0; x < w; ++ x) {
+       			xs[0] = (x / nSamplePeriod | 0) * nSamplePeriod;
+      			xs[1] = (xs[0] + nSamplePeriod) % w;
+      			vBlend = (x - xs[0]) * fSampleFreq;
+
+      			fTop = this._interpolate(aBaseNoise[ys[0]][xs[0]], aBaseNoise[ys[1]][xs[0]], hBlend)
+      			fBottom = this._interpolate(aBaseNoise[ys[0]][xs[1]], aBaseNoise[ys[1]][xs[1]], hBlend)
+     			
+     			r.push(this._interpolate(fTop, fBottom, vBlend));
+      		}
+
+      		aSmoothNoise.push(r);
+		}
+		return aSmoothNoise;
+	},
+
+	generatePerlinNoise: function(aBaseNoise, nOctaveCount) {
+		var w = aBaseNoise.length;
+		var h = aBaseNoise[0].length;
+		var aSmoothNoise = [];
+		var fPersist = 0.5;
+
+		for (var i = 0; i < nOctaveCount; ++i) {
+			aSmoothNoise.push(this.generateSmoothNoise(aBaseNoise, i));
+		}
+
+		var aPerlinNoise = [];
+		var fAmplitude = 1;
+		var fTotalAmp = 0;
+		var x, y, r;
+
+		for (y = 0; y < h; ++y) {
+			r = [];
+			for (x = 0; x < w; ++x) {
+				r.push(0);
+			}
+			aPerlinNoise.push(r);
+		}
+
+		for (var iOctave = nOctaveCount - 1; iOctave >= 0; --iOctave) {
+			fAmplitude *= fPersist;
+			fTotalAmp += fAmplitude;
+
+			for (y = 0; y < h; ++y) {
+				r = [];
+				for (x = 0; x < w; ++x) {
+					aPerlinNoise[y][x] += aSmoothNoise[iOctave][y][x] * fAmplitude;
+				}
+			} 
+		}
+		for (y = 0; y < h; ++y) {
+			r = [];
+			for (x = 0; x < w; ++x) {
+				aPerlinNoise[y][x] /= fTotalAmp;
+			}
+		}
+		return aPerlinNoise;
+	},
+
+
+	hash: function (a) {
+	    a = (a ^ 61) ^ (a >> 16);
+	    a = a + (a << 3);
+	    a = a ^ (a >> 4);
+	    a = a * 0x27d4eb2d;
+	    a = a ^ (a >> 15);
+    	return a;
+    },
+
+	/** 
+	 * Calcule le hash d'une région
+	 * Permet de choisir une graine aléatoire
+	 * et de raccorder seamlessly les région adjacente
+	 */
+	getPointHash: function(x, y) {
+		var xh = this.hash(x).toString().split('');
+		var yh = this.hash(y).toString().split('');
+		var s = xh.shift() + yh.shift() + '.';
+		while (xh.length || yh.length) {
+			if (xh.length) {
+				s += xh.shift();
+			}
+			if (yh.length) {
+				s += yh.shift();
+			}
+		}
+		return parseFloat(s);
+	},
+
+	generate: function(x, y) {
+		var _self = this;
+
+		function gwn(xg, yg) {
+			var nSeed = _self.getPointHash(xg, yg);
+			_self.rand().seed(nSeed);
+			return _self.generateWhiteNoise(_self.width(), _self.height());
+		}
+
+		function merge33(a33) {
+			var h = _self.height();
+			var a = [];
+			for (var y, ya = 0; ya < 3; ++ya) {
+				for (y = 0; y < h; ++y) {
+					a.push(a33[ya][0][y].concat(a33[ya][1][y], a33[ya][2][y]));
+				}
+			}
+			return a;
+		}
+
+		function extract33(a) {
+			var w = _self.width();
+			var h = _self.height();
+			return a.slice(h, h * 2).map(function(r) { return r.slice(w, w * 2); });
+		}
+
+		var a0 = [
+			[gwn(x - 1, y - 1), gwn(x, y - 1), gwn(x + 1, y - 1)],
+			[gwn(x - 1, y), gwn(x, y), gwn(x + 1, y)],
+			[gwn(x - 1, y + 1), gwn(x, y + 1), gwn(x + 1, y + 1)]
+		];
+
+		var a1 = merge33(a0);
+		var a2 = this.generatePerlinNoise(a1, this.octaves());
+		var a3 = extract33(a2);
+		return a3;
+	},
+
+
+	render: function(aNoise, oContext, aPalette) {
+		var oRainbow = new O876.Rainbow();
+		var aPalette = aPalette || oRainbow.gradient({
+			0: '#008',
+			49: '#00F',
+			50: '#840',
+			84: '#0A0',
+			85: '#888',
+			99: '#FFF'
+		});
+		var h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
+		var oImageData = oContext.createImageData(w, h);
+		var data = oImageData.data;
+		var oRainbow = new O876.Rainbow();
+		aNoise.forEach(function(r, y) {
+			r.forEach(function(p, x) {
+				var nOfs = (y * w + x) << 2;
+				var rgb = oRainbow.parse(aPalette[p * pl | 0]);
+				data[nOfs] = rgb.r;
+				data[nOfs + 1] = rgb.g;
+				data[nOfs + 2] = rgb.b;
+				data[nOfs + 3] = 255;
+			});
+		});
+		oContext.putImageData(oImageData, 0, 0);
+	}
+
+});
+
+
+O2.mixin(O876.Perlin, O876.Mixin.Prop);
+;/**
  * A class for manipulating canvas
  * Provides gimp like filter and effect like blur, emboss, sharpen
  */
@@ -1913,13 +3575,167 @@ O2.createClass('O876.Philter', {
 
 O2.mixin(O876.Philter, O876.Mixin.Data);
 O2.mixin(O876.Philter, O876.Mixin.Events);
-/** Rainbow - Color Code Convertor Boîte à outil graphique
+;/**
+ * @class O876.Rainbow
+ * Rainbow - Color Code Convertor Boîte à outil graphique
  * O876 raycaster project
  * 2012-01-01 Raphaël Marandet
  * good to GIT
  */
 
 O2.createClass('O876.Rainbow', {
+	
+	COLORS: {
+		aliceblue : '#F0F8FF',
+		antiquewhite : '#FAEBD7',
+		aqua : '#00FFFF',
+		aquamarine : '#7FFFD4',
+		azure : '#F0FFFF',
+		beige : '#F5F5DC',
+		bisque : '#FFE4C4',
+		black : '#000000',
+		blanchedalmond : '#FFEBCD',
+		blue : '#0000FF',
+		blueviolet : '#8A2BE2',
+		brown : '#A52A2A',
+		burlywood : '#DEB887',
+		cadetblue : '#5F9EA0',
+		chartreuse : '#7FFF00',
+		chocolate : '#D2691E',
+		coral : '#FF7F50',
+		cornflowerblue : '#6495ED',
+		cornsilk : '#FFF8DC',
+		crimson : '#DC143C',
+		cyan : '#00FFFF',
+		darkblue : '#00008B',
+		darkcyan : '#008B8B',
+		darkgoldenrod : '#B8860B',
+		darkgray : '#A9A9A9',
+		darkgrey : '#A9A9A9',
+		darkgreen : '#006400',
+		darkkhaki : '#BDB76B',
+		darkmagenta : '#8B008B',
+		darkolivegreen : '#556B2F',
+		darkorange : '#FF8C00',
+		darkorchid : '#9932CC',
+		darkred : '#8B0000',
+		darksalmon : '#E9967A',
+		darkseagreen : '#8FBC8F',
+		darkslateblue : '#483D8B',
+		darkslategray : '#2F4F4F',
+		darkslategrey : '#2F4F4F',
+		darkturquoise : '#00CED1',
+		darkviolet : '#9400D3',
+		deeppink : '#FF1493',
+		deepskyblue : '#00BFFF',
+		dimgray : '#696969',
+		dimgrey : '#696969',
+		dodgerblue : '#1E90FF',
+		firebrick : '#B22222',
+		floralwhite : '#FFFAF0',
+		forestgreen : '#228B22',
+		fuchsia : '#FF00FF',
+		gainsboro : '#DCDCDC',
+		ghostwhite : '#F8F8FF',
+		gold : '#FFD700',
+		goldenrod : '#DAA520',
+		gray : '#808080',
+		grey : '#808080',
+		green : '#008000',
+		greenyellow : '#ADFF2F',
+		honeydew : '#F0FFF0',
+		hotpink : '#FF69B4',
+		indianred  : '#CD5C5C',
+		indigo  : '#4B0082',
+		ivory : '#FFFFF0',
+		khaki : '#F0E68C',
+		lavender : '#E6E6FA',
+		lavenderblush : '#FFF0F5',
+		lawngreen : '#7CFC00',
+		lemonchiffon : '#FFFACD',
+		lightblue : '#ADD8E6',
+		lightcoral : '#F08080',
+		lightcyan : '#E0FFFF',
+		lightgoldenrodyellow : '#FAFAD2',
+		lightgray : '#D3D3D3',
+		lightgrey : '#D3D3D3',
+		lightgreen : '#90EE90',
+		lightpink : '#FFB6C1',
+		lightsalmon : '#FFA07A',
+		lightseagreen : '#20B2AA',
+		lightskyblue : '#87CEFA',
+		lightslategray : '#778899',
+		lightslategrey : '#778899',
+		lightsteelblue : '#B0C4DE',
+		lightyellow : '#FFFFE0',
+		lime : '#00FF00',
+		limegreen : '#32CD32',
+		linen : '#FAF0E6',
+		magenta : '#FF00FF',
+		maroon : '#800000',
+		mediumaquamarine : '#66CDAA',
+		mediumblue : '#0000CD',
+		mediumorchid : '#BA55D3',
+		mediumpurple : '#9370DB',
+		mediumseagreen : '#3CB371',
+		mediumslateblue : '#7B68EE',
+		mediumspringgreen : '#00FA9A',
+		mediumturquoise : '#48D1CC',
+		mediumvioletred : '#C71585',
+		midnightblue : '#191970',
+		mintcream : '#F5FFFA',
+		mistyrose : '#FFE4E1',
+		moccasin : '#FFE4B5',
+		navajowhite : '#FFDEAD',
+		navy : '#000080',
+		oldlace : '#FDF5E6',
+		olive : '#808000',
+		olivedrab : '#6B8E23',
+		orange : '#FFA500',
+		orangered : '#FF4500',
+		orchid : '#DA70D6',
+		palegoldenrod : '#EEE8AA',
+		palegreen : '#98FB98',
+		paleturquoise : '#AFEEEE',
+		palevioletred : '#DB7093',
+		papayawhip : '#FFEFD5',
+		peachpuff : '#FFDAB9',
+		peru : '#CD853F',
+		pink : '#FFC0CB',
+		plum : '#DDA0DD',
+		powderblue : '#B0E0E6',
+		purple : '#800080',
+		rebeccapurple : '#663399',
+		red : '#FF0000',
+		rosybrown : '#BC8F8F',
+		royalblue : '#4169E1',
+		saddlebrown : '#8B4513',
+		salmon : '#FA8072',
+		sandybrown : '#F4A460',
+		seagreen : '#2E8B57',
+		seashell : '#FFF5EE',
+		sienna : '#A0522D',
+		silver : '#C0C0C0',
+		skyblue : '#87CEEB',
+		slateblue : '#6A5ACD',
+		slategray : '#708090',
+		slategrey : '#708090',
+		snow : '#FFFAFA',
+		springgreen : '#00FF7F',
+		steelblue : '#4682B4',
+		tan : '#D2B48C',
+		teal : '#008080',
+		thistle : '#D8BFD8',
+		tomato : '#FF6347',
+		turquoise : '#40E0D0',
+		violet : '#EE82EE',
+		wheat : '#F5DEB3',
+		white : '#FFFFFF',
+		whitesmoke : '#F5F5F5',
+		yellow : '#FFFF00',
+		yellowgreen : '#9ACD32'
+	},
+	
 	/** 
 	 * Fabrique une chaine de caractère représentant une couleur au format CSS
 	 * @param xData une structure {r: int, g: int, b: int, a: float}
@@ -1939,6 +3755,10 @@ O2.createClass('O876.Rainbow', {
 		} else if (typeof xData === "number") {
 			return this._buildStructureFromInt(xData);
 		} else if (typeof xData === "string") {
+			xData = xData.toLowerCase();
+			if (xData in this.COLORS) {
+				xData = this.COLORS[xData];
+			}
 			switch (xData.length) {
 				case 3:
 					return this._buildStructureFromString3(xData);
@@ -2019,6 +3839,47 @@ O2.createClass('O876.Rainbow', {
 			return this.rgba(c);
 		}, this);
 	},
+	
+	/**
+	 * Generate a gradient
+	 * @param oPalette palette definition
+	 * 
+	 * {
+	 * 		start: value,
+	 * 		stop1: value,
+	 * 		stop2: value,
+	 * 		...
+	 * 		stopN: value,
+	 * 		end: value
+	 * },
+	 * 
+	 * example :
+	 * {
+	 * 		0: '#00F',
+	 * 		50: '#FF0',
+	 * 		100: '#F00'
+	 * }
+	 * rappel : une palette d'indices de 0 à 100 dispose de 101 entrée
+	 */
+	gradient: function(oPalette) {
+		var aPalette = [];
+		var sColor;
+		var sLastColor = null;
+		var nPal;
+		var nLastPal = 0;
+		for (var iPal in oPalette) {
+			nPal = iPal | 0;
+			sColor = oPalette[iPal];
+			if (sLastColor !== null) {
+				aPalette = aPalette.concat(this.spectrum(sLastColor, sColor, nPal - nLastPal + 1).slice(1));
+			} else {
+				aPalette[nPal] = this.rgba(sColor);
+			}
+			sLastColor = sColor;
+			nLastPal = nPal;
+		}
+		return aPalette;
+	},
 
 	_buildStructureFromInt: function(n) {
 		var r = (n >> 16) & 0xFF;
@@ -2058,7 +3919,119 @@ O2.createClass('O876.Rainbow', {
 		return sr + sg + sb;
 	}
 });
-/**
+;/**
+ * @class O876.Random
+ * a FALSE random very false...
+ * generated random numbers, with seed
+ * used for predictable landscape generation
+ */
+
+O2.createClass('O876.Random', {
+
+	_seed: 1,
+
+	__construct: function() {
+		this._seed = Math.random();
+	},
+
+	seed: function(x) {
+    	return this.prop('_seed', x);
+	},
+
+
+	_rand: function() {
+		return this._seed = Math.abs(((Math.sin(this._seed) * 1e12) % 1e6) / 1e6);
+	},
+
+	rand: function(a, b) {
+		var r = this._rand();
+		switch (typeof a) {
+			case "undefined":
+				return r;
+				
+			case "number":
+				if (b === undefined) {
+					b = a - 1;
+					a = 0;
+				}
+				return Math.max(a, Math.min(b, (b - a + 1) * r + a | 0));
+			
+			case "object":
+				if (Array.isArray(a)) {
+					if (a.length > 0) {
+						return a[r * a.length | 0];
+					} else {
+						return undefined;
+					}
+				} else {
+					return this.rand(Object.keys(a));
+				}
+				
+			default:
+				return r;
+		}
+	}
+});
+
+O2.mixin(O876.Random, O876.Mixin.Prop);
+;O2.createClass('O876.Snail', {
+	/**
+	 * Renvoie la largeur d'un carré de snail selon le niveau
+	 * @param nLevel niveau
+	 * @return int nombre d'élément sur le coté
+	 */
+	getLevelSquareWidth: function(nLevel) {
+		return nLevel * 2 + 1;
+	},
+	
+	/**
+	 * Renvoie le nombre d'élément qu'il y a dans un niveau
+	 * @param nLevel niveau
+	 * @return int nombre d'élément
+	 */
+	getLevelItemCount: function(nLevel) {
+		var w = this.getLevelSquareWidth(nLevel);
+		return 4 * w - 4;
+	},
+	
+	/**
+	 * Renvoie le niveau auquel appartient ce secteur
+	 * le niveau 0 correspond au point 0, 0
+	 */
+	getLevel: function(x, y) {
+		x = Math.abs(x);
+		y = Math.abs(y);
+		return Math.max(x, y);
+	},
+	
+	/**
+	 * Renvoie tous les secteur de niveau spécifié
+	 */
+	crawl: function(nLevelMin, nLevelMax) {
+		if (nLevelMax === undefined) {
+			nLevelMax = nLevelMin;
+		}
+		if (nLevelMin > nLevelMax) {
+			throw new Error('levelMin must be lower or equal levelMax');
+		}
+		if (nLevelMin < 0) {
+			return [];
+		}
+		var aSectors = [];
+		var n, x, y;
+		for (y = -nLevelMax; y <= nLevelMax; ++y) {
+			for (x = -nLevelMax; x <= nLevelMax; ++x) {
+				n = this.getLevel(x, y);
+				if (n >= nLevelMin && n <= nLevelMax) {
+					aSectors.push({x: x, y: y});
+				}
+			}
+		}
+		return aSectors;
+	}
+
+});
+;/**
  * Class of multiple channels audio management
  * deals with sound effects and background music
  * deals with crossfading background musics
@@ -2198,7 +4171,9 @@ O2.createClass('O876.SoundSystem', {
 		oChan.loop = true;
 		this._setChanSource(oChan, sFile);
 		oChan.load();
-		oChan.play();
+		if (!this.bMute) {
+			oChan.play();
+		}
 	},
 
 	/**
@@ -2418,7 +4393,7 @@ O2.createClass('O876.SoundSystem', {
 
 });
 
-/**
+;/**
  * Outil d'exploitation de requete Ajax
  * Permet de chainer les requete ajax avec un système de file d'attente.
  * good to GIT
@@ -2532,7 +4507,7 @@ O2.createClass('O876.XHR', {
 	    }
 	}
 });
-/**
+;/**
  * Parse a string of format "?param1=value1&param2=value2"
  * useful when it comes to get parameters from an url
  * good to GIT
@@ -2561,51 +4536,7 @@ O2.createObject('O876.parseSearch' , function(sSearch) {
 	}
 	return oURLParams;
 });
-/**
- * Transforms an HTML element (and its content) into a bitmap image 
- * inside a canvas.
- * @param xElement the DOM element to be rasterize
- * @param oCanvas the canvas on which will render the element
- * @param pDone a callback function called when it's done 
- * good to GIT
- */ 
-O2.createObject('O876.rasterize', function(xElement, oCanvas, pDone) {
-	var w = oCanvas.width;
-	var h = oCanvas.height;
-	var ctx = oCanvas.getContext('2d');
-	var sHTML = typeof oElement == 'string' ? xElement : xElement.outerHTML;
-	var sSVG = ([
-'	<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '">',
-'		<foreignObject width="100%" height="100%">',
-'			<style scoped="scoped">',
-'div.rasterized-body {',
-'	width: 100%; ',
-'	height: 100%; ',
-'	overflow: hidden;',
-'	background-color: transparent;',
-'	color: black;',
-'	font-family: monospace;',
-'	font-size: 8px;',
-'}',
-'',
-'			</style>',
-'			<div class="rasterized-body" xmlns="http://www.w3.org/1999/xhtml">',
-             sHTML,
-           '</div>',
-         '</foreignObject>',
-       '</svg>'
-    ]).join('\n');
-	var img = new Image();
-	var svg = new Blob([sSVG], {type: 'image/svg+xml;charset=utf-8'});
-	var url = URL.createObjectURL(svg);
-	img.addEventListener('load', function() {
-	    ctx.drawImage(img, 0, 0);
-	    URL.revokeObjectURL(url);
-	    pDone();
-	});
-	img.setAttribute('src', url);
-});
-/**
+;/**
  * O876 Toolkit
  * This tool is used to determine the type of all parameters passed
  * to a function, durinng a call.

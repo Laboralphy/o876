@@ -286,7 +286,7 @@ O2.createClass('O876.Rainbow', {
 	 */
 	gradient: function(oPalette) {
 		var aPalette = [];
-		var sColor = null;
+		var sColor;
 		var sLastColor = null;
 		var nPal;
 		var nLastPal = 0;

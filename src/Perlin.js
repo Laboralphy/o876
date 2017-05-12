@@ -200,7 +200,7 @@ O2.createClass('O876.Perlin', {
 		function extract33(a) {
 			var w = _self.width();
 			var h = _self.height();
-			return a.slice(h, h * 2).map(r => r.slice(w, w * 2));
+			return a.slice(h, h * 2).map(function(r) { return r.slice(w, w * 2); });
 		}
 
 		var a0 = [
