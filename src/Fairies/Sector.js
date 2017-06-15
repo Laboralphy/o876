@@ -40,10 +40,9 @@ O2.createClass('Fairy.Sector', {
 	collides : function(oObject) {
 		var oShape = oObject.shape();
 		return this._objects
-			.filter(o => 
-				o != oObject && 
-				oShape.hits(o.shape())
-			);
+			.filter(function(o) {
+				return o != oObject && oShape.hits(o.shape());
+			});
 	}
 });
 

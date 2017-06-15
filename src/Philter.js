@@ -513,7 +513,6 @@ O2.createClass('O876.Philter', {
 		// variance from the rectangular area specified
 		
 		function rgb_mean_and_variance (x0, y0, x1, y1) {
-			var variance, mean, r_mean, g_mean, b_mean;
 			var min = 1;
 			var max = 0;
 			var accumulated_r = 0;
@@ -538,10 +537,10 @@ O2.createClass('O876.Philter', {
 					}
 				}
 			}
-			variance = max - min,
-			mean_r = accumulated_r / count;
-			mean_g = accumulated_g / count;
-			mean_b = accumulated_b / count;
+			var variance = max - min;
+			var mean_r =  accumulated_r / count;
+			var mean_g = accumulated_g / count;
+			var mean_b = accumulated_b / count;
 			return {mean: {r: mean_r, g: mean_g, b: mean_b}, variance: variance};
 		}
 

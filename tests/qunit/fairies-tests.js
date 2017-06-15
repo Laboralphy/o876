@@ -9,6 +9,7 @@
 
 QUnit.module('Vector');
 
+
 QUnit.test('Basic', function(assert) {
 	var v = new Fairy.Vector();
 	assert.ok('x' in Fairy.Vector.prototype, 'mixin property worked');

@@ -43,7 +43,7 @@ O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 	process: function(nTime) {
 		var view = this.view();
 		this.visibleMobiles(
-			this.mobiles().filter(m => this.view().hits(m.shape()))
+			this.mobiles().filter(function(m) { return this.view().hits(m.shape()); })
 		).visibleMobiles().sort(this._sort);
 		return this;
 	},
@@ -54,7 +54,7 @@ O2.extendClass('Fairy.MobileLayer', Fairy.Layer, {
 	 */
 	render: function(oContext) {
 		var vRender = Fairy.Vector.ZERO.sub(this.origin().add(this.view().offset()));
-		this.visibleMobiles().forEach(m => m.render(oContext, vRender));
+		this.visibleMobiles().forEach(function(m) { return m.render(oContext, vRender); });
 		return this;
 	}
 });

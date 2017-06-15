@@ -10,7 +10,9 @@
 
 /* global QUnit */
 
-QUnit.module('O2');
+
+
+QUnit.module('O2') ;
 
 QUnit.test('A simple class', function(assert) {
 	assert.ok(O2, 'O2 is loaded');
@@ -415,21 +417,21 @@ QUnit.test('setFunction', function(assert) {
 	e.from(4).to(17).during(10).use(function(v) {
 		return v * 2; 
 	});
-	assert.equal(e.x, 4, 'the starting value is 4');
+	assert.equal(e.val(), 4, 'the starting value is 4');
 	assert.equal(e.xStart, 4, 'the starting value is 4');
 	assert.equal(e.xEnd, 17, 'the ending value is 17');
 	assert.equal(e.nTime, 10, 'the max time value is 10');
 	assert.equal(e.iTime, 0, 'the index time value is 0');
-	e.f();
-	assert.equal(e.x * 10 | 0, 66, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 92, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 117, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 144, 'advancing t1');
-	e.f();
-	assert.equal(e.x * 10 | 0, 170, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 66, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 92, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 117, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 144, 'advancing t1');
+	e.next();
+	assert.equal(e.val() * 10 | 0, 170, 'advancing t1');
 });
 
 

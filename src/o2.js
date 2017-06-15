@@ -8,13 +8,16 @@
  */
 
 var O2 = {};
+console.log('O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT ')
+console.log('O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT O2 INIT ')
+
 
 /** Creation d'une nouvelle classe
  * @example NouvelleClasse = Function.createClass(function(param1) { this.data = param1; });
  * @param fConstructor prototype du constructeur
  * @return Function
  */
-Function.prototype.createClass = function(pPrototype) {
+Function.prototype.createClass = function(pPrototype ) {
 	var f;
 	f = function() {
 		if ('__construct' in this) {
@@ -160,7 +163,7 @@ O2._loadObject = function(s, oContext) {
 	console.warn('O2._loadObject is deprecated. Use the brand new O2.loadObject, which do the same thing, but without this "_" in front of the name.');
 	console.trace();
 	return O2.loadObject(s, oContext);
-}
+};
 
 /** Creation d'une classe avec support namespace
  * le nom de la classe suit la syntaxe de la fonction O2.createObject() concernant les namespaces.

@@ -2,8 +2,16 @@ module.exports = function (grunt) {
     var srcDir = [
         "src/o2.js",
         "src/**/Mixin/**/*.js",
-        "src/**/*.js"
+        "src/Fairies/Wings/*.js",
+        "src/Fairies/Shape.js",
+        "src/Fairies/Layer.js",
+        "src/Fairies/Rect.js",
+        "src/**/*.js",
     ];
+    var testDir = [
+        "tests/qunit/*.js"
+    ];
+
     // Configuration de Grunt
     grunt.initConfig({
         // Concat
@@ -16,11 +24,11 @@ module.exports = function (grunt) {
                 src: srcDir,
                 // the location of the resulting JS file
                 dest: 'dist/o876.js',
-            },
-            dev: {
-                src: srcDir,
-                dest: 'src/o876.js'
             }
+        },
+
+        qunit: {
+            all: ['tests/qunit/**/*.html']
         },
 
         // Uglify
@@ -33,7 +41,7 @@ module.exports = function (grunt) {
             },
             dist: {
                 files: {
-                    'dist/o876.min.js': 'dist/o876.js'
+                    'dist/o876.js': 'dist/o876.js'
                 }
             }
         },
@@ -52,7 +60,7 @@ module.exports = function (grunt) {
         // Watch Files
         watch: {
             dev: {
-                files: srcDir,
+                files: [srcDir, testDir],
                 tasks: ['dev'],
                 options: {
                     interrupt: false,
@@ -63,10 +71,10 @@ module.exports = function (grunt) {
     });
 
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-concurrent');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
 
     // Définition des tâches Grunt pour une sortie de release
     grunt.registerTask(
@@ -78,7 +86,10 @@ module.exports = function (grunt) {
     );
 
     // Concat la dev
-    grunt.registerTask('dev', ['concat:dev']);
+    grunt.registerTask('dev', [
+        'concat:dist',
+        'qunit:all'
+    ]);
 
     // Monitor pour la dev
     grunt.registerTask('monitor', ["concurrent:monitor"]);

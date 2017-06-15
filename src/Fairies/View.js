@@ -24,7 +24,7 @@ O2.extendClass('Fairy.View', Fairy.Rect, {
 		// retirer screen
 		this._p2.x = this._width; 
 		this._p2.y = this._height; 
-		return __inherited().map(v => v.sub(this._offset));
+		return __inherited().map(function(v) { return v.sub(this._offset); });
 	},
 	
 	center: function() {

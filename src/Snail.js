@@ -9,7 +9,7 @@ O2.createClass('O876.Snail', {
 	},
 	
 	/**
-	 * Renvoie le nombre d'élément qu'il y a dans un niveau
+	 * Renvoie le nombre d'éléments qu'il y a dans un niveau
 	 * @param nLevel niveau
 	 * @return int nombre d'élément
 	 */

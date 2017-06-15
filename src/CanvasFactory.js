@@ -41,13 +41,18 @@ O2.createObject('O876.CanvasFactory', {
 		oContext.msImageSmoothingEnabled = b;
 		oContext.imageSmoothingEnabled = b;
 	},
-	
+
+    /**
+	 * Returns the smoothing flags of the given canvas context
+     * @param oContext
+     * @returns {boolean|*}
+     */
 	getImageSmoothing: function(oContext) {
 		return oContext.imageSmoothingEnabled;
 	},
 
 	/**
-	 * Clones a canvas into a new one
+	 * Clones a canvas into a new one and returns the cloned canvas.
 	 * @param oCanvas {HTMLCanvasElement} to be cloned
 	 * @return  HTMLCanvasElement
 	 */
