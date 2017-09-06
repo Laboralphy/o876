@@ -1,103 +1,38 @@
-O2.createClass('O876.Astar.Point', {
-	x : 0,
-	y : 0,
-	__construct : function(x, y) {
-		this.x = x;
-		this.y = y;
+/**
+ * Created by ralphy on 06/09/17.
+ */
+
+import NoodList from './NoodList.js';
+
+export default class Grid {
+
+	constructor() {
+		this.bUseDiagonals = false;
+		this.MAX_ITERATIONS = 2048;
+		this.nIterations = 0;
+		this.aTab = null;
+		this.nWidth = 0;
+		this.nHeight = 0;
+		this.oOpList = null;
+		this.oClList = null;
+		this.aPath = null;
+		this.xLast = 0;
+		this.yLast = 0;
+		this.nLastDir = 0;
+		this.GRID_BLOCK_WALKABLE = 0;
 	}
-});
 
-O2.createClass('O876.Astar.Nood', {
-	fGCost : 0.0,
-	fHCost : 0.0,
-	fFCost : 0.0,
-	oParent : null,
-	oPos : null,
-
-	__construct : function() {
-		this.oParent = new O876.Astar.Point(0, 0);
-		this.oPos = new O876.Astar.Point(0, 0);
-	},
-
-	isRoot : function() {
-		return this.oParent.x == this.oPos.x && this.oParent.y === this.oPos.y;
-	}
-});
-
-O2.createClass('O876.Astar.NoodList', {
-	aList : null,
-
-	__construct : function() {
-		this.oList = {};
-	},
-
-	add : function(oNood) {
-		this.set(oNood.oPos.x, oNood.oPos.y, oNood);
-	},
-
-	set : function(x, y, oNood) {
-		this.oList[this.getKey(x, y)] = oNood;
-	},
-
-	count : function() {
-		var n = 0, i = '';
-		for (i in this.oList) {
-			n++;
-		}
-		return n;
-	},
-
-	exists : function(x, y) {
-		if (this.getKey(x, y) in this.oList) {
-			return true;
-		} else {
-			return false;
-		}
-	},
-
-	getKey : function(x, y) {
-		return x.toString() + '__' + y.toString();
-	},
-
-	get : function(x, y) {
-		if (this.exists(x, y)) {
-			return this.oList[this.getKey(x, y)];
-		} else {
-			return null;
-		}
-	},
-
-	del : function(x, y) {
-		delete this.oList[this.getKey(x, y)];
-	},
-
-	empty : function() {
-		var i = '';
-		for (i in this.oList) {
-			return false;
-		}
-		return true;
-	}
-});
-
-
-O2.createClass('O876.Astar.Grid', {
-	bUseDiagonals : false,
-	MAX_ITERATIONS : 2048,
-	nIterations : 0,
-	aTab : null,
-	nWidth : 0,
-	nHeight : 0,
-	oOpList : null,
-	oClList : null,
-	aPath : null,
-	xLast : 0,
-	yLast : 0,
-	nLastDir : 0,
-
-	GRID_BLOCK_WALKABLE: 0,
-
-	init : function(c) {
+	/**
+	 * Initialisation de la grille avec le JSON suivant :
+	 * {
+	 * 		grid: [[......][.......]....],  // tableau 2D contenant la grille
+	 * 		diagonals: {bool} utilisation des diagonales autorisée
+	 * 		max: nombre d'itération maximale (watch dog)
+	 *		walkable : code de walkabilité à comparer dans la grille
+	 * }
+	 * @param c
+	 */
+	init(c) {
 		if ('grid' in c) {
 			this.aTab = c.grid;
 			this.nHeight = c.grid.length;
@@ -112,24 +47,24 @@ O2.createClass('O876.Astar.Grid', {
 		if ('walkable' in c) {
 			this.GRID_BLOCK_WALKABLE = c.walkable;
 		}
-	},
+	}
 
-	reset : function() {
-		this.oOpList = new O876.Astar.NoodList();
-		this.oClList = new O876.Astar.NoodList();
+	/**
+	 * Remettre à zero l'état de la grille
+	 */
+	reset() {
+		this.oOpList = new NoodList();
+		this.oClList = new NoodList();
 		this.aPath = [];
 		this.nIterations = 0;
-	},
+	}
 
-	distance : function(x1, y1, x2, y2) {
-		var d = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-		var r = {
-			distance: d,
-			from: {x: x1, y: y1},
-			to: {x: x2, y: y2}
-		};
-		this.trigger('distance', r);
-		return r.distance;
+	/**
+	 * Renvoie la distance entre deux cellules
+	 * @param x1
+	 */
+	distance(x1, y1, x2, y2) {
+		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	},
 
 	setCell : function(x, y, n) {
@@ -137,7 +72,7 @@ O2.createClass('O876.Astar.Grid', {
 			this.aTab[y][x] = n;
 		} else {
 			throw new Error(
-					'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
+				'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
 		}
 	},
 
@@ -164,7 +99,7 @@ O2.createClass('O876.Astar.Grid', {
 			var r = {
 				walkable: this.getCell(x, y) == this.GRID_BLOCK_WALKABLE,
 				cell: {
-					x: x, 
+					x: x,
 					y: y
 				}
 			};
@@ -270,7 +205,7 @@ O2.createClass('O876.Astar.Grid', {
 			}
 		}
 		if (this.oOpList.empty() && !((xCurrent == xTo) && (yCurrent == yTo))) {
-			 throw new Error('O876.Astar: no path to destination');
+			throw new Error('O876.Astar: no path to destination');
 		}
 		this.nIterations = iIter;
 		this.buildPath(xTo, yTo);
@@ -282,7 +217,7 @@ O2.createClass('O876.Astar.Grid', {
 		if (oCursor !== null) {
 			while (!oCursor.isRoot()) {
 				this.aPath.unshift({
-					x: oCursor.oPos.x, 
+					x: oCursor.oPos.x,
 					y: oCursor.oPos.y
 				});
 				oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
@@ -290,6 +225,3 @@ O2.createClass('O876.Astar.Grid', {
 		}
 	}
 });
-
-
-O2.mixin(O876.Astar.Grid, O876.Mixin.Events);
