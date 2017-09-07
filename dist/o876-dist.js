@@ -1085,9 +1085,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__ = __webpack_require__(10);
 /**
  * includes all modules
  */
+
 
 
 
@@ -1104,8 +1106,382 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
 	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
 	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */],
-	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */]
+	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */],
+	Astar: __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__["a" /* default */]
 });
+
+/***/ }),
+/* 9 */,
+/* 10 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Nood__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__NoodList__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Emitter__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__ = __webpack_require__(0);
+/**
+ * Created by ralphy on 06/09/17.
+ */
+
+
+
+
+
+
+
+
+/**
+ * This class is a grid.
+ */
+/* harmony default export */ __webpack_exports__["a"] = (class {
+	constructor() {
+		this.bUseDiagonals = false;
+		this.MAX_ITERATIONS = 2048;
+		this.nIterations = 0;
+		this.aTab = null;
+		this.nWidth = 0;
+		this.nHeight = 0;
+		this.oOpList = null;
+		this.oClList = null;
+		this.aPath = null;
+		this.xLast = 0;
+		this.yLast = 0;
+		this.nLastDir = 0;
+		this.GRID_BLOCK_WALKABLE = 0;
+		this.emitter = new __WEBPACK_IMPORTED_MODULE_3__Emitter__["a" /* default */]();
+        this.emitter.instance(this);
+	}
+
+	/**
+	 * initialize the grid
+	 * {
+	 * 		grid: [[......][.......]....],  // 2Dim Array containing the grid
+	 * 		diagonals: {bool} use the diagonals
+	 * 		max: (watch dog)
+	 *		walkable : specify a walkable code
+	 * }
+     * @param c {object}
+     * @param c.grid {array}
+     * @param c.diagonals {boolean}
+     * @param c.max {number}
+     * @param c.walkable {number}
+	 */
+	init(c) {
+		if ('grid' in c) {
+			this.aTab = c.grid;
+			this.nHeight = c.grid.length;
+			this.nWidth = c.grid[0].length;
+		}
+		if ('diagonals' in c) {
+			this.bUseDiagonals = c.diagonals;
+		}
+		if ('max' in c) {
+			this.MAX_ITERATIONS = c.max;
+		}
+		if ('walkable' in c) {
+			this.GRID_BLOCK_WALKABLE = c.walkable;
+		}
+	}
+
+	/**
+	 * resets the grid
+	 */
+	reset() {
+		this.oOpList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
+		this.oClList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
+		this.aPath = [];
+		this.nIterations = 0;
+	}
+
+    /**
+	 * modifies a cell value
+     */
+	setCell(x, y, n) {
+		if (this.aTab[y] !== undefined && this.aTab[y][x] !== undefined) {
+			this.aTab[y][x] = n;
+		} else {
+			throw new Error(
+				'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
+		}
+	}
+
+	getCell(x, y) {
+		if (this.aTab[y]) {
+			if (x < this.aTab[y].length) {
+				return this.aTab[y][x];
+			}
+		}
+		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
+	}
+
+	cell(x, y, v) {
+		if (v === undefined) {
+			return this.getCell(x, y);
+		} else {
+			this.setCell(x, y, v);
+			return this;
+		}
+	}
+
+	isCellWalkable(x, y) {
+		try {
+			let r = {
+				walkable: this.getCell(x, y) === this.GRID_BLOCK_WALKABLE,
+				cell: {
+					x: x,
+					y: y
+				}
+			};
+			this.emitter.trigger('walkable', r);
+			return r.walkable;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	closeNood(x, y) {
+		let n = this.oOpList.get(x, y);
+		if (n) {
+			this.oClList.set(x, y, n);
+			this.oOpList.del(x, y);
+		}
+	}
+
+	addAdjacent(x, y, xArrivee, yArrivee) {
+		let i, j;
+		let i0, j0;
+		let oTmp;
+		for (i0 = -1; i0 <= 1; i0++) {
+			i = x + i0;
+			if ((i < 0) || (i >= this.nWidth)) {
+				continue;
+			}
+			for (j0 = -1; j0 <= 1; j0++) {
+				if (!this.bUseDiagonals && (j0 * i0) !== 0) {
+					continue;
+				}
+				j = y + j0;
+				if ((j < 0) || (j >= this.nHeight)) {
+					continue;
+				}
+				if ((i === x) && (j === y)) {
+					continue;
+				}
+				if (!this.isCellWalkable(i, j)) {
+					continue;
+				}
+
+				if (!this.oClList.exists(i, j)) {
+					oTmp = new __WEBPACK_IMPORTED_MODULE_1__Nood__["a" /* default */]();
+					oTmp.fGCost = this.oClList.get(x, y).fGCost	+ __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__["a" /* default */].distance(i, j, x, y);
+					oTmp.fHCost = __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__["a" /* default */].distance(i, j, xArrivee,	yArrivee);
+					oTmp.fFCost = oTmp.fGCost + oTmp.fHCost;
+					oTmp.oPos = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](i, j);
+					oTmp.oParent = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](x, y);
+
+					if (this.oOpList.exists(i, j)) {
+						if (oTmp.fFCost < this.oOpList.get(i, j).fFCost) {
+							this.oOpList.set(i, j, oTmp);
+						}
+					} else {
+						this.oOpList.set(i, j, oTmp);
+					}
+				}
+			}
+		}
+	}
+
+	// Recherche le meilleur noeud de la liste et le renvoi
+	bestNood(oList) {
+		let oBest = null;
+		let oNood;
+
+		for (let iNood in oList.oList) {
+			oNood = oList.oList[iNood];
+			if (oBest === null) {
+				oBest = oNood;
+			} else if (oNood.fFCost < oBest.fFCost) {
+				oBest = oNood;
+			}
+		}
+		if (oBest === null) {
+			console.log(oList.oList);
+		}
+		return oBest;
+	}
+
+	find(xFrom, yFrom, xTo, yTo) {
+		this.reset();
+		let oBest;
+		let oDepart = new __WEBPACK_IMPORTED_MODULE_1__Nood__["a" /* default */]();
+		oDepart.oPos = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](xFrom, yFrom);
+		oDepart.oParent = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](xFrom, yFrom);
+		let xCurrent = xFrom;
+		let yCurrent = yFrom;
+		this.oOpList.add(oDepart);
+		this.closeNood(xCurrent, yCurrent);
+		this.addAdjacent(xCurrent, yCurrent, xTo, yTo);
+
+		let iIter = 0, MAX = this.MAX_ITERATIONS;
+
+		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
+			oBest = this.bestNood(this.oOpList);
+			xCurrent = oBest.oPos.x;
+			yCurrent = oBest.oPos.y;
+			this.closeNood(xCurrent, yCurrent);
+			this.addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
+			if (++iIter > MAX) {
+				throw new Error('O876.Astar: too much iterations');
+			}
+		}
+		if (this.oOpList.empty() && !((xCurrent === xTo) && (yCurrent === yTo))) {
+			throw new Error('O876.Astar: no path to destination');
+		}
+		this.nIterations = iIter;
+		this.buildPath(xTo, yTo);
+		return this.aPath;
+	}
+
+	buildPath(xTo, yTo) {
+		let oCursor = this.oClList.get(xTo, yTo);
+		if (oCursor !== null) {
+			while (!oCursor.isRoot()) {
+				this.aPath.unshift({
+					x: oCursor.oPos.x,
+					y: oCursor.oPos.y
+				});
+				oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
+			}
+		}
+	}
+});
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+class Nood {
+	constructor() {
+		this.fGCost = 0.0;
+		this.fHCost = 0.0;
+		this.fFCost = 0.0;
+		this.oParent = new __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */](0, 0);
+		this.oPos = new __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */](0, 0);
+	}
+
+	isRoot() {
+		return this.oParent.x === this.oPos.x && this.oParent.y === this.oPos.y;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Nood;
+
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Created by ralphy on 06/09/17.
+ */
+
+/**
+ * The NoodList class is a simple class aimed at facilitating nood list manipulations
+ */
+class NoodList {
+	constructor() {
+		this.oList = {};
+	}
+
+	/**
+	 * adds an instance of Nood in the list
+	 * @param oNood
+	 */
+	add(oNood) {
+		this.set(oNood.oPos.x, oNood.oPos.y, oNood);
+	}
+
+	/**
+	 * Sets an instance of Nood in the list
+	 * a Nood is indexed by its position. Thus two Nood shall not have the same x and y pair
+	 * @param x {number}
+	 * @param y {number}
+	 * @param oNood {Nood}
+	 */
+	set(x, y, oNood) {
+		this.oList[this.getKey(x, y)] = oNood;
+	}
+
+	/**
+	 * Returns the numbers of Nood in the list
+	 * @return {number}
+	 */
+	count() {
+		return Object(this.oList).length;
+	}
+
+	/**
+	 * Returns true if the spécified position (x, y) has a matching Nood in the list
+	 * @param x {number}
+	 * @param y {number}
+	 * @returns {boolean}
+	 */
+	exists(x, y) {
+		return this.getKey(x, y) in this.oList;
+	}
+
+	/**
+	 * Creates a key from an x and y values
+	 * @param x {number}
+	 * @param y {number}
+	 * @returns {string}
+	 */
+	getKey(x, y) {
+		return x.toString() + '__' + y.toString();
+	}
+
+	/**
+	 * Gets the Nood matching the given x y pair
+	 * Returns null if does not exists
+	 * @param x {number}
+	 * @param y {number}
+	 * @returns {Nood|null}
+	 */
+	get(x, y) {
+		return this.oList[this.getKey(x, y)] || null;
+	}
+
+	/**
+	 * Remove a Nood from the list with the given coordinates
+	 * @param x {number}
+	 * @param y {number}
+	 */
+	del(x, y) {
+		delete this.oList[this.getKey(x, y)];
+	}
+
+	/**
+	 * Returns true if the liste is empty
+	 * @returns {boolean}
+	 */
+	empty() {
+		return this.count() === 0;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = NoodList;
+
 
 /***/ })
 /******/ ]);

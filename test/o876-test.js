@@ -338,4 +338,46 @@ describe('Emitter', function() {
 });
 
 
-describe('Astar')
+describe('Astar', function() {
+	describe('simple path find', function() {
+		const oAstar = new O876.Astar();
+		oAstar.init({
+			grid: [
+                ('*******').split(''),
+                ('*     *').split(''),
+                ('*     *').split(''),
+                ('* **  *').split(''),
+                ('*  ** *').split(''),
+                ('*  *  *').split(''),
+                ('*******').split('')
+			],
+			walkable: ' ',
+			diagonals: false
+		});
+        it('should have initialized grid 7x7 grid', function() {
+            expect(oAstar.aTab.length).toEqual(7);
+            expect(oAstar.aTab[0].length).toEqual(7);
+        });
+        it('should have property width and height set to 7', function() {
+            expect(oAstar.nWidth).toEqual(7);
+            expect(oAstar.nHeight).toEqual(7);
+        });
+        it('should fiond the way', function() {
+			const aExpected =
+                [ { x: 5, y: 5 },
+                { x: 5, y: 4 },
+                { x: 5, y: 3 },
+                { x: 4, y: 3 },
+                { x: 4, y: 2 },
+                { x: 3, y: 2 },
+                { x: 2, y: 2 },
+                { x: 1, y: 2 },
+                { x: 1, y: 3 },
+                { x: 1, y: 4 },
+                { x: 1, y: 5 },
+                { x: 2, y: 5 } ];
+            let p = oAstar.find(4, 5, 2, 5);
+			expect(p).toEqual(aExpected);
+        });
+	});
+});

@@ -9,8 +9,6 @@ export default class Nood {
 		this.fGCost = 0.0;
 		this.fHCost = 0.0;
 		this.fFCost = 0.0;
-		this.oParent = null;
-		this.oPos = null;
 		this.oParent = new Point(0, 0);
 		this.oPos = new Point(0, 0);
 	}

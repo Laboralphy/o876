@@ -183,6 +183,9 @@ export default class {
 				oBest = oNood;
 			}
 		}
+		if (oBest === null) {
+			console.log(oList.oList);
+		}
 		return oBest;
 	}
 

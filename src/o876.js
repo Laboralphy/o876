@@ -9,6 +9,7 @@ import Easing from './Easing.js';
 import Rainbow from './Rainbow.js';
 import SpellBook from './SpellBook.js';
 import Emitter from './Emitter.js';
+import Astar from './Astar/Astar.js';
 
 export default {
 	Point,
@@ -17,5 +18,6 @@ export default {
 	Easing,
 	Rainbow,
 	SpellBook,
-	Emitter
+	Emitter,
+	Astar
 }
