@@ -2,14 +2,17 @@
  * Created by ralphy on 06/09/17.
  */
 
-import Helper from '../Geometry/Helper.js';
-import NoodList from './NoodList.js';
+import Helper from '../Geometry/Helper';
+import Nood from './Nood';
+import NoodList from './NoodList';
+import Emitter from '../Emitter';
+import Point from '../Geometry/Point';
 
 
 /**
  * This class is a grid.
  */
-export default class Grid {
+export default class {
 	constructor() {
 		this.bUseDiagonals = false;
 		this.MAX_ITERATIONS = 2048;
@@ -24,6 +27,8 @@ export default class Grid {
 		this.yLast = 0;
 		this.nLastDir = 0;
 		this.GRID_BLOCK_WALKABLE = 0;
+		this.emitter = new Emitter();
+        this.emitter.instance(this);
 	}
 
 	/**
@@ -34,7 +39,11 @@ export default class Grid {
 	 * 		max: (watch dog)
 	 *		walkable : specify a walkable code
 	 * }
-	 * @param c
+     * @param c {object}
+     * @param c.grid {array}
+     * @param c.diagonals {boolean}
+     * @param c.max {number}
+     * @param c.walkable {number}
 	 */
 	init(c) {
 		if ('grid' in c) {
@@ -102,26 +111,25 @@ export default class Grid {
 					y: y
 				}
 			};
-			this.trigger('walkable', r);
+			this.emitter.trigger('walkable', r);
 			return r.walkable;
 		} catch (e) {
 			return false;
 		}
-	},
+	}
 
-	// Transferer un node de la liste ouverte vers la liste fermee
-	closeNood : function(x, y) {
-		var n = this.oOpList.get(x, y);
+	closeNood(x, y) {
+		let n = this.oOpList.get(x, y);
 		if (n) {
 			this.oClList.set(x, y, n);
 			this.oOpList.del(x, y);
 		}
-	},
+	}
 
-	addAdjacent : function(x, y, xArrivee, yArrivee) {
-		var i, j;
-		var i0, j0;
-		var oTmp;
+	addAdjacent(x, y, xArrivee, yArrivee) {
+		let i, j;
+		let i0, j0;
+		let oTmp;
 		for (i0 = -1; i0 <= 1; i0++) {
 			i = x + i0;
 			if ((i < 0) || (i >= this.nWidth)) {
@@ -135,7 +143,7 @@ export default class Grid {
 				if ((j < 0) || (j >= this.nHeight)) {
 					continue;
 				}
-				if ((i == x) && (j == y)) {
+				if ((i === x) && (j === y)) {
 					continue;
 				}
 				if (!this.isCellWalkable(i, j)) {
@@ -143,12 +151,12 @@ export default class Grid {
 				}
 
 				if (!this.oClList.exists(i, j)) {
-					oTmp = new O876.Astar.Nood();
-					oTmp.fGCost = this.oClList.get(x, y).fGCost	+ this.distance(i, j, x, y);
-					oTmp.fHCost = this.distance(i, j, xArrivee,	yArrivee);
+					oTmp = new Nood();
+					oTmp.fGCost = this.oClList.get(x, y).fGCost	+ Helper.distance(i, j, x, y);
+					oTmp.fHCost = Helper.distance(i, j, xArrivee,	yArrivee);
 					oTmp.fFCost = oTmp.fGCost + oTmp.fHCost;
-					oTmp.oPos = new O876.Astar.Point(i, j);
-					oTmp.oParent = new O876.Astar.Point(x, y);
+					oTmp.oPos = new Point(i, j);
+					oTmp.oParent = new Point(x, y);
 
 					if (this.oOpList.exists(i, j)) {
 						if (oTmp.fFCost < this.oOpList.get(i, j).fFCost) {
@@ -160,15 +168,14 @@ export default class Grid {
 				}
 			}
 		}
-	},
+	}
 
 	// Recherche le meilleur noeud de la liste et le renvoi
-	bestNood : function(oList) {
-		var oBest = null;
-		var oNood;
-		var iNood = '';
+	bestNood(oList) {
+		let oBest = null;
+		let oNood;
 
-		for (iNood in oList.oList) {
+		for (let iNood in oList.oList) {
 			oNood = oList.oList[iNood];
 			if (oBest === null) {
 				oBest = oNood;
@@ -177,23 +184,23 @@ export default class Grid {
 			}
 		}
 		return oBest;
-	},
+	}
 
-	find : function(xFrom, yFrom, xTo, yTo) {
+	find(xFrom, yFrom, xTo, yTo) {
 		this.reset();
-		var oBest;
-		var oDepart = new O876.Astar.Nood();
-		oDepart.oPos = new O876.Astar.Point(xFrom, yFrom);
-		oDepart.oParent = new O876.Astar.Point(xFrom, yFrom);
-		var xCurrent = xFrom;
-		var yCurrent = yFrom;
+		let oBest;
+		let oDepart = new Nood();
+		oDepart.oPos = new Point(xFrom, yFrom);
+		oDepart.oParent = new Point(xFrom, yFrom);
+		let xCurrent = xFrom;
+		let yCurrent = yFrom;
 		this.oOpList.add(oDepart);
 		this.closeNood(xCurrent, yCurrent);
 		this.addAdjacent(xCurrent, yCurrent, xTo, yTo);
 
-		var iIter = 0, MAX = this.MAX_ITERATIONS;
+		let iIter = 0, MAX = this.MAX_ITERATIONS;
 
-		while (!((xCurrent == xTo) && (yCurrent == yTo)) && (!this.oOpList.empty())) {
+		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
 			oBest = this.bestNood(this.oOpList);
 			xCurrent = oBest.oPos.x;
 			yCurrent = oBest.oPos.y;
@@ -203,16 +210,16 @@ export default class Grid {
 				throw new Error('O876.Astar: too much iterations');
 			}
 		}
-		if (this.oOpList.empty() && !((xCurrent == xTo) && (yCurrent == yTo))) {
+		if (this.oOpList.empty() && !((xCurrent === xTo) && (yCurrent === yTo))) {
 			throw new Error('O876.Astar: no path to destination');
 		}
 		this.nIterations = iIter;
 		this.buildPath(xTo, yTo);
 		return this.aPath;
-	},
+	}
 
-	buildPath : function(xTo, yTo) {
-		var oCursor = this.oClList.get(xTo, yTo);
+	buildPath(xTo, yTo) {
+		let oCursor = this.oClList.get(xTo, yTo);
 		if (oCursor !== null) {
 			while (!oCursor.isRoot()) {
 				this.aPath.unshift({
@@ -223,4 +230,4 @@ export default class Grid {
 			}
 		}
 	}
-});
+}

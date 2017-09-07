@@ -281,34 +281,61 @@ describe('SpellBook', function() {
 
 describe('Emitter', function() {
 	describe('#on', function() {
-		it('should trigger an event', function() {
-			const E = new O876.Emitter();
-			let sTemoin = 0;
-			E.on('test', function(v) {
-				sTemoin = v;
-			});
-			expect('test' in E._oEventHandlers).toBeTruthy();
-			expect('on' in E._oEventHandlers.test).toBeTruthy();
-			expect('one' in E._oEventHandlers.test).toBeTruthy();
-			expect(Array.isArray(E._oEventHandlers.test.on)).toBeTruthy();
-			expect(Array.isArray(E._oEventHandlers.test.one)).toBeTruthy();
-			expect(E._oEventHandlers.test.on.length).toEqual(1);
-			expect(E._oEventHandlers.test.one.length).toEqual(0);
-			E.trigger('test', 10);
-			expect(sTemoin).toEqual(10);
-		});
-		it('should trigger an event only once', function() {
-			const E = new O876.Emitter();
-			let sTemoin = 0;
-			E.one('test', function(v) {
-				sTemoin += v*2;
-			});
-			E.trigger('test', 44);
-			expect(sTemoin).toEqual(88);
-			E.trigger('test', 44);
-			expect(sTemoin).toEqual(88);
-			E.trigger('test', 44);
-			expect(sTemoin).toEqual(88);
-		});
-	});
+        it('should trigger an event', function () {
+            const E = new O876.Emitter();
+            let sTemoin = 0;
+            E.on('test', function (v) {
+                sTemoin = v;
+            });
+            expect('test' in E._oEventHandlers).toBeTruthy();
+            expect('on' in E._oEventHandlers.test).toBeTruthy();
+            expect('one' in E._oEventHandlers.test).toBeTruthy();
+            expect(Array.isArray(E._oEventHandlers.test.on)).toBeTruthy();
+            expect(Array.isArray(E._oEventHandlers.test.one)).toBeTruthy();
+            expect(E._oEventHandlers.test.on.length).toEqual(1);
+            expect(E._oEventHandlers.test.one.length).toEqual(0);
+            E.trigger('test', 10);
+            expect(sTemoin).toEqual(10);
+        });
+    });
+    describe('#one', function() {
+        it('should trigger an event only once', function() {
+            const E = new O876.Emitter();
+            let sTemoin = 0;
+            E.one('test', function(v) {
+                sTemoin += v*2;
+            });
+            E.trigger('test', 44);
+            expect(sTemoin).toEqual(88);
+            E.trigger('test', 44);
+            expect(sTemoin).toEqual(88);
+            E.trigger('test', 44);
+            expect(sTemoin).toEqual(88);
+        });
+    });
+    describe('#off', function() {
+        it('should not trigger anything', function() {
+            const E = new O876.Emitter();
+            let sTemoin = 0;
+            let pHandler = function(v) {
+                sTemoin += v*2;
+            };
+            let pHandler2 = function(v) {
+                sTemoin += v*3;
+            };
+            E.on('test', pHandler);
+            E.on('test', pHandler2);
+            E.trigger('test', 4);
+            expect(sTemoin).toEqual(20);
+            E.off('test', pHandler);
+            E.trigger('test', 3);
+            expect(sTemoin).toEqual(29);
+            E.off('test', pHandler2);
+            E.trigger('test', 5);
+            expect(sTemoin).toEqual(29);
+        });
+    });
 });
+
+
+describe('Astar')
