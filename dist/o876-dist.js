@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,20 +71,169 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(8);
 /**
  * Created by ralphy on 04/09/17.
  */
 
-/* harmony default export */ __webpack_exports__["a"] = (class {
+
+
+class Point {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
 	}
-});
+
+	/**
+	 * return the distance between this point and the given point
+	 * @param p {Point}
+	 * @return {number}
+	 */
+	distance(p) {
+		return __WEBPACK_IMPORTED_MODULE_0__Helper_js__["a" /* default */].distance(p.x, p.y, this.x, this.y);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Point;
+
 
 
 /***/ }),
 /* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(8);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+
+class Vector {
+	constructor(x, y) {
+		this.x = x || 0;
+		this.y = y || 0;
+	}
+
+	/**
+	 * Returns a copy of this vector
+	 * @returns {Vector}
+	 */
+	clone() {
+		return new Vector(this.x, this.y);
+	}
+
+	/**
+	 * Will return a nbew vector with the given initializers
+	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
+	 * @param y {number}
+	 */
+	static set(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(x.x, x.y);
+		} else {
+			return new Vector(x, y);
+		}
+	}
+
+	/**
+	 * adds a Point or a Vector to this vector
+	 * @param x {Vector|Point|number}
+	 * @param y {number}
+	 * @returns {Vector}
+	 */
+	add(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(this.x + x.x, this.y + x.y);
+		} else {
+			return new Vector(this.x + x, this.y + y);
+		}
+	}
+
+	/**
+	 * scalar product
+	 * multiplies the vector components by a given value -(vector, point or number)
+	 * @param f {Vector|number}
+	 * @param y ({number})
+	 * @returns {Vector|number}
+	 */
+	mul(f, y) {
+		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return this.x * x.x + this.y * x.y;
+		} else if (y === undefined) {
+			return new Vector(this.x * f, this.y * f);
+		} else {
+			return this.mul(new Vector(f, y));
+		}
+	}
+
+	/**
+	 * return the vector distance
+	 * @return {number}
+	 */
+	distance() {
+		return __WEBPACK_IMPORTED_MODULE_1__Helper_js__["a" /* default */].distance(0, 0, this.x, this.y);
+	}
+
+	/**
+	 * returns a normalized version of this vector
+	 * @return {Vector}
+	 */
+	normalize() {
+		return this.mul(1 / this.distance());
+	}
+
+	/**
+	 * returns a zero vector
+	 * @returns {Vector}
+	 */
+	static zero() {
+		return new Vector(0, 0);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter_js__ = __webpack_require__(9);
+/**
+ * includes all modules
+ */
+
+
+
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
+	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
+	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
+	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */],
+	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */]
+});
+
+/***/ }),
+/* 3 */,
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -149,7 +298,7 @@ class Bresenham {
 
 
 /***/ }),
-/* 2 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -333,104 +482,7 @@ class Easing {
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
-/**
- * Created by ralphy on 04/09/17.
- */
-
-
-
-class Vector {
-	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
-
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(x.x, x.y);
-		} else {
-			return new Vector(x, y);
-		}
-	}
-
-	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
-	 * @returns {Vector}
-	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
-	}
-
-	/**
-	 * scalar product
-	 * multiplies the vector components by a given value -(vector, point or number)
-	 * @param f {Vector|number}
-	 * @param y ({number})
-	 * @returns {Vector|number}
-	 */
-	mul(f, y) {
-		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
-			return new Vector(this.x * f, this.y * f);
-		} else {
-			return this.mul(new Vector(f, y));
-		}
-	}
-
-	/**
-	 * return the vector distance
-	 * @return {number}
-	 */
-	distance() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
-	}
-
-	/**
-	 * returns a normalized version of this vector
-	 * @return {Vector}
-	 */
-	normalize() {
-		return this.mul(1 / this.distance());
-	}
-
-	/**
-	 * returns a zero vector
-	 * @returns {Vector}
-	 */
-	static zero() {
-		return new Vector(0, 0);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
-
-
-/***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -783,39 +835,6 @@ class Rainbow {
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
-/**
- * includes all modules
- */
-
-
-
-
-
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
-	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
-	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
-	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */]
-});
-
-/***/ }),
-/* 6 */,
 /* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -828,35 +847,188 @@ class SpellBook {
     /**
      * Turns an array-like-structure into an array (a real one)
      */
-    static array(subject, bFast) {
-        if (bFast) {
-            return Array.prototype.slice.call(subject, 0);
-        }
+    static array(subject) {
         const LENGTH_PROPERTY = 'length';
         if (Array.isArray(subject)) {
             return subject;
         }
         if (typeof subject === 'object') {
+            let bLength = LENGTH_PROPERTY in subject;
             let aKeys = Object
                 .keys(subject)
                 .filter(k => k !== LENGTH_PROPERTY);
+            if (aKeys)
             if (aKeys.some(k => isNaN(k))) {
                 return false;
             }
-            if ((LENGTH_PROPERTY in subject) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
+            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
                 return false;
             }
             if (aKeys
                 .map(k => parseInt(k))
                 .sort((k1, k2) => k1 - k2)
                 .every((k, i) => k === i)) {
-                return aKeys.map(k => subject[k]);
+                return bLength
+                    ? Array.prototype.slice.call(subject, 0)
+                    : aKeys.map(k => subject[k]);
             }
         }
         return false;
     }
+
+    static cloneArray(a) {
+        return Array.prototype.slice.call(a, 0)
+    }
+
+    static typeMap(aArgs) {
+		return this.cloneArray(aArgs).map(function(x) {
+			let tx = (typeof x);
+			switch (tx) {
+				case 'object':
+					if (x === null) {
+						return 'u';
+					} else if (Array.isArray(x)) {
+						return 'a';
+					} else {
+						return 'o';
+					}
+					break;
+
+				default:
+					return tx.charAt(0);
+			}
+		}).join('');
+    }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+/**
+ * A simple helper class
+ */
+class Helper {
+	/**
+	 * Distance between 2 points
+	 * @param x1 {Number} point 1 coordinates
+	 * @param y1 {Number}
+	 * @param x2 {Number} point 2 coordinates
+	 * @param y2 {Number}
+	 * @return {number} distance
+	 */
+	static distance(x1, y1, x2, y2) {
+		let dx = x1 - x2;
+		let dy = y1 - y2;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Helper;
+
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(7);
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+
+
+
+
+class Emitter {
+    constructor() {
+        this._oEventHandlers = {};
+        this._oInstance = null;
+    }
+
+    instance(oInst) {
+        if (oInst === undefined) {
+            return this._oInstance;
+        } else {
+			this._oInstance = oInst;
+            return this;
+        }
+    }
+
+    trigger() {
+        let aArgs = __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].array(arguments);
+        let sEvent = aArgs.shift();
+        let eh = this._oEventHandlers;
+        if (sEvent in eh) {
+			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
+			eh[sEvent].one = [];
+            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
+        }
+		return this.instance();
+    }
+
+	_define(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			eh[sEvent] = {
+			    on: [],
+                one: []
+            };
+		}
+		eh[sEvent][sType].push(pHandler);
+	}
+
+	_undefine(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			return;
+		}
+		eh = eh[sEvent];
+		if (!(sType in eh)) {
+			return;
+		}
+		if (pHandler) {
+			eh[sType] = eh[sType].filter(h => h !== pHandler);
+        } else {
+			eh[sType] = [];
+        }
+		return;
+	}
+
+	on(sEvent, pHandler) {
+		this._define(sEvent, 'on', pHandler);
+		return this;
+	}
+
+	one(sEvent, pHandler) {
+		this._define(sEvent, 'one', pHandler);
+		return this;
+	}
+
+	off() {
+        switch (__WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].typeMap(arguments)) {
+            case 's': // turn off handler
+				this._undefine(arguments[0], 'on');
+				this._undefine(arguments[0], 'one');
+				break;
+
+            case 'sf':
+				this._undefine(arguments[0], 'on', arguments[1]);
+				this._undefine(arguments[0], 'one', arguments[1]);
+				break;
+        }
+		return this;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Emitter;
 
 
 /***/ })

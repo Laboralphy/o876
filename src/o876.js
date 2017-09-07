@@ -8,6 +8,7 @@ import Bresenham from './Bresenham.js';
 import Easing from './Easing.js';
 import Rainbow from './Rainbow.js';
 import SpellBook from './SpellBook.js';
+import Emitter from './Emitter.js';
 
 export default {
 	Point,
@@ -15,5 +16,6 @@ export default {
 	Bresenham,
 	Easing,
 	Rainbow,
-	SpellBook
+	SpellBook,
+	Emitter
 }

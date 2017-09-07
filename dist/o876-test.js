@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 6);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,20 +71,490 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(8);
 /**
  * Created by ralphy on 04/09/17.
  */
 
-/* harmony default export */ __webpack_exports__["a"] = (class {
+
+
+class Point {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
 	}
-});
+
+	/**
+	 * return the distance between this point and the given point
+	 * @param p {Point}
+	 * @return {number}
+	 */
+	distance(p) {
+		return __WEBPACK_IMPORTED_MODULE_0__Helper_js__["a" /* default */].distance(p.x, p.y, this.x, this.y);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Point;
+
 
 
 /***/ }),
 /* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(8);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+
+class Vector {
+	constructor(x, y) {
+		this.x = x || 0;
+		this.y = y || 0;
+	}
+
+	/**
+	 * Returns a copy of this vector
+	 * @returns {Vector}
+	 */
+	clone() {
+		return new Vector(this.x, this.y);
+	}
+
+	/**
+	 * Will return a nbew vector with the given initializers
+	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
+	 * @param y {number}
+	 */
+	static set(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(x.x, x.y);
+		} else {
+			return new Vector(x, y);
+		}
+	}
+
+	/**
+	 * adds a Point or a Vector to this vector
+	 * @param x {Vector|Point|number}
+	 * @param y {number}
+	 * @returns {Vector}
+	 */
+	add(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(this.x + x.x, this.y + x.y);
+		} else {
+			return new Vector(this.x + x, this.y + y);
+		}
+	}
+
+	/**
+	 * scalar product
+	 * multiplies the vector components by a given value -(vector, point or number)
+	 * @param f {Vector|number}
+	 * @param y ({number})
+	 * @returns {Vector|number}
+	 */
+	mul(f, y) {
+		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return this.x * x.x + this.y * x.y;
+		} else if (y === undefined) {
+			return new Vector(this.x * f, this.y * f);
+		} else {
+			return this.mul(new Vector(f, y));
+		}
+	}
+
+	/**
+	 * return the vector distance
+	 * @return {number}
+	 */
+	distance() {
+		return __WEBPACK_IMPORTED_MODULE_1__Helper_js__["a" /* default */].distance(0, 0, this.x, this.y);
+	}
+
+	/**
+	 * returns a normalized version of this vector
+	 * @return {Vector}
+	 */
+	normalize() {
+		return this.mul(1 / this.distance());
+	}
+
+	/**
+	 * returns a zero vector
+	 * @returns {Vector}
+	 */
+	static zero() {
+		return new Vector(0, 0);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter_js__ = __webpack_require__(9);
+/**
+ * includes all modules
+ */
+
+
+
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
+	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
+	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
+	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */],
+	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */]
+});
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__src_o876_js__ = __webpack_require__(2);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+describe('Vector', function() {
+	describe('initialisation 0', function () {
+		it('creates a zero vector', function () {
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector();
+			expect(v.x).toEqual(0);
+			expect(v.y).toEqual(0);
+		});
+	});
+
+	describe('initialisation not 0', function () {
+		it('creates an initialized vector', function () {
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(7, 89);
+			expect(v.x).toEqual(7);
+			expect(v.y).toEqual(89);
+		});
+	});
+
+	describe('cloning', function () {
+		it('properly clones a vector', function () {
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(-7, 66);
+			let w = v.clone();
+			expect(v.x).toEqual(w.x);
+			expect(v.y).toEqual(w.y);
+			expect(v === w).toBeFalsy();
+		});
+	});
+
+	describe('zero vector', function() {
+		it('should build a 0, 0 vector', function() {
+			let v = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector.zero();
+			expect(v.x).toEqual(0);
+			expect(v.y).toEqual(0);
+		});
+	});
+
+	describe('adding two vectors', function() {
+		it('should add 2 vectors', function() {
+			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(10, 15);
+			let v2 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(2, -2);
+			let v3 = v1.add(v2);
+			// immutability
+			expect(v1.x).toEqual(10);
+			expect(v1.y).toEqual(15);
+			expect(v2.x).toEqual(2);
+			expect(v2.y).toEqual(-2);
+			expect(v3.x).toEqual(12);
+			expect(v3.y).toEqual(13);
+		});
+	});
+
+	describe('scaling a vector', function() {
+		it('should scale a vector', function() {
+			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(30, 4);
+			let v2 = v1.mul(6);
+			expect(v1.x).toEqual(30);
+			expect(v1.y).toEqual(4);
+			expect(v2.x).toEqual(30 * 6);
+			expect(v2.y).toEqual(4 * 6);
+		});
+	});
+
+	describe('get vector distance', function() {
+		it('should compute vector distance', function() {
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(5, 5);
+			expect(v.distance()).toBeCloseTo(5 * Math.sqrt(2), 4);
+		});
+		it('should compute vector distance 2', function() {
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(-3, 2);
+			expect(v.distance()).toBeCloseTo(Math.sqrt(9 + 4), 4);
+		});
+	});
+
+	describe('normalize vector', function() {
+		it('should build a normalized vector', function() {
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(64, 4123);
+			expect(v.normalize().distance()).toBeCloseTo(1, 5);
+		});
+	});
+});
+
+describe('Bresenham', function() {
+	it('should build a line', function() {
+		let aList = [];
+		let bOk = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Bresenham.line(10, 10, 15, 12, function (x, y) {
+			aList.push(x + ';' + y);
+		});
+		expect(aList.join('-')).toEqual('10;10-11;10-12;11-13;11-14;12-15;12');
+		expect(bOk).toBeTruthy();
+	});
+});
+
+describe('Rainbow', function() {
+	it ('should parse colors without error', function() {
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		expect(r.parse('741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
+		expect(r.parse('774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
+		expect(r.parse('#741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
+		expect(r.parse('#774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
+		expect(r.parse('rgb(119,68, 17)')).toEqual({r: 0x77, g: 0x44, b: 0x11});
+		expect(r.parse('rgba(119,68, 17, 0.777)')).toEqual({r: 0x77, g: 0x44, b: 0x11, a:0.777});
+	});
+
+	it('should convert rgba', function() {
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		expect(r.rgba('#FFF')).toEqual('rgb(255, 255, 255)');
+	});
+
+	it('should make an array of 4 items', function() {
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		let a = r.spectrum('#F41', '#8A5', 4);
+		expect(a.length).toEqual(4);
+	});
+
+	it('should build a big gradient array', function() {
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		let a;
+
+		a = r.gradient({
+			0: 'red',
+			2: 'navy',
+			4: 'yellow'
+		});
+		expect(a).toEqual([
+			"rgb(255, 0, 0)",
+			"rgb(127, 0, 64)",
+			"rgb(0, 0, 128)",
+			"rgb(127, 127, 64)",
+			"rgb(255, 255, 0)"
+		]);
+		expect(a.length).toEqual(5);
+
+		a = r.gradient({
+			0: 'red',
+			1: 'navy',
+			2: 'yellow'
+		});
+		expect(a).toEqual([
+			"rgb(255, 0, 0)",
+			"rgb(0, 0, 128)",
+			"rgb(255, 255, 0)"
+		]);
+		expect(a.length).toEqual(3);
+
+		a = r.gradient({
+			0: 'red',
+			15: 'navy',
+			30: 'yellow'
+		});
+		expect(a).toEqual([
+			"rgb(255, 0, 0)",
+			"rgb(223, 0, 16)",
+			"rgb(207, 0, 24)",
+			"rgb(191, 0, 32)",
+			"rgb(175, 0, 40)",
+			"rgb(159, 0, 48)",
+			"rgb(143, 0, 56)",
+			"rgb(127, 0, 64)",
+			"rgb(111, 0, 72)",
+			"rgb(95, 0, 80)",
+			"rgb(79, 0, 88)",
+			"rgb(63, 0, 96)",
+			"rgb(47, 0, 104)",
+			"rgb(31, 0, 112)",
+			"rgb(15, 0, 120)",
+			"rgb(0, 0, 128)",
+			"rgb(31, 31, 112)",
+			"rgb(47, 47, 104)",
+			"rgb(63, 63, 96)",
+			"rgb(79, 79, 88)",
+			"rgb(95, 95, 80)",
+			"rgb(111, 111, 72)",
+			"rgb(127, 127, 64)",
+			"rgb(143, 143, 56)",
+			"rgb(159, 159, 48)",
+			"rgb(175, 175, 40)",
+			"rgb(191, 191, 32)",
+			"rgb(207, 207, 24)",
+			"rgb(223, 223, 16)",
+			"rgb(239, 239, 8)",
+			"rgb(255, 255, 0)"
+		]);
+		expect(a.length).toEqual(31);
+	});
+
+});
+
+describe('Easing', function() {
+	describe('setting move', function() {
+		it('should initialize correctly', function() {
+			const e = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Easing();
+			e.from(4).to(17).during(10);
+			expect(e.x).toEqual(4);
+			expect(e.xStart).toEqual(4);
+			expect(e.xEnd).toEqual(17);
+			expect(e.nTime).toEqual(10);
+			expect(e.iTime).toEqual(0);
+		});
+	});
+	describe('setting move', function() {
+		it('should correctly use a simple linear function', function() {
+			const e = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Easing();
+			e.from(4).to(17).during(10).use(function(v) {
+				return v * 2;
+			});
+			expect(e.x).toEqual(4);
+			expect(e.xStart).toEqual(4);
+			expect(e.xEnd).toEqual(17);
+			expect(e.nTime).toEqual(10);
+			expect(e.iTime).toEqual(0);
+			e.next();
+			expect(e.val() * 10 | 0).toEqual(66);
+			e.next();
+			expect(e.val() * 10 | 0).toEqual(92);
+			e.next();
+			expect(e.val() * 10 | 0).toEqual(117);
+			e.next();
+			expect(e.val() * 10 | 0).toEqual(144);
+			e.next();
+			expect(e.val() * 10 | 0).toEqual(170);
+		});
+	});
+
+});
+
+
+
+
+describe('SpellBook', function() {
+	describe('#array', function() {
+		it('should return the same array', function() {
+			let a = ['a', 'b', 'c'];
+			let b = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(a);
+            expect(a).toEqual(b);
+            expect(a === b).toBeTruthy();
+		});
+        it('should convert a simple object', function() {
+            let aSource = {3:'t', 2:'o', 1: 'i', 0:'y'};
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource))
+                .toEqual(['y', 'i', 'o', 't']);
+        });
+        it('should convert a simple object with quoted keys', function() {
+            let aSource = {'3':'t', '2':'o', '1':'i', '0':'y'};
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource))
+                .toEqual(['y', 'i', 'o', 't']);
+        });
+        it('should convert an array like object', function() {
+            let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 4};
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toEqual([111, 222, 333, 444]);
+        });
+        it('should fail to convert an array like object (bad length)', function() {
+            let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 5};
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toBeFalsy();
+        });
+        it('should fail to convert an array like object (missing key)', function() {
+            let aSource = {0:111, 1:222, 2:333, 4:444};
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toBeFalsy();
+        });
+        it('should convert argument', function() {
+        	let a;
+			(function() {
+        		a = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(arguments);
+			})(4, 5, 6);
+			expect(a).toEqual([4, 5, 6]);
+		});
+	});
+
+	describe('#typeMap', function() {
+		it('should map this type', function() {
+			expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.typeMap([1, 0, {}, [], null, true, false, Infinity, undefined, function() {}])).toEqual('nnoaubbnuf');
+		});
+	});
+});
+
+
+
+describe('Emitter', function() {
+	describe('#on', function() {
+		it('should trigger an event', function() {
+			const E = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Emitter();
+			let sTemoin = 0;
+			E.on('test', function(v) {
+				sTemoin = v;
+			});
+			expect('test' in E._oEventHandlers).toBeTruthy();
+			expect('on' in E._oEventHandlers.test).toBeTruthy();
+			expect('one' in E._oEventHandlers.test).toBeTruthy();
+			expect(Array.isArray(E._oEventHandlers.test.on)).toBeTruthy();
+			expect(Array.isArray(E._oEventHandlers.test.one)).toBeTruthy();
+			expect(E._oEventHandlers.test.on.length).toEqual(1);
+			expect(E._oEventHandlers.test.one.length).toEqual(0);
+			E.trigger('test', 10);
+			expect(sTemoin).toEqual(10);
+		});
+		it('should trigger an event only once', function() {
+			const E = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Emitter();
+			let sTemoin = 0;
+			E.one('test', function(v) {
+				sTemoin += v*2;
+			});
+			E.trigger('test', 44);
+			expect(sTemoin).toEqual(88);
+			E.trigger('test', 44);
+			expect(sTemoin).toEqual(88);
+			E.trigger('test', 44);
+			expect(sTemoin).toEqual(88);
+		});
+	});
+});
+
+/***/ }),
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -149,7 +619,7 @@ class Bresenham {
 
 
 /***/ }),
-/* 2 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -333,104 +803,7 @@ class Easing {
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
-/**
- * Created by ralphy on 04/09/17.
- */
-
-
-
-class Vector {
-	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
-
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(x.x, x.y);
-		} else {
-			return new Vector(x, y);
-		}
-	}
-
-	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
-	 * @returns {Vector}
-	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
-	}
-
-	/**
-	 * scalar product
-	 * multiplies the vector components by a given value -(vector, point or number)
-	 * @param f {Vector|number}
-	 * @param y ({number})
-	 * @returns {Vector|number}
-	 */
-	mul(f, y) {
-		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
-			return new Vector(this.x * f, this.y * f);
-		} else {
-			return this.mul(new Vector(f, y));
-		}
-	}
-
-	/**
-	 * return the vector distance
-	 * @return {number}
-	 */
-	distance() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
-	}
-
-	/**
-	 * returns a normalized version of this vector
-	 * @return {Vector}
-	 */
-	normalize() {
-		return this.mul(1 / this.distance());
-	}
-
-	/**
-	 * returns a zero vector
-	 * @returns {Vector}
-	 */
-	static zero() {
-		return new Vector(0, 0);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
-
-
-/***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -783,318 +1156,6 @@ class Rainbow {
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
-/**
- * includes all modules
- */
-
-
-
-
-
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
-	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
-	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
-	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */]
-});
-
-/***/ }),
-/* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__src_o876_js__ = __webpack_require__(5);
-/**
- * Created by ralphy on 04/09/17.
- */
-
-
-
-describe('Vector', function() {
-	describe('initialisation 0', function () {
-		it('creates a zero vector', function () {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector();
-			expect(v.x).toEqual(0);
-			expect(v.y).toEqual(0);
-		});
-	});
-
-	describe('initialisation not 0', function () {
-		it('creates an initialized vector', function () {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(7, 89);
-			expect(v.x).toEqual(7);
-			expect(v.y).toEqual(89);
-		});
-	});
-
-	describe('cloning', function () {
-		it('properly clones a vector', function () {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(-7, 66);
-			let w = v.clone();
-			expect(v.x).toEqual(w.x);
-			expect(v.y).toEqual(w.y);
-			expect(v === w).toBeFalsy();
-		});
-	});
-
-	describe('zero vector', function() {
-		it('should build a 0, 0 vector', function() {
-			let v = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector.zero();
-			expect(v.x).toEqual(0);
-			expect(v.y).toEqual(0);
-		});
-	});
-
-	describe('adding two vectors', function() {
-		it('should add 2 vectors', function() {
-			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(10, 15);
-			let v2 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(2, -2);
-			let v3 = v1.add(v2);
-			// immutability
-			expect(v1.x).toEqual(10);
-			expect(v1.y).toEqual(15);
-			expect(v2.x).toEqual(2);
-			expect(v2.y).toEqual(-2);
-			expect(v3.x).toEqual(12);
-			expect(v3.y).toEqual(13);
-		});
-	});
-
-	describe('scaling a vector', function() {
-		it('should scale a vector', function() {
-			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(30, 4);
-			let v2 = v1.mul(6);
-			expect(v1.x).toEqual(30);
-			expect(v1.y).toEqual(4);
-			expect(v2.x).toEqual(30 * 6);
-			expect(v2.y).toEqual(4 * 6);
-		});
-	});
-
-	describe('get vector distance', function() {
-		it('should compute vector distance', function() {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(5, 5);
-			expect(v.distance()).toBeCloseTo(5 * Math.sqrt(2), 4);
-		});
-		it('should compute vector distance 2', function() {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(-3, 2);
-			expect(v.distance()).toBeCloseTo(Math.sqrt(9 + 4), 4);
-		});
-	});
-
-	describe('normalize vector', function() {
-		it('should build a normalized vector', function() {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(64, 4123);
-			expect(v.normalize().distance()).toBeCloseTo(1, 5);
-		});
-	});
-});
-
-describe('Bresenham', function() {
-	it('should build a line', function() {
-		let aList = [];
-		let bOk = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Bresenham.line(10, 10, 15, 12, function (x, y) {
-			aList.push(x + ';' + y);
-		});
-		expect(aList.join('-')).toEqual('10;10-11;10-12;11-13;11-14;12-15;12');
-		expect(bOk).toBeTruthy();
-	});
-});
-
-describe('Rainbow', function() {
-	it ('should parse colors without error', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
-		expect(r.parse('741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-		expect(r.parse('774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-		expect(r.parse('#741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-		expect(r.parse('#774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-		expect(r.parse('rgb(119,68, 17)')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-		expect(r.parse('rgba(119,68, 17, 0.777)')).toEqual({r: 0x77, g: 0x44, b: 0x11, a:0.777});
-	});
-
-	it('should convert rgba', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
-		expect(r.rgba('#FFF')).toEqual('rgb(255, 255, 255)');
-	});
-
-	it('should make an array of 4 items', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
-		let a = r.spectrum('#F41', '#8A5', 4);
-		expect(a.length).toEqual(4);
-	});
-
-	it('should build a big gradient array', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
-		let a;
-
-		a = r.gradient({
-			0: 'red',
-			2: 'navy',
-			4: 'yellow'
-		});
-		expect(a).toEqual([
-			"rgb(255, 0, 0)",
-			"rgb(127, 0, 64)",
-			"rgb(0, 0, 128)",
-			"rgb(127, 127, 64)",
-			"rgb(255, 255, 0)"
-		]);
-		expect(a.length).toEqual(5);
-
-		a = r.gradient({
-			0: 'red',
-			1: 'navy',
-			2: 'yellow'
-		});
-		expect(a).toEqual([
-			"rgb(255, 0, 0)",
-			"rgb(0, 0, 128)",
-			"rgb(255, 255, 0)"
-		]);
-		expect(a.length).toEqual(3);
-
-		a = r.gradient({
-			0: 'red',
-			15: 'navy',
-			30: 'yellow'
-		});
-		expect(a).toEqual([
-			"rgb(255, 0, 0)",
-			"rgb(223, 0, 16)",
-			"rgb(207, 0, 24)",
-			"rgb(191, 0, 32)",
-			"rgb(175, 0, 40)",
-			"rgb(159, 0, 48)",
-			"rgb(143, 0, 56)",
-			"rgb(127, 0, 64)",
-			"rgb(111, 0, 72)",
-			"rgb(95, 0, 80)",
-			"rgb(79, 0, 88)",
-			"rgb(63, 0, 96)",
-			"rgb(47, 0, 104)",
-			"rgb(31, 0, 112)",
-			"rgb(15, 0, 120)",
-			"rgb(0, 0, 128)",
-			"rgb(31, 31, 112)",
-			"rgb(47, 47, 104)",
-			"rgb(63, 63, 96)",
-			"rgb(79, 79, 88)",
-			"rgb(95, 95, 80)",
-			"rgb(111, 111, 72)",
-			"rgb(127, 127, 64)",
-			"rgb(143, 143, 56)",
-			"rgb(159, 159, 48)",
-			"rgb(175, 175, 40)",
-			"rgb(191, 191, 32)",
-			"rgb(207, 207, 24)",
-			"rgb(223, 223, 16)",
-			"rgb(239, 239, 8)",
-			"rgb(255, 255, 0)"
-		]);
-		expect(a.length).toEqual(31);
-	});
-
-});
-
-describe('Easing', function() {
-	describe('setting move', function() {
-		it('should initialize correctly', function() {
-			const e = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Easing();
-			e.from(4).to(17).during(10);
-			expect(e.x).toEqual(4);
-			expect(e.xStart).toEqual(4);
-			expect(e.xEnd).toEqual(17);
-			expect(e.nTime).toEqual(10);
-			expect(e.iTime).toEqual(0);
-		});
-	});
-	describe('setting move', function() {
-		it('should correctly use a simple linear function', function() {
-			const e = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Easing();
-			e.from(4).to(17).during(10).use(function(v) {
-				return v * 2;
-			});
-			expect(e.x).toEqual(4);
-			expect(e.xStart).toEqual(4);
-			expect(e.xEnd).toEqual(17);
-			expect(e.nTime).toEqual(10);
-			expect(e.iTime).toEqual(0);
-			e.next();
-			expect(e.val() * 10 | 0).toEqual(66);
-			e.next();
-			expect(e.val() * 10 | 0).toEqual(92);
-			e.next();
-			expect(e.val() * 10 | 0).toEqual(117);
-			e.next();
-			expect(e.val() * 10 | 0).toEqual(144);
-			e.next();
-			expect(e.val() * 10 | 0).toEqual(170);
-		});
-	});
-
-});
-
-
-
-
-describe('SpellBook', function() {
-	describe('#array', function() {
-		it('should return the same array', function() {
-			let a = ['a', 'b', 'c'];
-			let b = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(a);
-            expect(a).toEqual(b);
-            expect(a === b).toBeTruthy();
-		});
-        it('should convert a simple object', function() {
-            let aSource = {3:'t', 2:'o', 1: 'i', 0:'y'};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource))
-                .toEqual(['y', 'i', 'o', 't']);
-        });
-        it('should convert a simple object with quoted keys', function() {
-            let aSource = {'3':'t', '2':'o', '1':'i', '0':'y'};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource))
-                .toEqual(['y', 'i', 'o', 't']);
-        });
-        it('should convert an array like object', function() {
-            let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 4};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toEqual([111, 222, 333, 444]);
-        });
-        it('should fail to convert an array like object (bad length)', function() {
-            let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 5};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toBeFalsy();
-        });
-        it('should fail to convert an array like object (missing key)', function() {
-            let aSource = {0:111, 1:222, 2:333, 4:444};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toBeFalsy();
-        });
-        it('should convert argument', function() {
-        	let a;
-			(function() {
-        		a = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(arguments);
-			})(4, 5, 6);
-			expect(a).toEqual([4, 5, 6]);
-		})
-	});
-})
-
-/***/ }),
 /* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -1107,35 +1168,188 @@ class SpellBook {
     /**
      * Turns an array-like-structure into an array (a real one)
      */
-    static array(subject, bFast) {
-        if (bFast) {
-            return Array.prototype.slice.call(subject, 0);
-        }
+    static array(subject) {
         const LENGTH_PROPERTY = 'length';
         if (Array.isArray(subject)) {
             return subject;
         }
         if (typeof subject === 'object') {
+            let bLength = LENGTH_PROPERTY in subject;
             let aKeys = Object
                 .keys(subject)
                 .filter(k => k !== LENGTH_PROPERTY);
+            if (aKeys)
             if (aKeys.some(k => isNaN(k))) {
                 return false;
             }
-            if ((LENGTH_PROPERTY in subject) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
+            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
                 return false;
             }
             if (aKeys
                 .map(k => parseInt(k))
                 .sort((k1, k2) => k1 - k2)
                 .every((k, i) => k === i)) {
-                return aKeys.map(k => subject[k]);
+                return bLength
+                    ? Array.prototype.slice.call(subject, 0)
+                    : aKeys.map(k => subject[k]);
             }
         }
         return false;
     }
+
+    static cloneArray(a) {
+        return Array.prototype.slice.call(a, 0)
+    }
+
+    static typeMap(aArgs) {
+		return this.cloneArray(aArgs).map(function(x) {
+			let tx = (typeof x);
+			switch (tx) {
+				case 'object':
+					if (x === null) {
+						return 'u';
+					} else if (Array.isArray(x)) {
+						return 'a';
+					} else {
+						return 'o';
+					}
+					break;
+
+				default:
+					return tx.charAt(0);
+			}
+		}).join('');
+    }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+/**
+ * A simple helper class
+ */
+class Helper {
+	/**
+	 * Distance between 2 points
+	 * @param x1 {Number} point 1 coordinates
+	 * @param y1 {Number}
+	 * @param x2 {Number} point 2 coordinates
+	 * @param y2 {Number}
+	 * @return {number} distance
+	 */
+	static distance(x1, y1, x2, y2) {
+		let dx = x1 - x2;
+		let dy = y1 - y2;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Helper;
+
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(7);
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+
+
+
+
+class Emitter {
+    constructor() {
+        this._oEventHandlers = {};
+        this._oInstance = null;
+    }
+
+    instance(oInst) {
+        if (oInst === undefined) {
+            return this._oInstance;
+        } else {
+			this._oInstance = oInst;
+            return this;
+        }
+    }
+
+    trigger() {
+        let aArgs = __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].array(arguments);
+        let sEvent = aArgs.shift();
+        let eh = this._oEventHandlers;
+        if (sEvent in eh) {
+			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
+			eh[sEvent].one = [];
+            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
+        }
+		return this.instance();
+    }
+
+	_define(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			eh[sEvent] = {
+			    on: [],
+                one: []
+            };
+		}
+		eh[sEvent][sType].push(pHandler);
+	}
+
+	_undefine(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			return;
+		}
+		eh = eh[sEvent];
+		if (!(sType in eh)) {
+			return;
+		}
+		if (pHandler) {
+			eh[sType] = eh[sType].filter(h => h !== pHandler);
+        } else {
+			eh[sType] = [];
+        }
+		return;
+	}
+
+	on(sEvent, pHandler) {
+		this._define(sEvent, 'on', pHandler);
+		return this;
+	}
+
+	one(sEvent, pHandler) {
+		this._define(sEvent, 'one', pHandler);
+		return this;
+	}
+
+	off() {
+        switch (__WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].typeMap(arguments)) {
+            case 's': // turn off handler
+				this._undefine(arguments[0], 'on');
+				this._undefine(arguments[0], 'one');
+				break;
+
+            case 'sf':
+				this._undefine(arguments[0], 'on', arguments[1]);
+				this._undefine(arguments[0], 'one', arguments[1]);
+				break;
+        }
+		return this;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Emitter;
 
 
 /***/ })

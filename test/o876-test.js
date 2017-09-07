@@ -267,6 +267,48 @@ describe('SpellBook', function() {
         		a = O876.SpellBook.array(arguments);
 			})(4, 5, 6);
 			expect(a).toEqual([4, 5, 6]);
-		})
+		});
 	});
-})
+
+	describe('#typeMap', function() {
+		it('should map this type', function() {
+			expect(O876.SpellBook.typeMap([1, 0, {}, [], null, true, false, Infinity, undefined, function() {}])).toEqual('nnoaubbnuf');
+		});
+	});
+});
+
+
+
+describe('Emitter', function() {
+	describe('#on', function() {
+		it('should trigger an event', function() {
+			const E = new O876.Emitter();
+			let sTemoin = 0;
+			E.on('test', function(v) {
+				sTemoin = v;
+			});
+			expect('test' in E._oEventHandlers).toBeTruthy();
+			expect('on' in E._oEventHandlers.test).toBeTruthy();
+			expect('one' in E._oEventHandlers.test).toBeTruthy();
+			expect(Array.isArray(E._oEventHandlers.test.on)).toBeTruthy();
+			expect(Array.isArray(E._oEventHandlers.test.one)).toBeTruthy();
+			expect(E._oEventHandlers.test.on.length).toEqual(1);
+			expect(E._oEventHandlers.test.one.length).toEqual(0);
+			E.trigger('test', 10);
+			expect(sTemoin).toEqual(10);
+		});
+		it('should trigger an event only once', function() {
+			const E = new O876.Emitter();
+			let sTemoin = 0;
+			E.one('test', function(v) {
+				sTemoin += v*2;
+			});
+			E.trigger('test', 44);
+			expect(sTemoin).toEqual(88);
+			E.trigger('test', 44);
+			expect(sTemoin).toEqual(88);
+			E.trigger('test', 44);
+			expect(sTemoin).toEqual(88);
+		});
+	});
+});

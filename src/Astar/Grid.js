@@ -2,6 +2,7 @@
  * Created by ralphy on 06/09/17.
  */
 
+import Helper from '../Geometry/Helper.js';
 import NoodList from './NoodList.js';
 
 
@@ -62,14 +63,6 @@ export default class Grid {
 		this.nIterations = 0;
 	}
 
-	/**
-	 * compute the distance between 2 cells
-	 * @param x1
-	 */
-	distance(x1, y1, x2, y2) {
-		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-	}
-
     /**
 	 * modifies a cell value
      */
@@ -89,7 +82,7 @@ export default class Grid {
 			}
 		}
 		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
-	},
+	}
 
 	cell(x, y, v) {
 		if (v === undefined) {
@@ -103,7 +96,7 @@ export default class Grid {
 	isCellWalkable(x, y) {
 		try {
 			let r = {
-				walkable: this.getCell(x, y) == this.GRID_BLOCK_WALKABLE,
+				walkable: this.getCell(x, y) === this.GRID_BLOCK_WALKABLE,
 				cell: {
 					x: x,
 					y: y

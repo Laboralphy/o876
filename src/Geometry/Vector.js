@@ -3,6 +3,7 @@
  */
 
 import Point from './Point.js';
+import Helper from './Helper.js';
 
 export default class Vector {
 	constructor(x, y) {
@@ -67,7 +68,7 @@ export default class Vector {
 	 * @return {number}
 	 */
 	distance() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
+		return Helper.distance(0, 0, this.x, this.y);
 	}
 
 	/**
