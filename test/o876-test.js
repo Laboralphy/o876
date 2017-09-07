@@ -227,3 +227,46 @@ describe('Easing', function() {
 	});
 
 });
+
+
+
+
+describe('SpellBook', function() {
+	describe('#array', function() {
+		it('should return the same array', function() {
+			let a = ['a', 'b', 'c'];
+			let b = O876.SpellBook.array(a);
+            expect(a).toEqual(b);
+            expect(a === b).toBeTruthy();
+		});
+        it('should convert a simple object', function() {
+            let aSource = {3:'t', 2:'o', 1: 'i', 0:'y'};
+            expect(O876.SpellBook.array(aSource))
+                .toEqual(['y', 'i', 'o', 't']);
+        });
+        it('should convert a simple object with quoted keys', function() {
+            let aSource = {'3':'t', '2':'o', '1':'i', '0':'y'};
+            expect(O876.SpellBook.array(aSource))
+                .toEqual(['y', 'i', 'o', 't']);
+        });
+        it('should convert an array like object', function() {
+            let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 4};
+            expect(O876.SpellBook.array(aSource)).toEqual([111, 222, 333, 444]);
+        });
+        it('should fail to convert an array like object (bad length)', function() {
+            let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 5};
+            expect(O876.SpellBook.array(aSource)).toBeFalsy();
+        });
+        it('should fail to convert an array like object (missing key)', function() {
+            let aSource = {0:111, 1:222, 2:333, 4:444};
+            expect(O876.SpellBook.array(aSource)).toBeFalsy();
+        });
+        it('should convert argument', function() {
+        	let a;
+			(function() {
+        		a = O876.SpellBook.array(arguments);
+			})(4, 5, 6);
+			expect(a).toEqual([4, 5, 6]);
+		})
+	});
+})

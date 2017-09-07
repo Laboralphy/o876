@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A set of javascript classes and utility to help making video games",
   "scripts": {
+    "pack": "./node_modules/.bin/webpack --watch",
     "test": "./node_modules/.bin/jasmine dist/o876-test.js"
   },
   "repository": {

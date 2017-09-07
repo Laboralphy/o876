@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -85,133 +85,6 @@
 
 /***/ }),
 /* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
-/**
- * Created by ralphy on 04/09/17.
- */
-
-
-
-class Vector {
-	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
-
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(x.x, x.y);
-		} else {
-			return new Vector(x, y);
-		}
-	}
-
-	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
-	 * @returns {Vector}
-	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
-	}
-
-	/**
-	 * scalar product
-	 * multiplies the vector components by a given value -(vector, point or number)
-	 * @param f {Vector|number}
-	 * @param y ({number})
-	 * @returns {Vector|number}
-	 */
-	mul(f, y) {
-		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
-			return new Vector(this.x * f, this.y * f);
-		} else {
-			return this.mul(new Vector(f, y));
-		}
-	}
-
-	/**
-	 * return the vector distance
-	 * @return {number}
-	 */
-	distance() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
-	}
-
-	/**
-	 * returns a normalized version of this vector
-	 * @return {Vector}
-	 */
-	normalize() {
-		return this.mul(1 / this.distance());
-	}
-
-	/**
-	 * returns a zero vector
-	 * @returns {Vector}
-	 */
-	static zero() {
-		return new Vector(0, 0);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(6);
-/**
- * includes all modules
- */
-
-
-
-
-
-
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
-	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
-	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */]
-});
-
-/***/ }),
-/* 3 */,
-/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -276,7 +149,7 @@ class Bresenham {
 
 
 /***/ }),
-/* 5 */
+/* 2 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -460,7 +333,104 @@ class Easing {
 
 
 /***/ }),
-/* 6 */
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+class Vector {
+	constructor(x, y) {
+		this.x = x || 0;
+		this.y = y || 0;
+	}
+
+	/**
+	 * Returns a copy of this vector
+	 * @returns {Vector}
+	 */
+	clone() {
+		return new Vector(this.x, this.y);
+	}
+
+	/**
+	 * Will return a nbew vector with the given initializers
+	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
+	 * @param y {number}
+	 */
+	static set(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(x.x, x.y);
+		} else {
+			return new Vector(x, y);
+		}
+	}
+
+	/**
+	 * adds a Point or a Vector to this vector
+	 * @param x {Vector|Point|number}
+	 * @param y {number}
+	 * @returns {Vector}
+	 */
+	add(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(this.x + x.x, this.y + x.y);
+		} else {
+			return new Vector(this.x + x, this.y + y);
+		}
+	}
+
+	/**
+	 * scalar product
+	 * multiplies the vector components by a given value -(vector, point or number)
+	 * @param f {Vector|number}
+	 * @param y ({number})
+	 * @returns {Vector|number}
+	 */
+	mul(f, y) {
+		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return this.x * x.x + this.y * x.y;
+		} else if (y === undefined) {
+			return new Vector(this.x * f, this.y * f);
+		} else {
+			return this.mul(new Vector(f, y));
+		}
+	}
+
+	/**
+	 * return the vector distance
+	 * @return {number}
+	 */
+	distance() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+
+	/**
+	 * returns a normalized version of this vector
+	 * @return {Vector}
+	 */
+	normalize() {
+		return this.mul(1 / this.distance());
+	}
+
+	/**
+	 * returns a zero vector
+	 * @returns {Vector}
+	 */
+	static zero() {
+		return new Vector(0, 0);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -810,6 +780,83 @@ class Rainbow {
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Rainbow;
 
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
+/**
+ * includes all modules
+ */
+
+
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
+	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
+	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
+	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */]
+});
+
+/***/ }),
+/* 6 */,
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+class SpellBook {
+    /**
+     * Turns an array-like-structure into an array (a real one)
+     */
+    static array(subject, bFast) {
+        if (bFast) {
+            return Array.prototype.slice.call(subject, 0);
+        }
+        const LENGTH_PROPERTY = 'length';
+        if (Array.isArray(subject)) {
+            return subject;
+        }
+        if (typeof subject === 'object') {
+            let aKeys = Object
+                .keys(subject)
+                .filter(k => k !== LENGTH_PROPERTY);
+            if (aKeys.some(k => isNaN(k))) {
+                return false;
+            }
+            if ((LENGTH_PROPERTY in subject) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
+                return false;
+            }
+            if (aKeys
+                .map(k => parseInt(k))
+                .sort((k1, k2) => k1 - k2)
+                .every((k, i) => k === i)) {
+                return aKeys.map(k => subject[k]);
+            }
+        }
+        return false;
+    }
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
 
 
 /***/ })

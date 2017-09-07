@@ -4,8 +4,11 @@
 
 import NoodList from './NoodList.js';
 
-export default class Grid {
 
+/**
+ * This class is a grid.
+ */
+export default class Grid {
 	constructor() {
 		this.bUseDiagonals = false;
 		this.MAX_ITERATIONS = 2048;
@@ -23,12 +26,12 @@ export default class Grid {
 	}
 
 	/**
-	 * Initialisation de la grille avec le JSON suivant :
+	 * initialize the grid
 	 * {
-	 * 		grid: [[......][.......]....],  // tableau 2D contenant la grille
-	 * 		diagonals: {bool} utilisation des diagonales autorisée
-	 * 		max: nombre d'itération maximale (watch dog)
-	 *		walkable : code de walkabilité à comparer dans la grille
+	 * 		grid: [[......][.......]....],  // 2Dim Array containing the grid
+	 * 		diagonals: {bool} use the diagonals
+	 * 		max: (watch dog)
+	 *		walkable : specify a walkable code
 	 * }
 	 * @param c
 	 */
@@ -50,7 +53,7 @@ export default class Grid {
 	}
 
 	/**
-	 * Remettre à zero l'état de la grille
+	 * resets the grid
 	 */
 	reset() {
 		this.oOpList = new NoodList();
@@ -60,23 +63,26 @@ export default class Grid {
 	}
 
 	/**
-	 * Renvoie la distance entre deux cellules
+	 * compute the distance between 2 cells
 	 * @param x1
 	 */
 	distance(x1, y1, x2, y2) {
 		return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-	},
+	}
 
-	setCell : function(x, y, n) {
+    /**
+	 * modifies a cell value
+     */
+	setCell(x, y, n) {
 		if (this.aTab[y] !== undefined && this.aTab[y][x] !== undefined) {
 			this.aTab[y][x] = n;
 		} else {
 			throw new Error(
 				'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
 		}
-	},
+	}
 
-	getCell : function(x, y) {
+	getCell(x, y) {
 		if (this.aTab[y]) {
 			if (x < this.aTab[y].length) {
 				return this.aTab[y][x];
@@ -85,18 +91,18 @@ export default class Grid {
 		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
 	},
 
-	cell: function(x, y, v) {
+	cell(x, y, v) {
 		if (v === undefined) {
 			return this.getCell(x, y);
 		} else {
 			this.setCell(x, y, v);
 			return this;
 		}
-	},
+	}
 
-	isCellWalkable : function(x, y) {
+	isCellWalkable(x, y) {
 		try {
-			var r = {
+			let r = {
 				walkable: this.getCell(x, y) == this.GRID_BLOCK_WALKABLE,
 				cell: {
 					x: x,
