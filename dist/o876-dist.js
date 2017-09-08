@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 8);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,7 +71,7 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(8);
 /**
  * Created by ralphy on 04/09/17.
  */
@@ -102,95 +102,98 @@ class Point {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(8);
 /**
- * Created by ralphy on 07/09/17.
+ * Created by ralphy on 04/09/17.
  */
 
-class SpellBook {
-    /**
-     * Turns an array-like-structure into an array (a real one)
-     */
-    static array(subject) {
-        const LENGTH_PROPERTY = 'length';
-        if (Array.isArray(subject)) {
-            return subject;
-        }
-        if (typeof subject === 'object') {
-            // is there a length property ?
-            let bLength = LENGTH_PROPERTY in subject;
-            // extracting keys minus "length" property
-            let aKeys = Object
-                .keys(subject)
-                .filter(k => k !== LENGTH_PROPERTY);
-            if (aKeys.some(k => isNaN(k))) {
-                return false;
-            }
-            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
-                return false;
-            }
-            if (aKeys
-                .map(k => parseInt(k))
-                .sort((k1, k2) => k1 - k2)
-                .every((k, i) => k === i)) {
-                return bLength
-                    ? Array.prototype.slice.call(subject, 0)
-                    : aKeys.map(k => subject[k]);
-            }
-        }
-        return false;
-    }
 
-    /**
-     * quickly clones an array into a new one
-     * this method is mainly used for turning "arguments" pseudo array into a real array
-     * @param a {Array|Object}
-     * @return {Array}
-     */
-    static cloneArray(a) {
-        return Array.prototype.slice.call(a, 0)
-    }
 
-    /**
-     * maps an array into a string
-     * converting all elements into there "type" counterpart.
-     * any number element will be turned into "n"
-     * any object element will be turned into "o"
-     * this method is used to quickly switch-case an array according to its elements types.
-     *
-     * example : [222, "abc", [1,2,3], null, {x: 1.00, y: 3.00}]
-     * will produce : "nsauo"
-     * n: number
-     * s: string
-     * b: boolean
-     * o: object
-     * a: real array
-     * f: function
-     * u: undefined / null
-     *
-     * @param aArgs
-     * @return {string}
-     */
-    static typeMap(aArgs) {
-		return this.cloneArray(aArgs).map(function(x) {
-			let tx = (typeof x);
-			switch (tx) {
-				case 'object':
-					if (x === null) {
-						return 'u';
-					} else if (Array.isArray(x)) {
-						return 'a';
-					} else {
-						return 'o';
-					}
-					break;
 
-				default:
-					return tx.charAt(0);
-			}
-		}).join('');
-    }
+class Vector {
+	constructor(x, y) {
+		this.x = x || 0;
+		this.y = y || 0;
+	}
+
+	/**
+	 * Returns a copy of this vector
+	 * @returns {Vector}
+	 */
+	clone() {
+		return new Vector(this.x, this.y);
+	}
+
+	/**
+	 * Will return a nbew vector with the given initializers
+	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
+	 * @param y {number}
+	 */
+	static set(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(x.x, x.y);
+		} else {
+			return new Vector(x, y);
+		}
+	}
+
+	/**
+	 * adds a Point or a Vector to this vector
+	 * @param x {Vector|Point|number}
+	 * @param y {number}
+	 * @returns {Vector}
+	 */
+	add(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(this.x + x.x, this.y + x.y);
+		} else {
+			return new Vector(this.x + x, this.y + y);
+		}
+	}
+
+	/**
+	 * scalar product
+	 * multiplies the vector components by a given value -(vector, point or number)
+	 * @param f {Vector|number}
+	 * @param y ({number})
+	 * @returns {Vector|number}
+	 */
+	mul(f, y) {
+		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return this.x * x.x + this.y * x.y;
+		} else if (y === undefined) {
+			return new Vector(this.x * f, this.y * f);
+		} else {
+			return this.mul(new Vector(f, y));
+		}
+	}
+
+	/**
+	 * return the vector distance
+	 * @return {number}
+	 */
+	distance() {
+		return __WEBPACK_IMPORTED_MODULE_1__Helper_js__["a" /* default */].distance(0, 0, this.x, this.y);
+	}
+
+	/**
+	 * returns a normalized version of this vector
+	 * @return {Vector}
+	 */
+	normalize() {
+		return this.mul(1 / this.distance());
+	}
+
+	/**
+	 * returns a zero vector
+	 * @returns {Vector}
+	 */
+	static zero() {
+		return new Vector(0, 0);
+	}
 }
-/* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
+/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
 
 
 /***/ }),
@@ -198,34 +201,42 @@ class SpellBook {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__ = __webpack_require__(10);
 /**
- * Created by ralphy on 07/09/17.
+ * includes all modules
  */
 
-/**
- * A simple helper class
- */
-class Helper {
-	/**
-	 * Distance between 2 points
-	 * @param x1 {Number} point 1 coordinates
-	 * @param y1 {Number}
-	 * @param x2 {Number} point 2 coordinates
-	 * @param y2 {Number}
-	 * @return {number} distance
-	 */
-	static distance(x1, y1, x2, y2) {
-		let dx = x1 - x2;
-		let dy = y1 - y2;
-		return Math.sqrt(dx * dx + dy * dy);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Helper;
 
 
+
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
+	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
+	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
+	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */],
+	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */],
+	Astar: __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__["a" /* default */]
+});
 
 /***/ }),
-/* 3 */
+/* 3 */,
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -290,7 +301,7 @@ class Bresenham {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -474,253 +485,7 @@ class Easing {
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(1);
-/**
- * Created by ralphy on 07/09/17.
- */
-
-
-/**
- * this class is similar to the node.js Emitter system
- * it emits events
- * client instances may instanciate this class and call methods such as
- * .on  to defines an event handler
- * .off to undefined an event handler
- * .one to define a "one triggered" handler
- * .trigger to cast an event
- *
- */
-class Emitter {
-    constructor() {
-        this._oEventHandlers = {};
-        this._oInstance = null;
-    }
-
-    /**
-	 * defines or returns the client instance associated with this
-     * @param oInst {object}
-     * @return {*}
-     */
-    instance(oInst) {
-        if (oInst === undefined) {
-            return this._oInstance;
-        } else {
-			this._oInstance = oInst;
-            return this;
-        }
-    }
-
-    /**
-	 * triggers an event
-	 * @param sEvent {string} event name
-	 * @param params {*} any parameter that will transmitted to the handler
-     * @return {*}
-     */
-    trigger(sEvent, params) {
-        let aArgs = __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].array(arguments);
-        aArgs.shift();
-        let eh = this._oEventHandlers;
-        if (sEvent in eh) {
-			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
-			eh[sEvent].one = [];
-            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
-        }
-		return this.instance();
-    }
-
-    /**
-	 * A private helper to define a handler
-     * @param sEvent {string}
-     * @param sType {string}
-     * @param pHandler {function}
-     * @private
-     */
-	_define(sEvent, sType, pHandler) {
-		let eh = this._oEventHandlers;
-		if (!(sEvent in eh)) {
-			eh[sEvent] = {
-			    on: [],
-                one: []
-            };
-		}
-		eh[sEvent][sType].push(pHandler);
-	}
-
-    /**
-	 * a private method to undefined an event
-     * @param sEvent {string}
-     * @param sType {string}
-     * @param pHandler ({function})
-     * @private
-     */
-	_undefine(sEvent, sType, pHandler) {
-		let eh = this._oEventHandlers;
-		if (!(sEvent in eh)) {
-			return;
-		}
-		eh = eh[sEvent];
-		if (!(sType in eh)) {
-			return;
-		}
-		if (pHandler) {
-			eh[sType] = eh[sType].filter(h => h !== pHandler);
-        } else {
-			eh[sType] = [];
-        }
-	}
-
-    /**
-	 * Defines an event handler, that will be invoked each time the event is triggered
-     * @param sEvent {string}
-     * @param pHandler {function}
-     * @return {Emitter}
-     */
-	on(sEvent, pHandler) {
-		this._define(sEvent, 'on', pHandler);
-		return this;
-	}
-
-    /**
-     * Defines an event handler, that will be invoked only the next time
-	 * the event will be triggered
-     * @param sEvent {string}
-     * @param pHandler {function}
-     * @return {Emitter}
-     */
-	one(sEvent, pHandler) {
-		this._define(sEvent, 'one', pHandler);
-		return this;
-	}
-
-    /**
-	 * unload event handlers
-     * @param sEvent {string}
-     * @param pHandler {function}
-     * @return {Emitter}
-     */
-	off(sEvent, pHandler) {
-        switch (__WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].typeMap(arguments)) {
-            case 's': // turn off handler
-				this._undefine(sEvent, 'on');
-				this._undefine(sEvent, 'one');
-				break;
-
-            case 'sf':
-				this._undefine(sEvent, 'on', pHandler);
-				this._undefine(sEvent, 'one', pHandler);
-				break;
-        }
-		return this;
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Emitter;
-
-
-/***/ }),
 /* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(2);
-/**
- * Created by ralphy on 04/09/17.
- */
-
-
-
-
-class Vector {
-	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
-
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(x.x, x.y);
-		} else {
-			return new Vector(x, y);
-		}
-	}
-
-	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
-	 * @returns {Vector}
-	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
-	}
-
-	/**
-	 * scalar product
-	 * multiplies the vector components by a given value -(vector, point or number)
-	 * @param f {Vector|number}
-	 * @param y ({number})
-	 * @returns {Vector|number}
-	 */
-	mul(f, y) {
-		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
-			return new Vector(this.x * f, this.y * f);
-		} else {
-			return this.mul(new Vector(f, y));
-		}
-	}
-
-	/**
-	 * return the vector distance
-	 * @return {number}
-	 */
-	distance() {
-		return __WEBPACK_IMPORTED_MODULE_1__Helper_js__["a" /* default */].distance(0, 0, this.x, this.y);
-	}
-
-	/**
-	 * returns a normalized version of this vector
-	 * @return {Vector}
-	 */
-	normalize() {
-		return this.mul(1 / this.distance());
-	}
-
-	/**
-	 * returns a zero vector
-	 * @returns {Vector}
-	 */
-	static zero() {
-		return new Vector(0, 0);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
-
-
-/***/ }),
-/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1073,53 +838,318 @@ class Rainbow {
 
 
 /***/ }),
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+class SpellBook {
+    /**
+     * Turns an array-like-structure into an array (a real one)
+     */
+    static array(subject) {
+        const LENGTH_PROPERTY = 'length';
+        if (Array.isArray(subject)) {
+            return subject;
+        }
+        if (typeof subject === 'object') {
+            // is there a length property ?
+            let bLength = LENGTH_PROPERTY in subject;
+            // extracting keys minus "length" property
+            let aKeys = Object
+                .keys(subject)
+                .filter(k => k !== LENGTH_PROPERTY);
+            if (aKeys.some(k => isNaN(k))) {
+                return false;
+            }
+            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
+                return false;
+            }
+            if (aKeys
+                .map(k => parseInt(k))
+                .sort((k1, k2) => k1 - k2)
+                .every((k, i) => k === i)) {
+                return bLength
+                    ? Array.prototype.slice.call(subject, 0)
+                    : aKeys.map(k => subject[k]);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * quickly clones an array into a new one
+     * this method is mainly used for turning "arguments" pseudo array into a real array
+     * @param a {Array|Object}
+     * @return {Array}
+     */
+    static cloneArray(a) {
+        return Array.prototype.slice.call(a, 0)
+    }
+
+    /**
+     * maps an array into a string
+     * converting all elements into there "type" counterpart.
+     * any number element will be turned into "n"
+     * any object element will be turned into "o"
+     * this method is used to quickly switch-case an array according to its elements types.
+     *
+     * example : [222, "abc", [1,2,3], null, {x: 1.00, y: 3.00}]
+     * will produce : "nsauo"
+     * n: number
+     * s: string
+     * b: boolean
+     * o: object
+     * a: real array
+     * f: function
+     * u: undefined / null
+     *
+     * @param aArgs
+     * @return {string}
+     */
+    static typeMap(aArgs) {
+		return this.cloneArray(aArgs).map(function(x) {
+			let tx = (typeof x);
+			switch (tx) {
+				case 'object':
+					if (x === null) {
+						return 'u';
+					} else if (Array.isArray(x)) {
+						return 'a';
+					} else {
+						return 'o';
+					}
+					break;
+
+				default:
+					return tx.charAt(0);
+			}
+		}).join('');
+    }
+
+	/**
+     * Parse a search string (?variable=value)
+     * @param sSearch {string} as in window.search
+	 * @returns {{}}
+	 */
+	static parseSearch(sSearch) {
+		if (sSearch) {
+			let nQuest = sSearch.indexOf('?');
+			if (nQuest >= 0) {
+				sSearch = sSearch.substr(nQuest + 1);
+			} else {
+				return {};
+			}
+		} else {
+			sSearch = window.location.search.substr(1);
+		}
+		let match,
+			pl     = /\+/g,  // Regex for replacing addition symbol with a space
+			search = /([^&=]+)=?([^&]*)/g,
+			query  = sSearch,
+			_decode = function(s) {
+				return decodeURIComponent(s.replace(pl, ' '));
+			};
+		let oURLParams = {};
+		while (match = search.exec(query)) {
+			oURLParams[_decode(match[1])] = _decode(match[2]);
+		}
+		return oURLParams;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
+
+
+/***/ }),
 /* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__ = __webpack_require__(10);
 /**
- * includes all modules
+ * Created by ralphy on 07/09/17.
+ */
+
+/**
+ * A simple helper class
+ */
+class Helper {
+	/**
+	 * Distance between 2 points
+	 * @param x1 {Number} point 1 coordinates
+	 * @param y1 {Number}
+	 * @param x2 {Number} point 2 coordinates
+	 * @param y2 {Number}
+	 * @return {number} distance
+	 */
+	static distance(x1, y1, x2, y2) {
+		let dx = x1 - x2;
+		let dy = y1 - y2;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Helper;
+
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(7);
+/**
+ * Created by ralphy on 07/09/17.
  */
 
 
+/**
+ * this class is similar to the node.js Emitter system
+ * it emits events
+ * client instances may instanciate this class and call methods such as
+ * .on  to defines an event handler
+ * .off to undefined an event handler
+ * .one to define a "one triggered" handler
+ * .trigger to cast an event
+ *
+ */
+class Emitter {
+    constructor() {
+        this._oEventHandlers = {};
+        this._oInstance = null;
+    }
 
+    /**
+	 * defines or returns the client instance associated with this
+     * @param oInst {object}
+     * @return {*}
+     */
+    instance(oInst) {
+        if (oInst === undefined) {
+            return this._oInstance;
+        } else {
+			this._oInstance = oInst;
+            return this;
+        }
+    }
 
+    /**
+	 * triggers an event
+	 * @param sEvent {string} event name
+	 * @param params {*} any parameter that will transmitted to the handler
+     * @return {*}
+     */
+    trigger(sEvent, params) {
+        let aArgs = __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].array(arguments);
+        aArgs.shift();
+        let eh = this._oEventHandlers;
+        if (sEvent in eh) {
+			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
+			eh[sEvent].one = [];
+            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
+        }
+		return this.instance();
+    }
 
+    /**
+	 * A private helper to define a handler
+     * @param sEvent {string}
+     * @param sType {string}
+     * @param pHandler {function}
+     * @private
+     */
+	_define(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			eh[sEvent] = {
+			    on: [],
+                one: []
+            };
+		}
+		eh[sEvent][sType].push(pHandler);
+	}
 
+    /**
+	 * a private method to undefined an event
+     * @param sEvent {string}
+     * @param sType {string}
+     * @param pHandler ({function})
+     * @private
+     */
+	_undefine(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			return;
+		}
+		eh = eh[sEvent];
+		if (!(sType in eh)) {
+			return;
+		}
+		if (pHandler) {
+			eh[sType] = eh[sType].filter(h => h !== pHandler);
+        } else {
+			eh[sType] = [];
+        }
+	}
 
+    /**
+	 * Defines an event handler, that will be invoked each time the event is triggered
+     * @param sEvent {string}
+     * @param pHandler {function}
+     * @return {Emitter}
+     */
+	on(sEvent, pHandler) {
+		this._define(sEvent, 'on', pHandler);
+		return this;
+	}
 
+    /**
+     * Defines an event handler, that will be invoked only the next time
+	 * the event will be triggered
+     * @param sEvent {string}
+     * @param pHandler {function}
+     * @return {Emitter}
+     */
+	one(sEvent, pHandler) {
+		this._define(sEvent, 'one', pHandler);
+		return this;
+	}
 
+    /**
+	 * unload event handlers
+     * @param sEvent {string}
+     * @param pHandler {function}
+     * @return {Emitter}
+     */
+	off(sEvent, pHandler) {
+        switch (__WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].typeMap(arguments)) {
+            case 's': // turn off handler
+				this._undefine(sEvent, 'on');
+				this._undefine(sEvent, 'one');
+				break;
 
-/* harmony default export */ __webpack_exports__["default"] = ({
-	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
-	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
-	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
-	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */],
-	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */],
-	Astar: __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__["a" /* default */]
-});
+            case 'sf':
+				this._undefine(sEvent, 'on', pHandler);
+				this._undefine(sEvent, 'one', pHandler);
+				break;
+        }
+		return this;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Emitter;
+
 
 /***/ }),
-/* 9 */,
 /* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Nood__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__NoodList__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Emitter__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Emitter__ = __webpack_require__(9);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__ = __webpack_require__(0);
 /**
  * Created by ralphy on 06/09/17.
