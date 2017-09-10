@@ -85,4 +85,13 @@ export default class SpellBook {
 			}
 		}).join('');
     }
+
+    static prop(oInstance, sProperty, value) {
+        if (value === undefined) {
+            return oInstance[sProperty];
+        } else {
+            oInstance[sProperty] = value;
+            return oInstance;
+        }
+    }
 }

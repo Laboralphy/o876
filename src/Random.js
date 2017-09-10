@@ -5,25 +5,25 @@
  * used for predictable landscape generation
  */
 
-O2.createClass('O876.Random', {
+import SB from './SpellBook';
 
-	_seed: 1,
+export default class {
 
-	__construct: function() {
-		this._seed = Math.random();
-	},
+	constructor() {
+        this._seed = Math.random();
+	}
 
-	seed: function(x) {
-    	return this.prop('_seed', x);
-	},
+	seed(x) {
+    	return SB.prop(this, '_seed', x);
+	}
 
 
-	_rand: function() {
+	_rand() {
 		return this._seed = Math.abs(((Math.sin(this._seed) * 1e12) % 1e6) / 1e6);
-	},
+	}
 
-	rand: function(a, b) {
-		var r = this._rand();
+	rand(a, b) {
+		let r = this._rand();
 		switch (typeof a) {
 			case "undefined":
 				return r;
@@ -50,6 +50,4 @@ O2.createClass('O876.Random', {
 				return r;
 		}
 	}
-});
-
-O2.mixin(O876.Random, O876.Mixin.Prop);
+}
