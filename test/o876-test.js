@@ -275,6 +275,18 @@ describe('SpellBook', function() {
 			expect(O876.SpellBook.typeMap([1, 0, {}, [], null, true, false, Infinity, undefined, function() {}])).toEqual('nnoaubbnuf');
 		});
 	});
+
+	describe('#parseSearch', function() {
+		it ('should parse a simple query', function() {
+			expect(O876.SpellBook.parseSearch('?x=1&y=5')).toEqual({
+				x: '1',
+				y: '5'
+			});
+			expect(O876.SpellBook.parseSearch('?text=abc+def')).toEqual({
+				text: 'abc def'
+			});
+		});
+	})
 });
 
 
@@ -422,3 +434,4 @@ describe('Astar', function() {
     });
 
 });
+
