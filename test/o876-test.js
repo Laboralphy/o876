@@ -367,14 +367,14 @@ describe('Astar', function() {
 			diagonals: false
 		});
         it('should have initialized grid 7x7 grid', function() {
-            expect(oAstar.aTab.length).toEqual(7);
-            expect(oAstar.aTab[0].length).toEqual(7);
+            expect(oAstar._grid.length).toEqual(7);
+            expect(oAstar._grid[0].length).toEqual(7);
         });
         it('should have property width and height set to 7', function() {
             expect(oAstar.nWidth).toEqual(7);
             expect(oAstar.nHeight).toEqual(7);
         });
-        it('should fiond the way', function() {
+        it('should find the way', function() {
 			const aExpected =
                 [ { x: 5, y: 5 },
                 { x: 5, y: 4 },
@@ -392,5 +392,46 @@ describe('Astar', function() {
 			expect(p).toEqual(aExpected);
         });
 	});
+
+    describe('impossible path', function() {
+        const oAstar = new O876.Astar();
+        oAstar.init({
+            grid: [
+                ('*******').split(''),
+                ('*   * *').split(''),
+                ('*  *  *').split(''),
+                ('* **  *').split(''),
+                ('*  ** *').split(''),
+                ('*  *  *').split(''),
+                ('*******').split('')
+            ],
+            walkable: ' ',
+            diagonals: false
+        });
+        it('should not find path', function() {
+            expect(() => oAstar.find(4, 5, 2, 5)).toThrow(new Error('O876.Astar: no path to destination'));
+        });
+    });
+
+    describe('path is possible via diagonals', function() {
+        const oAstar = new O876.Astar();
+        oAstar.init({
+            grid: [
+                ('*******').split(''),
+                ('*   * *').split(''),
+                ('*  *  *').split(''),
+                ('* **  *').split(''),
+                ('*  ** *').split(''),
+                ('*  *  *').split(''),
+                ('*******').split('')
+            ],
+            walkable: ' ',
+            diagonals: true
+        });
+        it('should not find path', function() {
+            expect(Array.isArray(oAstar.find(4, 5, 2, 5))).toBeTruthy();
+        });
+    });
+
 });
 

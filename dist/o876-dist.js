@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 9);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,7 +71,7 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(2);
 /**
  * Created by ralphy on 04/09/17.
  */
@@ -102,98 +102,104 @@ class Point {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(8);
 /**
- * Created by ralphy on 04/09/17.
+ * Created by ralphy on 07/09/17.
  */
 
+class SpellBook {
+    /**
+     * Turns an array-like-structure into an array (a real one)
+     */
+    static array(subject) {
+        const LENGTH_PROPERTY = 'length';
+        if (Array.isArray(subject)) {
+            return subject;
+        }
+        if (typeof subject === 'object') {
+            // is there a length property ?
+            let bLength = LENGTH_PROPERTY in subject;
+            // extracting keys minus "length" property
+            let aKeys = Object
+                .keys(subject)
+                .filter(k => k !== LENGTH_PROPERTY);
+            if (aKeys.some(k => isNaN(k))) {
+                return false;
+            }
+            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
+                return false;
+            }
+            if (aKeys
+                .map(k => parseInt(k))
+                .sort((k1, k2) => k1 - k2)
+                .every((k, i) => k === i)) {
+                return bLength
+                    ? Array.prototype.slice.call(subject, 0)
+                    : aKeys.map(k => subject[k]);
+            }
+        }
+        return false;
+    }
 
+    /**
+     * quickly clones an array into a new one
+     * this method is mainly used for turning "arguments" pseudo array into a real array
+     * @param a {Array|Object}
+     * @return {Array}
+     */
+    static cloneArray(a) {
+        return Array.prototype.slice.call(a, 0)
+    }
 
+    /**
+     * maps an array into a string
+     * converting all elements into there "type" counterpart.
+     * any number element will be turned into "n"
+     * any object element will be turned into "o"
+     * this method is used to quickly switch-case an array according to its elements types.
+     *
+     * example : [222, "abc", [1,2,3], null, {x: 1.00, y: 3.00}]
+     * will produce : "nsauo"
+     * n: number
+     * s: string
+     * b: boolean
+     * o: object
+     * a: real array
+     * f: function
+     * u: undefined / null
+     *
+     * @param aArgs
+     * @return {string}
+     */
+    static typeMap(aArgs) {
+		return this.cloneArray(aArgs).map(function(x) {
+			let tx = (typeof x);
+			switch (tx) {
+				case 'object':
+					if (x === null) {
+						return 'u';
+					} else if (Array.isArray(x)) {
+						return 'a';
+					} else {
+						return 'o';
+					}
+					break;
 
-class Vector {
-	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
+				default:
+					return tx.charAt(0);
+			}
+		}).join('');
+    }
 
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(x.x, x.y);
-		} else {
-			return new Vector(x, y);
-		}
-	}
-
-	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
-	 * @returns {Vector}
-	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
-	}
-
-	/**
-	 * scalar product
-	 * multiplies the vector components by a given value -(vector, point or number)
-	 * @param f {Vector|number}
-	 * @param y ({number})
-	 * @returns {Vector|number}
-	 */
-	mul(f, y) {
-		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
-			return new Vector(this.x * f, this.y * f);
-		} else {
-			return this.mul(new Vector(f, y));
-		}
-	}
-
-	/**
-	 * return the vector distance
-	 * @return {number}
-	 */
-	distance() {
-		return __WEBPACK_IMPORTED_MODULE_1__Helper_js__["a" /* default */].distance(0, 0, this.x, this.y);
-	}
-
-	/**
-	 * returns a normalized version of this vector
-	 * @return {Vector}
-	 */
-	normalize() {
-		return this.mul(1 / this.distance());
-	}
-
-	/**
-	 * returns a zero vector
-	 * @returns {Vector}
-	 */
-	static zero() {
-		return new Vector(0, 0);
-	}
+    static prop(oInstance, sProperty, value) {
+        if (value === undefined) {
+            return oInstance[sProperty];
+        } else {
+            oInstance[sProperty] = value;
+            return oInstance;
+        }
+    }
 }
-/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
+/* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
 
 
 /***/ }),
@@ -201,17 +207,191 @@ class Vector {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter_js__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__ = __webpack_require__(10);
 /**
- * includes all modules
+ * Created by ralphy on 07/09/17.
+ */
+
+/**
+ * A simple helper class
+ */
+class Helper {
+	/**
+	 * Distance between 2 points
+	 * @param x1 {Number} point 1 coordinates
+	 * @param y1 {Number}
+	 * @param x2 {Number} point 2 coordinates
+	 * @param y2 {Number}
+	 * @return {number} distance
+	 */
+	static distance(x1, y1, x2, y2) {
+		let dx = x1 - x2;
+		let dy = y1 - y2;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Helper;
+
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__SpellBook__ = __webpack_require__(1);
+/**
+ * Created by ralphy on 07/09/17.
+ */
+
+
+/**
+ * this class is similar to the node.js Emitter system
+ * it emits events
+ * client instances may instanciate this class and call methods such as
+ * .on  to defines an event handler
+ * .off to undefined an event handler
+ * .one to define a "one triggered" handler
+ * .trigger to cast an event
+ *
+ */
+
+
+
+class Emitter {
+    constructor() {
+        this._oEventHandlers = {};
+        this._oInstance = null;
+    }
+
+    /**
+	 * defines or returns the client instance associated with this
+     * @param oInst {object}
+     * @return {*}
+     */
+    instance(oInst) {
+    	return __WEBPACK_IMPORTED_MODULE_1__SpellBook__["a" /* default */].prop(this, '_oInstance', oInst);
+    }
+
+    /**
+	 * triggers an event
+	 * @param sEvent {string} event name
+	 * @param params {*} any parameter that will transmitted to the handler
+     * @return {*}
+     */
+    trigger(sEvent, params) {
+        let aArgs = __WEBPACK_IMPORTED_MODULE_1__SpellBook__["a" /* default */].array(arguments);
+        aArgs.shift();
+        let eh = this._oEventHandlers;
+        if (sEvent in eh) {
+			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
+			eh[sEvent].one = [];
+            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
+        }
+		return this.instance();
+    }
+
+    /**
+	 * A private helper to define a handler
+     * @param sEvent {string}
+     * @param sType {string}
+     * @param pHandler {function}
+     * @private
+     */
+	_define(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			eh[sEvent] = {
+			    on: [],
+                one: []
+            };
+		}
+		eh[sEvent][sType].push(pHandler);
+	}
+
+    /**
+	 * a private method to undefined an event
+     * @param sEvent {string}
+     * @param sType {string}
+     * @param pHandler ({function})
+     * @private
+     */
+	_undefine(sEvent, sType, pHandler) {
+		let eh = this._oEventHandlers;
+		if (!(sEvent in eh)) {
+			return;
+		}
+		eh = eh[sEvent];
+		if (!(sType in eh)) {
+			return;
+		}
+		if (pHandler) {
+			eh[sType] = eh[sType].filter(h => h !== pHandler);
+        } else {
+			eh[sType] = [];
+        }
+	}
+
+    /**
+	 * Defines an event handler, that will be invoked each time the event is triggered
+     * @param sEvent {string}
+     * @param pHandler {function}
+     * @return {Emitter}
+     */
+	on(sEvent, pHandler) {
+		this._define(sEvent, 'on', pHandler);
+		return this;
+	}
+
+    /**
+     * Defines an event handler, that will be invoked only the next time
+	 * the event will be triggered
+     * @param sEvent {string}
+     * @param pHandler {function}
+     * @return {Emitter}
+     */
+	one(sEvent, pHandler) {
+		this._define(sEvent, 'one', pHandler);
+		return this;
+	}
+
+    /**
+	 * unload event handlers
+     * @param sEvent {string}
+     * @param pHandler {function}
+     * @return {Emitter}
+     */
+	off(sEvent, pHandler) {
+        switch (__WEBPACK_IMPORTED_MODULE_1__SpellBook__["a" /* default */].typeMap(arguments)) {
+            case 's': // turn off handler
+				this._undefine(sEvent, 'on');
+				this._undefine(sEvent, 'one');
+				break;
+
+            case 'sf':
+				this._undefine(sEvent, 'on', pHandler);
+				this._undefine(sEvent, 'one', pHandler);
+				break;
+        }
+		return this;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Emitter;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Nood__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__NoodList__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Emitter__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(1);
+/**
+ * Created by ralphy on 06/09/17.
  */
 
 
@@ -222,21 +402,255 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+/**
+ * @class
+ * this class is an implementation of a-star path finding algorithm
+ * how to use :
+ * const pf = new Astar()
+ * pf.init({
+ * 	grid: [[][]..] give a 2D array of cells here
+ * 	walkable: code for walkable cell in the grid
+ * 	diagonals: true if you want to allow diagonal moves
+ * 	max: maximum iteration (act as watch dog)
+ * })
+ * pf.find(xfrom, yfrom, xto, yto)
+ */
+/* harmony default export */ __webpack_exports__["a"] = (class {
+	constructor() {
+		this.bUseDiagonals = false;
+		this.MAX_ITERATIONS = 2048;
+		this.nIterations = 0;
+		this._grid = null;
+		this.nWidth = 0;
+		this.nHeight = 0;
+		this.oOpList = null;
+		this.oClList = null;
+		this.aPath = null;
+		this.GRID_BLOCK_WALKABLE = 0;
+		this.emitter = new __WEBPACK_IMPORTED_MODULE_3__Emitter__["a" /* default */]();
+        this.emitter.instance(this);
+	}
 
-/* harmony default export */ __webpack_exports__["default"] = ({
-	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__["a" /* default */],
-	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector_js__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham_js__["a" /* default */],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing_js__["a" /* default */],
-	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow_js__["a" /* default */],
-	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook_js__["a" /* default */],
-	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter_js__["a" /* default */],
-	Astar: __WEBPACK_IMPORTED_MODULE_7__Astar_Astar_js__["a" /* default */]
+    /**
+	 * Set a new grid, or ask for the current one
+	 * @param g {(array)}
+	 * @return {array|object}
+     */
+    grid(g) {
+    	if (g !== undefined) {
+            this.nHeight = g.length;
+            this.nWidth = g[0].length;
+		}
+    	return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, '_grid', g);
+	}
+
+	/**
+	 * initialize the grid
+	 * {
+	 * 		grid: [[......][.......]....],  // 2Dim Array containing the grid
+	 * 		diagonals: {bool} use the diagonals
+	 * 		max: (watch dog)
+	 *		walkable : specify a walkable code
+	 * }
+     * @param c {object}
+     * @param c.grid {array}
+     * @param c.diagonals {boolean}
+     * @param c.max {number}
+     * @param c.walkable {number}
+	 */
+	init(c) {
+		if ('grid' in c) {
+			this.grid(c.grid);
+		}
+		if ('diagonals' in c) {
+			this.bUseDiagonals = c.diagonals;
+		}
+		if ('max' in c) {
+			this.MAX_ITERATIONS = c.max;
+		}
+		if ('walkable' in c) {
+			this.GRID_BLOCK_WALKABLE = c.walkable;
+		}
+	}
+
+	/**
+	 * resets the grid
+	 */
+	reset() {
+		this.oOpList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
+		this.oClList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
+		this.aPath = [];
+		this.nIterations = 0;
+	}
+
+    /**
+	 * modifies a cell value
+     */
+	setCell(x, y, n) {
+		if (this._grid[y] !== undefined && this._grid[y][x] !== undefined) {
+			this._grid[y][x] = n;
+		} else {
+			throw new Error(
+				'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
+		}
+	}
+
+	getCell(x, y) {
+		if (this._grid[y]) {
+			if (x < this._grid[y].length) {
+				return this._grid[y][x];
+			}
+		}
+		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
+	}
+
+	cell(x, y, v) {
+		if (v === undefined) {
+			return this.getCell(x, y);
+		} else {
+			this.setCell(x, y, v);
+			return this;
+		}
+	}
+
+	isCellWalkable(x, y) {
+		try {
+			let r = {
+				walkable: this.getCell(x, y) === this.GRID_BLOCK_WALKABLE,
+				cell: {
+					x: x,
+					y: y
+				}
+			};
+			this.emitter.trigger('walkable', r);
+			return r.walkable;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	closeNood(x, y) {
+		let n = this.oOpList.get(x, y);
+		if (n) {
+			this.oClList.set(x, y, n);
+			this.oOpList.del(x, y);
+		}
+	}
+
+	addAdjacent(x, y, xArrival, yArrival) {
+		let i, j;
+		let i0, j0;
+		let oTmp;
+		let w = this.nWidth, h = this.nHeight, bDiag = this.bUseDiagonals;
+		for (i0 = -1; i0 <= 1; i0++) {
+			i = x + i0;
+			if ((i < 0) || (i >= w)) {
+				continue;
+			}
+			for (j0 = -1; j0 <= 1; j0++) {
+				if (!bDiag && (j0 * i0) !== 0) {
+					continue;
+				}
+				j = y + j0;
+				if ((j < 0) || (j >= h)) {
+					continue;
+				}
+				if ((i === x) && (j === y)) {
+					continue;
+				}
+				if (!this.isCellWalkable(i, j)) {
+					continue;
+				}
+
+				if (!this.oClList.exists(i, j)) {
+					oTmp = new __WEBPACK_IMPORTED_MODULE_1__Nood__["a" /* default */]();
+					oTmp.fGCost = this.oClList.get(x, y).fGCost	+ __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__["a" /* default */].distance(i, j, x, y);
+					oTmp.fHCost = __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__["a" /* default */].distance(i, j, xArrival, yArrival);
+					oTmp.fFCost = oTmp.fGCost + oTmp.fHCost;
+					oTmp.oPos = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](i, j);
+					oTmp.oParent = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](x, y);
+
+					if (this.oOpList.exists(i, j)) {
+						if (oTmp.fFCost < this.oOpList.get(i, j).fFCost) {
+							this.oOpList.set(i, j, oTmp);
+						}
+					} else {
+						this.oOpList.set(i, j, oTmp);
+					}
+				}
+			}
+		}
+	}
+
+	// Recherche le meilleur noeud de la liste et le renvoi
+	bestNood(oList) {
+		let oBest = null;
+		let oNood;
+
+		for (let iNood in oList.oList) {
+			oNood = oList.oList[iNood];
+			if (oBest === null) {
+				oBest = oNood;
+			} else if (oNood.fFCost < oBest.fFCost) {
+				oBest = oNood;
+			}
+		}
+		return oBest;
+	}
+
+	find(xFrom, yFrom, xTo, yTo) {
+		this.reset();
+		let oBest;
+		let oDepart = new __WEBPACK_IMPORTED_MODULE_1__Nood__["a" /* default */]();
+		oDepart.oPos = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](xFrom, yFrom);
+		oDepart.oParent = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](xFrom, yFrom);
+		let xCurrent = xFrom;
+		let yCurrent = yFrom;
+		this.oOpList.add(oDepart);
+		this.closeNood(xCurrent, yCurrent);
+		this.addAdjacent(xCurrent, yCurrent, xTo, yTo);
+
+		let iIter = 0, MAX = this.MAX_ITERATIONS;
+
+		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
+			oBest = this.bestNood(this.oOpList);
+			if (!oBest) {
+				// could not find path
+                throw new Error('O876.Astar: no path to destination');
+			}
+			xCurrent = oBest.oPos.x;
+			yCurrent = oBest.oPos.y;
+			this.closeNood(xCurrent, yCurrent);
+			this.addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
+			if (++iIter > MAX) {
+				throw new Error('O876.Astar: too much iterations');
+			}
+		}
+		if (this.oOpList.empty() && !((xCurrent === xTo) && (yCurrent === yTo))) {
+			throw new Error('O876.Astar: no path to destination');
+		}
+		this.nIterations = iIter;
+		this.buildPath(xTo, yTo);
+		return this.aPath;
+	}
+
+	buildPath(xTo, yTo) {
+		let oCursor = this.oClList.get(xTo, yTo);
+		if (oCursor !== null) {
+			while (!oCursor.isRoot()) {
+				this.aPath.unshift({
+					x: oCursor.oPos.x,
+					y: oCursor.oPos.y
+				});
+				oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
+			}
+		}
+	}
 });
 
+
 /***/ }),
-/* 3 */,
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -301,7 +715,7 @@ class Bresenham {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -485,7 +899,106 @@ class Easing {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(2);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+
+class Vector {
+	constructor(x, y) {
+		this.x = x || 0;
+		this.y = y || 0;
+	}
+
+	/**
+	 * Returns a copy of this vector
+	 * @returns {Vector}
+	 */
+	clone() {
+		return new Vector(this.x, this.y);
+	}
+
+	/**
+	 * Will return a nbew vector with the given initializers
+	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
+	 * @param y {number}
+	 */
+	static set(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(x.x, x.y);
+		} else {
+			return new Vector(x, y);
+		}
+	}
+
+	/**
+	 * adds a Point or a Vector to this vector
+	 * @param x {Vector|Point|number}
+	 * @param y {number}
+	 * @returns {Vector}
+	 */
+	add(x, y) {
+		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return new Vector(this.x + x.x, this.y + x.y);
+		} else {
+			return new Vector(this.x + x, this.y + y);
+		}
+	}
+
+	/**
+	 * scalar product
+	 * multiplies the vector components by a given value -(vector, point or number)
+	 * @param f {Vector|number}
+	 * @param y ({number})
+	 * @returns {Vector|number}
+	 */
+	mul(f, y) {
+		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
+			return this.x * x.x + this.y * x.y;
+		} else if (y === undefined) {
+			return new Vector(this.x * f, this.y * f);
+		} else {
+			return this.mul(new Vector(f, y));
+		}
+	}
+
+	/**
+	 * return the vector distance
+	 * @return {number}
+	 */
+	distance() {
+		return __WEBPACK_IMPORTED_MODULE_1__Helper_js__["a" /* default */].distance(0, 0, this.x, this.y);
+	}
+
+	/**
+	 * returns a normalized version of this vector
+	 * @return {Vector}
+	 */
+	normalize() {
+		return this.mul(1 / this.distance());
+	}
+
+	/**
+	 * returns a zero vector
+	 * @returns {Vector}
+	 */
+	static zero() {
+		return new Vector(0, 0);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Vector;
+
+
+/***/ }),
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -838,559 +1351,48 @@ class Rainbow {
 
 
 /***/ }),
-/* 7 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/**
- * Created by ralphy on 07/09/17.
- */
-
-class SpellBook {
-    /**
-     * Turns an array-like-structure into an array (a real one)
-     */
-    static array(subject) {
-        const LENGTH_PROPERTY = 'length';
-        if (Array.isArray(subject)) {
-            return subject;
-        }
-        if (typeof subject === 'object') {
-            // is there a length property ?
-            let bLength = LENGTH_PROPERTY in subject;
-            // extracting keys minus "length" property
-            let aKeys = Object
-                .keys(subject)
-                .filter(k => k !== LENGTH_PROPERTY);
-            if (aKeys.some(k => isNaN(k))) {
-                return false;
-            }
-            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
-                return false;
-            }
-            if (aKeys
-                .map(k => parseInt(k))
-                .sort((k1, k2) => k1 - k2)
-                .every((k, i) => k === i)) {
-                return bLength
-                    ? Array.prototype.slice.call(subject, 0)
-                    : aKeys.map(k => subject[k]);
-            }
-        }
-        return false;
-    }
-
-    /**
-     * quickly clones an array into a new one
-     * this method is mainly used for turning "arguments" pseudo array into a real array
-     * @param a {Array|Object}
-     * @return {Array}
-     */
-    static cloneArray(a) {
-        return Array.prototype.slice.call(a, 0)
-    }
-
-    /**
-     * maps an array into a string
-     * converting all elements into there "type" counterpart.
-     * any number element will be turned into "n"
-     * any object element will be turned into "o"
-     * this method is used to quickly switch-case an array according to its elements types.
-     *
-     * example : [222, "abc", [1,2,3], null, {x: 1.00, y: 3.00}]
-     * will produce : "nsauo"
-     * n: number
-     * s: string
-     * b: boolean
-     * o: object
-     * a: real array
-     * f: function
-     * u: undefined / null
-     *
-     * @param aArgs
-     * @return {string}
-     */
-    static typeMap(aArgs) {
-		return this.cloneArray(aArgs).map(function(x) {
-			let tx = (typeof x);
-			switch (tx) {
-				case 'object':
-					if (x === null) {
-						return 'u';
-					} else if (Array.isArray(x)) {
-						return 'a';
-					} else {
-						return 'o';
-					}
-					break;
-
-				default:
-					return tx.charAt(0);
-			}
-		}).join('');
-    }
-
-	/**
-     * Parse a search string (?variable=value)
-     * @param sSearch {string} as in window.search
-	 * @returns {{}}
-	 */
-	static parseSearch(sSearch) {
-		if (sSearch) {
-			let nQuest = sSearch.indexOf('?');
-			if (nQuest >= 0) {
-				sSearch = sSearch.substr(nQuest + 1);
-			} else {
-				return {};
-			}
-		} else {
-			sSearch = window.location.search.substr(1);
-		}
-		let match,
-			pl     = /\+/g,  // Regex for replacing addition symbol with a space
-			search = /([^&=]+)=?([^&]*)/g,
-			query  = sSearch,
-			_decode = function(s) {
-				return decodeURIComponent(s.replace(pl, ' '));
-			};
-		let oURLParams = {};
-		while (match = search.exec(query)) {
-			oURLParams[_decode(match[1])] = _decode(match[2]);
-		}
-		return oURLParams;
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/**
- * Created by ralphy on 07/09/17.
- */
-
-/**
- * A simple helper class
- */
-class Helper {
-	/**
-	 * Distance between 2 points
-	 * @param x1 {Number} point 1 coordinates
-	 * @param y1 {Number}
-	 * @param x2 {Number} point 2 coordinates
-	 * @param y2 {Number}
-	 * @return {number} distance
-	 */
-	static distance(x1, y1, x2, y2) {
-		let dx = x1 - x2;
-		let dy = y1 - y2;
-		return Math.sqrt(dx * dx + dy * dy);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Helper;
-
-
-
-/***/ }),
 /* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(7);
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__Random__ = __webpack_require__(13);
 /**
- * Created by ralphy on 07/09/17.
+ * includes all modules
  */
 
 
-/**
- * this class is similar to the node.js Emitter system
- * it emits events
- * client instances may instanciate this class and call methods such as
- * .on  to defines an event handler
- * .off to undefined an event handler
- * .one to define a "one triggered" handler
- * .trigger to cast an event
- *
- */
-class Emitter {
-    constructor() {
-        this._oEventHandlers = {};
-        this._oInstance = null;
-    }
 
-    /**
-	 * defines or returns the client instance associated with this
-     * @param oInst {object}
-     * @return {*}
-     */
-    instance(oInst) {
-        if (oInst === undefined) {
-            return this._oInstance;
-        } else {
-			this._oInstance = oInst;
-            return this;
-        }
-    }
 
-    /**
-	 * triggers an event
-	 * @param sEvent {string} event name
-	 * @param params {*} any parameter that will transmitted to the handler
-     * @return {*}
-     */
-    trigger(sEvent, params) {
-        let aArgs = __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].array(arguments);
-        aArgs.shift();
-        let eh = this._oEventHandlers;
-        if (sEvent in eh) {
-			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
-			eh[sEvent].one = [];
-            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
-        }
-		return this.instance();
-    }
 
-    /**
-	 * A private helper to define a handler
-     * @param sEvent {string}
-     * @param sType {string}
-     * @param pHandler {function}
-     * @private
-     */
-	_define(sEvent, sType, pHandler) {
-		let eh = this._oEventHandlers;
-		if (!(sEvent in eh)) {
-			eh[sEvent] = {
-			    on: [],
-                one: []
-            };
-		}
-		eh[sEvent][sType].push(pHandler);
-	}
 
-    /**
-	 * a private method to undefined an event
-     * @param sEvent {string}
-     * @param sType {string}
-     * @param pHandler ({function})
-     * @private
-     */
-	_undefine(sEvent, sType, pHandler) {
-		let eh = this._oEventHandlers;
-		if (!(sEvent in eh)) {
-			return;
-		}
-		eh = eh[sEvent];
-		if (!(sType in eh)) {
-			return;
-		}
-		if (pHandler) {
-			eh[sType] = eh[sType].filter(h => h !== pHandler);
-        } else {
-			eh[sType] = [];
-        }
-	}
 
-    /**
-	 * Defines an event handler, that will be invoked each time the event is triggered
-     * @param sEvent {string}
-     * @param pHandler {function}
-     * @return {Emitter}
-     */
-	on(sEvent, pHandler) {
-		this._define(sEvent, 'on', pHandler);
-		return this;
-	}
 
-    /**
-     * Defines an event handler, that will be invoked only the next time
-	 * the event will be triggered
-     * @param sEvent {string}
-     * @param pHandler {function}
-     * @return {Emitter}
-     */
-	one(sEvent, pHandler) {
-		this._define(sEvent, 'one', pHandler);
-		return this;
-	}
 
-    /**
-	 * unload event handlers
-     * @param sEvent {string}
-     * @param pHandler {function}
-     * @return {Emitter}
-     */
-	off(sEvent, pHandler) {
-        switch (__WEBPACK_IMPORTED_MODULE_0__SpellBook_js__["a" /* default */].typeMap(arguments)) {
-            case 's': // turn off handler
-				this._undefine(sEvent, 'on');
-				this._undefine(sEvent, 'one');
-				break;
 
-            case 'sf':
-				this._undefine(sEvent, 'on', pHandler);
-				this._undefine(sEvent, 'one', pHandler);
-				break;
-        }
-		return this;
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Emitter;
 
+/* harmony default export */ __webpack_exports__["default"] = ({
+	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__["a" /* default */],
+	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__["a" /* default */],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham__["a" /* default */],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing__["a" /* default */],
+	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow__["a" /* default */],
+	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */],
+	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter__["a" /* default */],
+	Astar: __WEBPACK_IMPORTED_MODULE_7__Astar_Astar__["a" /* default */],
+	Random: __WEBPACK_IMPORTED_MODULE_8__Random__["a" /* default */]
+});
 
 /***/ }),
 /* 10 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Nood__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__NoodList__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Emitter__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__ = __webpack_require__(0);
-/**
- * Created by ralphy on 06/09/17.
- */
-
-
-
-
-
-
-
-
-/**
- * This class is a grid.
- */
-/* harmony default export */ __webpack_exports__["a"] = (class {
-	constructor() {
-		this.bUseDiagonals = false;
-		this.MAX_ITERATIONS = 2048;
-		this.nIterations = 0;
-		this.aTab = null;
-		this.nWidth = 0;
-		this.nHeight = 0;
-		this.oOpList = null;
-		this.oClList = null;
-		this.aPath = null;
-		this.xLast = 0;
-		this.yLast = 0;
-		this.nLastDir = 0;
-		this.GRID_BLOCK_WALKABLE = 0;
-		this.emitter = new __WEBPACK_IMPORTED_MODULE_3__Emitter__["a" /* default */]();
-        this.emitter.instance(this);
-	}
-
-	/**
-	 * initialize the grid
-	 * {
-	 * 		grid: [[......][.......]....],  // 2Dim Array containing the grid
-	 * 		diagonals: {bool} use the diagonals
-	 * 		max: (watch dog)
-	 *		walkable : specify a walkable code
-	 * }
-     * @param c {object}
-     * @param c.grid {array}
-     * @param c.diagonals {boolean}
-     * @param c.max {number}
-     * @param c.walkable {number}
-	 */
-	init(c) {
-		if ('grid' in c) {
-			this.aTab = c.grid;
-			this.nHeight = c.grid.length;
-			this.nWidth = c.grid[0].length;
-		}
-		if ('diagonals' in c) {
-			this.bUseDiagonals = c.diagonals;
-		}
-		if ('max' in c) {
-			this.MAX_ITERATIONS = c.max;
-		}
-		if ('walkable' in c) {
-			this.GRID_BLOCK_WALKABLE = c.walkable;
-		}
-	}
-
-	/**
-	 * resets the grid
-	 */
-	reset() {
-		this.oOpList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
-		this.oClList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
-		this.aPath = [];
-		this.nIterations = 0;
-	}
-
-    /**
-	 * modifies a cell value
-     */
-	setCell(x, y, n) {
-		if (this.aTab[y] !== undefined && this.aTab[y][x] !== undefined) {
-			this.aTab[y][x] = n;
-		} else {
-			throw new Error(
-				'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
-		}
-	}
-
-	getCell(x, y) {
-		if (this.aTab[y]) {
-			if (x < this.aTab[y].length) {
-				return this.aTab[y][x];
-			}
-		}
-		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
-	}
-
-	cell(x, y, v) {
-		if (v === undefined) {
-			return this.getCell(x, y);
-		} else {
-			this.setCell(x, y, v);
-			return this;
-		}
-	}
-
-	isCellWalkable(x, y) {
-		try {
-			let r = {
-				walkable: this.getCell(x, y) === this.GRID_BLOCK_WALKABLE,
-				cell: {
-					x: x,
-					y: y
-				}
-			};
-			this.emitter.trigger('walkable', r);
-			return r.walkable;
-		} catch (e) {
-			return false;
-		}
-	}
-
-	closeNood(x, y) {
-		let n = this.oOpList.get(x, y);
-		if (n) {
-			this.oClList.set(x, y, n);
-			this.oOpList.del(x, y);
-		}
-	}
-
-	addAdjacent(x, y, xArrivee, yArrivee) {
-		let i, j;
-		let i0, j0;
-		let oTmp;
-		for (i0 = -1; i0 <= 1; i0++) {
-			i = x + i0;
-			if ((i < 0) || (i >= this.nWidth)) {
-				continue;
-			}
-			for (j0 = -1; j0 <= 1; j0++) {
-				if (!this.bUseDiagonals && (j0 * i0) !== 0) {
-					continue;
-				}
-				j = y + j0;
-				if ((j < 0) || (j >= this.nHeight)) {
-					continue;
-				}
-				if ((i === x) && (j === y)) {
-					continue;
-				}
-				if (!this.isCellWalkable(i, j)) {
-					continue;
-				}
-
-				if (!this.oClList.exists(i, j)) {
-					oTmp = new __WEBPACK_IMPORTED_MODULE_1__Nood__["a" /* default */]();
-					oTmp.fGCost = this.oClList.get(x, y).fGCost	+ __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__["a" /* default */].distance(i, j, x, y);
-					oTmp.fHCost = __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__["a" /* default */].distance(i, j, xArrivee,	yArrivee);
-					oTmp.fFCost = oTmp.fGCost + oTmp.fHCost;
-					oTmp.oPos = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](i, j);
-					oTmp.oParent = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](x, y);
-
-					if (this.oOpList.exists(i, j)) {
-						if (oTmp.fFCost < this.oOpList.get(i, j).fFCost) {
-							this.oOpList.set(i, j, oTmp);
-						}
-					} else {
-						this.oOpList.set(i, j, oTmp);
-					}
-				}
-			}
-		}
-	}
-
-	// Recherche le meilleur noeud de la liste et le renvoi
-	bestNood(oList) {
-		let oBest = null;
-		let oNood;
-
-		for (let iNood in oList.oList) {
-			oNood = oList.oList[iNood];
-			if (oBest === null) {
-				oBest = oNood;
-			} else if (oNood.fFCost < oBest.fFCost) {
-				oBest = oNood;
-			}
-		}
-		if (oBest === null) {
-			console.log(oList.oList);
-		}
-		return oBest;
-	}
-
-	find(xFrom, yFrom, xTo, yTo) {
-		this.reset();
-		let oBest;
-		let oDepart = new __WEBPACK_IMPORTED_MODULE_1__Nood__["a" /* default */]();
-		oDepart.oPos = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](xFrom, yFrom);
-		oDepart.oParent = new __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__["a" /* default */](xFrom, yFrom);
-		let xCurrent = xFrom;
-		let yCurrent = yFrom;
-		this.oOpList.add(oDepart);
-		this.closeNood(xCurrent, yCurrent);
-		this.addAdjacent(xCurrent, yCurrent, xTo, yTo);
-
-		let iIter = 0, MAX = this.MAX_ITERATIONS;
-
-		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
-			oBest = this.bestNood(this.oOpList);
-			xCurrent = oBest.oPos.x;
-			yCurrent = oBest.oPos.y;
-			this.closeNood(xCurrent, yCurrent);
-			this.addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
-			if (++iIter > MAX) {
-				throw new Error('O876.Astar: too much iterations');
-			}
-		}
-		if (this.oOpList.empty() && !((xCurrent === xTo) && (yCurrent === yTo))) {
-			throw new Error('O876.Astar: no path to destination');
-		}
-		this.nIterations = iIter;
-		this.buildPath(xTo, yTo);
-		return this.aPath;
-	}
-
-	buildPath(xTo, yTo) {
-		let oCursor = this.oClList.get(xTo, yTo);
-		if (oCursor !== null) {
-			while (!oCursor.isRoot()) {
-				this.aPath.unshift({
-					x: oCursor.oPos.x,
-					y: oCursor.oPos.y
-				});
-				oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
-			}
-		}
-	}
-});
-
-
-/***/ }),
-/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1419,7 +1421,7 @@ class Nood {
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1511,6 +1513,68 @@ class NoodList {
 	}
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = NoodList;
+
+
+/***/ }),
+/* 12 */,
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook__ = __webpack_require__(1);
+/**
+ * @class O876.Random
+ * a FALSE random very false...
+ * generated random numbers, with seed
+ * used for predictable landscape generation
+ */
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (class {
+
+	constructor() {
+        this._seed = Math.random();
+	}
+
+	seed(x) {
+    	return __WEBPACK_IMPORTED_MODULE_0__SpellBook__["a" /* default */].prop(this, '_seed', x);
+	}
+
+
+	_rand() {
+		return this._seed = Math.abs(((Math.sin(this._seed) * 1e12) % 1e6) / 1e6);
+	}
+
+	rand(a, b) {
+		let r = this._rand();
+		switch (typeof a) {
+			case "undefined":
+				return r;
+				
+			case "number":
+				if (b === undefined) {
+					b = a - 1;
+					a = 0;
+				}
+				return Math.max(a, Math.min(b, (b - a + 1) * r + a | 0));
+			
+			case "object":
+				if (Array.isArray(a)) {
+					if (a.length > 0) {
+						return a[r * a.length | 0];
+					} else {
+						return undefined;
+					}
+				} else {
+					return this.rand(Object.keys(a));
+				}
+				
+			default:
+				return r;
+		}
+	}
+});
 
 
 /***/ })

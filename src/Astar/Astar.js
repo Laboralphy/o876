@@ -7,28 +7,49 @@ import Nood from './Nood';
 import NoodList from './NoodList';
 import Emitter from '../Emitter';
 import Point from '../Geometry/Point';
+import SB from '../SpellBook'
 
 
 /**
- * This class is a grid.
+ * @class
+ * this class is an implementation of a-star path finding algorithm
+ * how to use :
+ * const pf = new Astar()
+ * pf.init({
+ * 	grid: [[][]..] give a 2D array of cells here
+ * 	walkable: code for walkable cell in the grid
+ * 	diagonals: true if you want to allow diagonal moves
+ * 	max: maximum iteration (act as watch dog)
+ * })
+ * pf.find(xfrom, yfrom, xto, yto)
  */
 export default class {
 	constructor() {
 		this.bUseDiagonals = false;
 		this.MAX_ITERATIONS = 2048;
 		this.nIterations = 0;
-		this.aTab = null;
+		this._grid = null;
 		this.nWidth = 0;
 		this.nHeight = 0;
 		this.oOpList = null;
 		this.oClList = null;
 		this.aPath = null;
-		this.xLast = 0;
-		this.yLast = 0;
-		this.nLastDir = 0;
 		this.GRID_BLOCK_WALKABLE = 0;
 		this.emitter = new Emitter();
         this.emitter.instance(this);
+	}
+
+    /**
+	 * Set a new grid, or ask for the current one
+	 * @param g {(array)}
+	 * @return {array|object}
+     */
+    grid(g) {
+    	if (g !== undefined) {
+            this.nHeight = g.length;
+            this.nWidth = g[0].length;
+		}
+    	return SB.prop(this, '_grid', g);
 	}
 
 	/**
@@ -47,9 +68,7 @@ export default class {
 	 */
 	init(c) {
 		if ('grid' in c) {
-			this.aTab = c.grid;
-			this.nHeight = c.grid.length;
-			this.nWidth = c.grid[0].length;
+			this.grid(c.grid);
 		}
 		if ('diagonals' in c) {
 			this.bUseDiagonals = c.diagonals;
@@ -76,8 +95,8 @@ export default class {
 	 * modifies a cell value
      */
 	setCell(x, y, n) {
-		if (this.aTab[y] !== undefined && this.aTab[y][x] !== undefined) {
-			this.aTab[y][x] = n;
+		if (this._grid[y] !== undefined && this._grid[y][x] !== undefined) {
+			this._grid[y][x] = n;
 		} else {
 			throw new Error(
 				'O876.Astar: writing tile out of Grid: ' + x + ', ' + y);
@@ -85,9 +104,9 @@ export default class {
 	}
 
 	getCell(x, y) {
-		if (this.aTab[y]) {
-			if (x < this.aTab[y].length) {
-				return this.aTab[y][x];
+		if (this._grid[y]) {
+			if (x < this._grid[y].length) {
+				return this._grid[y][x];
 			}
 		}
 		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
@@ -126,21 +145,22 @@ export default class {
 		}
 	}
 
-	addAdjacent(x, y, xArrivee, yArrivee) {
+	addAdjacent(x, y, xArrival, yArrival) {
 		let i, j;
 		let i0, j0;
 		let oTmp;
+		let w = this.nWidth, h = this.nHeight, bDiag = this.bUseDiagonals;
 		for (i0 = -1; i0 <= 1; i0++) {
 			i = x + i0;
-			if ((i < 0) || (i >= this.nWidth)) {
+			if ((i < 0) || (i >= w)) {
 				continue;
 			}
 			for (j0 = -1; j0 <= 1; j0++) {
-				if (!this.bUseDiagonals && (j0 * i0) !== 0) {
+				if (!bDiag && (j0 * i0) !== 0) {
 					continue;
 				}
 				j = y + j0;
-				if ((j < 0) || (j >= this.nHeight)) {
+				if ((j < 0) || (j >= h)) {
 					continue;
 				}
 				if ((i === x) && (j === y)) {
@@ -153,7 +173,7 @@ export default class {
 				if (!this.oClList.exists(i, j)) {
 					oTmp = new Nood();
 					oTmp.fGCost = this.oClList.get(x, y).fGCost	+ Helper.distance(i, j, x, y);
-					oTmp.fHCost = Helper.distance(i, j, xArrivee,	yArrivee);
+					oTmp.fHCost = Helper.distance(i, j, xArrival, yArrival);
 					oTmp.fFCost = oTmp.fGCost + oTmp.fHCost;
 					oTmp.oPos = new Point(i, j);
 					oTmp.oParent = new Point(x, y);
@@ -183,9 +203,6 @@ export default class {
 				oBest = oNood;
 			}
 		}
-		if (oBest === null) {
-			console.log(oList.oList);
-		}
 		return oBest;
 	}
 
@@ -205,6 +222,10 @@ export default class {
 
 		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
 			oBest = this.bestNood(this.oOpList);
+			if (!oBest) {
+				// could not find path
+                throw new Error('O876.Astar: no path to destination');
+			}
 			xCurrent = oBest.oPos.x;
 			yCurrent = oBest.oPos.y;
 			this.closeNood(xCurrent, yCurrent);

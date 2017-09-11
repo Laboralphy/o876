@@ -115,4 +115,13 @@ export default class SpellBook {
 		}
 		return oURLParams;
 	}
+
+    static prop(oInstance, sProperty, value) {
+        if (value === undefined) {
+            return oInstance[sProperty];
+        } else {
+            oInstance[sProperty] = value;
+            return oInstance;
+        }
+    }
 }

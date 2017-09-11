@@ -13,6 +13,9 @@ import SB from './SpellBook.js';
  * .trigger to cast an event
  *
  */
+
+import SB from './SpellBook';
+
 export default class Emitter {
     constructor() {
         this._oEventHandlers = {};
@@ -25,12 +28,7 @@ export default class Emitter {
      * @return {*}
      */
     instance(oInst) {
-        if (oInst === undefined) {
-            return this._oInstance;
-        } else {
-			this._oInstance = oInst;
-            return this;
-        }
+    	return SB.prop(this, '_oInstance', oInst);
     }
 
     /**
