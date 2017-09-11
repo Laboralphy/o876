@@ -63,42 +63,11 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 9);
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(2);
-/**
- * Created by ralphy on 04/09/17.
- */
-
-
-
-class Point {
-	constructor(x, y) {
-		this.x = x;
-		this.y = y;
-	}
-
-	/**
-	 * return the distance between this point and the given point
-	 * @param p {Point}
-	 * @return {number}
-	 */
-	distance(p) {
-		return __WEBPACK_IMPORTED_MODULE_0__Helper_js__["a" /* default */].distance(p.x, p.y, this.x, this.y);
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Point;
-
-
-
-/***/ }),
-/* 1 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -190,6 +159,36 @@ class SpellBook {
 		}).join('');
     }
 
+	/**
+     * Parse a search string (?variable=value)
+     * @param sSearch {string} as in window.search
+	 * @returns {{}}
+	 */
+	static parseSearch(sSearch) {
+		if (sSearch) {
+			let nQuest = sSearch.indexOf('?');
+			if (nQuest >= 0) {
+				sSearch = sSearch.substr(nQuest + 1);
+			} else {
+				return {};
+			}
+		} else {
+			sSearch = window.location.search.substr(1);
+		}
+		let match,
+			pl     = /\+/g,  // Regex for replacing addition symbol with a space
+			search = /([^&=]+)=?([^&]*)/g,
+			query  = sSearch,
+			_decode = function(s) {
+				return decodeURIComponent(s.replace(pl, ' '));
+			};
+		let oURLParams = {};
+		while (match = search.exec(query)) {
+			oURLParams[_decode(match[1])] = _decode(match[2]);
+		}
+		return oURLParams;
+	}
+
     static prop(oInstance, sProperty, value) {
         if (value === undefined) {
             return oInstance[sProperty];
@@ -200,6 +199,37 @@ class SpellBook {
     }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = SpellBook;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Helper_js__ = __webpack_require__(2);
+/**
+ * Created by ralphy on 04/09/17.
+ */
+
+
+
+class Point {
+	constructor(x, y) {
+		this.x = x;
+		this.y = y;
+	}
+
+	/**
+	 * return the distance between this point and the given point
+	 * @param p {Point}
+	 * @return {number}
+	 */
+	distance(p) {
+		return __WEBPACK_IMPORTED_MODULE_0__Helper_js__["a" /* default */].distance(p.x, p.y, this.x, this.y);
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Point;
+
 
 
 /***/ }),
@@ -238,8 +268,8 @@ class Helper {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__SpellBook__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__SpellBook__ = __webpack_require__(0);
 /**
  * Created by ralphy on 07/09/17.
  */
@@ -385,11 +415,11 @@ class Emitter {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Helper__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Nood__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__NoodList__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Nood__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__NoodList__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Emitter__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Geometry_Point__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(0);
 /**
  * Created by ralphy on 06/09/17.
  */
@@ -417,76 +447,31 @@ class Emitter {
  */
 /* harmony default export */ __webpack_exports__["a"] = (class {
 	constructor() {
-		this.bUseDiagonals = false;
-		this.MAX_ITERATIONS = 2048;
+		// configuration
+		this._bUseDiagonals = false;
+        this._grid = null;
+        this._width = 0;
+        this._height = 0;
+		this.MAX_ITERATIONS = 4096;
+        this.GRID_BLOCK_WALKABLE = 0;
+
+		// working objects and variables
+        this.oOpList = null;
+        this.oClList = null;
+        this.aPath = null;
 		this.nIterations = 0;
-		this._grid = null;
-		this.nWidth = 0;
-		this.nHeight = 0;
-		this.oOpList = null;
-		this.oClList = null;
-		this.aPath = null;
-		this.GRID_BLOCK_WALKABLE = 0;
+
+		// utilities
 		this.emitter = new __WEBPACK_IMPORTED_MODULE_3__Emitter__["a" /* default */]();
         this.emitter.instance(this);
 	}
 
-    /**
-	 * Set a new grid, or ask for the current one
-	 * @param g {(array)}
-	 * @return {array|object}
-     */
-    grid(g) {
-    	if (g !== undefined) {
-            this.nHeight = g.length;
-            this.nWidth = g[0].length;
-		}
-    	return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, '_grid', g);
-	}
 
-	/**
-	 * initialize the grid
-	 * {
-	 * 		grid: [[......][.......]....],  // 2Dim Array containing the grid
-	 * 		diagonals: {bool} use the diagonals
-	 * 		max: (watch dog)
-	 *		walkable : specify a walkable code
-	 * }
-     * @param c {object}
-     * @param c.grid {array}
-     * @param c.diagonals {boolean}
-     * @param c.max {number}
-     * @param c.walkable {number}
-	 */
-	init(c) {
-		if ('grid' in c) {
-			this.grid(c.grid);
-		}
-		if ('diagonals' in c) {
-			this.bUseDiagonals = c.diagonals;
-		}
-		if ('max' in c) {
-			this.MAX_ITERATIONS = c.max;
-		}
-		if ('walkable' in c) {
-			this.GRID_BLOCK_WALKABLE = c.walkable;
-		}
-	}
-
-	/**
-	 * resets the grid
-	 */
-	reset() {
-		this.oOpList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
-		this.oClList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
-		this.aPath = [];
-		this.nIterations = 0;
-	}
 
     /**
 	 * modifies a cell value
      */
-	setCell(x, y, n) {
+	_setCell(x, y, n) {
 		if (this._grid[y] !== undefined && this._grid[y][x] !== undefined) {
 			this._grid[y][x] = n;
 		} else {
@@ -495,7 +480,7 @@ class Emitter {
 		}
 	}
 
-	getCell(x, y) {
+	_getCell(x, y) {
 		if (this._grid[y]) {
 			if (x < this._grid[y].length) {
 				return this._grid[y][x];
@@ -504,19 +489,10 @@ class Emitter {
 		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
 	}
 
-	cell(x, y, v) {
-		if (v === undefined) {
-			return this.getCell(x, y);
-		} else {
-			this.setCell(x, y, v);
-			return this;
-		}
-	}
-
-	isCellWalkable(x, y) {
+	_isCellWalkable(x, y) {
 		try {
 			let r = {
-				walkable: this.getCell(x, y) === this.GRID_BLOCK_WALKABLE,
+				walkable: this._getCell(x, y) === this.GRID_BLOCK_WALKABLE,
 				cell: {
 					x: x,
 					y: y
@@ -529,7 +505,7 @@ class Emitter {
 		}
 	}
 
-	closeNood(x, y) {
+	_closeNood(x, y) {
 		let n = this.oOpList.get(x, y);
 		if (n) {
 			this.oClList.set(x, y, n);
@@ -537,11 +513,11 @@ class Emitter {
 		}
 	}
 
-	addAdjacent(x, y, xArrival, yArrival) {
+	_addAdjacent(x, y, xArrival, yArrival) {
 		let i, j;
 		let i0, j0;
 		let oTmp;
-		let w = this.nWidth, h = this.nHeight, bDiag = this.bUseDiagonals;
+		let w = this._width, h = this._height, bDiag = this._bUseDiagonals;
 		for (i0 = -1; i0 <= 1; i0++) {
 			i = x + i0;
 			if ((i < 0) || (i >= w)) {
@@ -558,7 +534,7 @@ class Emitter {
 				if ((i === x) && (j === y)) {
 					continue;
 				}
-				if (!this.isCellWalkable(i, j)) {
+				if (!this._isCellWalkable(i, j)) {
 					continue;
 				}
 
@@ -583,7 +559,7 @@ class Emitter {
 	}
 
 	// Recherche le meilleur noeud de la liste et le renvoi
-	bestNood(oList) {
+	_bestNood(oList) {
 		let oBest = null;
 		let oNood;
 
@@ -598,6 +574,19 @@ class Emitter {
 		return oBest;
 	}
 
+    _buildPath(xTo, yTo) {
+        let oCursor = this.oClList.get(xTo, yTo);
+        if (oCursor !== null) {
+            while (!oCursor.isRoot()) {
+                this.aPath.unshift({
+                    x: oCursor.oPos.x,
+                    y: oCursor.oPos.y
+                });
+                oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
+            }
+        }
+    }
+
 	find(xFrom, yFrom, xTo, yTo) {
 		this.reset();
 		let oBest;
@@ -607,21 +596,21 @@ class Emitter {
 		let xCurrent = xFrom;
 		let yCurrent = yFrom;
 		this.oOpList.add(oDepart);
-		this.closeNood(xCurrent, yCurrent);
-		this.addAdjacent(xCurrent, yCurrent, xTo, yTo);
+		this._closeNood(xCurrent, yCurrent);
+		this._addAdjacent(xCurrent, yCurrent, xTo, yTo);
 
 		let iIter = 0, MAX = this.MAX_ITERATIONS;
 
 		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
-			oBest = this.bestNood(this.oOpList);
+			oBest = this._bestNood(this.oOpList);
 			if (!oBest) {
 				// could not find path
                 throw new Error('O876.Astar: no path to destination');
 			}
 			xCurrent = oBest.oPos.x;
 			yCurrent = oBest.oPos.y;
-			this.closeNood(xCurrent, yCurrent);
-			this.addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
+			this._closeNood(xCurrent, yCurrent);
+			this._addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
 			if (++iIter > MAX) {
 				throw new Error('O876.Astar: too much iterations');
 			}
@@ -630,22 +619,59 @@ class Emitter {
 			throw new Error('O876.Astar: no path to destination');
 		}
 		this.nIterations = iIter;
-		this.buildPath(xTo, yTo);
+		this._buildPath(xTo, yTo);
 		return this.aPath;
 	}
 
-	buildPath(xTo, yTo) {
-		let oCursor = this.oClList.get(xTo, yTo);
-		if (oCursor !== null) {
-			while (!oCursor.isRoot()) {
-				this.aPath.unshift({
-					x: oCursor.oPos.x,
-					y: oCursor.oPos.y
-				});
-				oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
-			}
-		}
-	}
+    /**
+	 * Changes a cell value inside the grid
+     * @param x {number} cell coordinates
+     * @param y {number} cell coordinates
+     * @param (v) {number} new value
+     * @return {*}
+     */
+	cell(x, y, v) {
+        if (v === undefined) {
+            return this._getCell(x, y);
+        } else {
+            this._setCell(x, y, v);
+            return this;
+        }
+    }
+
+    /**
+     * resets the grid
+     * @return {*}
+     */
+    reset() {
+        this.oOpList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
+        this.oClList = new __WEBPACK_IMPORTED_MODULE_2__NoodList__["a" /* default */]();
+        this.aPath = [];
+        this.nIterations = 0;
+        return this;
+    }
+
+    /**
+     * Setter/Getter of the internal grid
+     * @param (g) {array}
+     * @return {array|object}
+     */
+    grid(g) {
+        if (g !== undefined) {
+            this._height = g.length;
+            this._width = g[0].length;
+        }
+        return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, '_grid', g);
+    }
+
+    /**
+	 * Setter/getter of the walkable code.
+     * @param w
+     * @return {*}
+     */
+    walkable(w) {
+        return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, 'GRID_BLOCK_WALKABLE', w);
+    }
 });
 
 
@@ -903,7 +929,7 @@ class Easing {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Point_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Helper_js__ = __webpack_require__(2);
 /**
  * Created by ralphy on 04/09/17.
@@ -913,60 +939,51 @@ class Easing {
 
 
 class Vector {
+    /**
+	 * The constructor accepts one two parameters
+	 * If one parameter is given, the constructor will consider it as
+	 * Vector or Point and will build this vector accordingly.
+	 * If two parameters are given (both numbers), the constructor will initialize the x and y
+	 * components with these numbers.
+	 * if no parameters are given : the vector will be ZERO
+     * @param (x) {Vector|Point|number}
+     * @param (y) {number}
+     */
 	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
-
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
 		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(x.x, x.y);
+			this.x = x.x;
+			this.y = x.y;
 		} else {
-			return new Vector(x, y);
+            this.x = x || 0;
+            this.y = y || 0;
 		}
 	}
 
 	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
+	 * Immutable !
+	 * returns a new Vector which is the sum of this instance + the given argument
+	 * @param v {Vector|Point}
 	 * @returns {Vector}
 	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
+	add(v) {
+		return new Vector(v.x + this.x, v.y + this.y);
 	}
 
 	/**
-	 * scalar product
+	 * Immutable !
+	 * returns a scalar product
 	 * multiplies the vector components by a given value -(vector, point or number)
 	 * @param f {Vector|number}
 	 * @param y ({number})
 	 * @returns {Vector|number}
 	 */
-	mul(f, y) {
+	mul(f) {
 		if ((f instanceof Vector) || (f instanceof __WEBPACK_IMPORTED_MODULE_0__Point_js__["a" /* default */])) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
+			return this.x * f.x + this.y * f.y;
+		} else if (typeof f === 'number') {
 			return new Vector(this.x * f, this.y * f);
 		} else {
-			return this.mul(new Vector(f, y));
+			throw new Error('vector product accepts only vectors or number as parameter');
 		}
 	}
 
@@ -1355,16 +1372,77 @@ class Rainbow {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook__ = __webpack_require__(0);
+/**
+ * @class O876.Random
+ * a FALSE random very false...
+ * generated random numbers, with seed
+ * used for predictable landscape generation
+ */
+
+
+
+/* harmony default export */ __webpack_exports__["a"] = (class {
+
+	constructor() {
+        this._seed = Math.random();
+	}
+
+	seed(x) {
+    	return __WEBPACK_IMPORTED_MODULE_0__SpellBook__["a" /* default */].prop(this, '_seed', x);
+	}
+
+
+	_rand() {
+		return this._seed = Math.abs(((Math.sin(this._seed) * 1e12) % 1e6) / 1e6);
+	}
+
+	rand(a, b) {
+		let r = this._rand();
+		switch (typeof a) {
+			case "undefined":
+				return r;
+				
+			case "number":
+				if (b === undefined) {
+					b = a - 1;
+					a = 0;
+				}
+				return Math.max(a, Math.min(b, (b - a + 1) * r + a | 0));
+			
+			case "object":
+				if (Array.isArray(a)) {
+					if (a.length > 0) {
+						return a[r * a.length | 0];
+					} else {
+						return undefined;
+					}
+				} else {
+					return this.rand(Object.keys(a));
+				}
+				
+			default:
+				return r;
+		}
+	}
+});
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__Random__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__Random__ = __webpack_require__(9);
 /**
  * includes all modules
  */
@@ -1392,11 +1470,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point_js__ = __webpack_require__(1);
 /**
  * Created by ralphy on 04/09/17.
  */
@@ -1421,7 +1499,7 @@ class Nood {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1513,68 +1591,6 @@ class NoodList {
 	}
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = NoodList;
-
-
-/***/ }),
-/* 12 */,
-/* 13 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__SpellBook__ = __webpack_require__(1);
-/**
- * @class O876.Random
- * a FALSE random very false...
- * generated random numbers, with seed
- * used for predictable landscape generation
- */
-
-
-
-/* harmony default export */ __webpack_exports__["a"] = (class {
-
-	constructor() {
-        this._seed = Math.random();
-	}
-
-	seed(x) {
-    	return __WEBPACK_IMPORTED_MODULE_0__SpellBook__["a" /* default */].prop(this, '_seed', x);
-	}
-
-
-	_rand() {
-		return this._seed = Math.abs(((Math.sin(this._seed) * 1e12) % 1e6) / 1e6);
-	}
-
-	rand(a, b) {
-		let r = this._rand();
-		switch (typeof a) {
-			case "undefined":
-				return r;
-				
-			case "number":
-				if (b === undefined) {
-					b = a - 1;
-					a = 0;
-				}
-				return Math.max(a, Math.min(b, (b - a + 1) * r + a | 0));
-			
-			case "object":
-				if (Array.isArray(a)) {
-					if (a.length > 0) {
-						return a[r * a.length | 0];
-					} else {
-						return undefined;
-					}
-				} else {
-					return this.rand(Object.keys(a));
-				}
-				
-			default:
-				return r;
-		}
-	}
-});
 
 
 /***/ })

@@ -6,60 +6,51 @@ import Point from './Point.js';
 import Helper from './Helper.js';
 
 export default class Vector {
+    /**
+	 * The constructor accepts one two parameters
+	 * If one parameter is given, the constructor will consider it as
+	 * Vector or Point and will build this vector accordingly.
+	 * If two parameters are given (both numbers), the constructor will initialize the x and y
+	 * components with these numbers.
+	 * if no parameters are given : the vector will be ZERO
+     * @param (x) {Vector|Point|number}
+     * @param (y) {number}
+     */
 	constructor(x, y) {
-		this.x = x || 0;
-		this.y = y || 0;
-	}
-
-	/**
-	 * Returns a copy of this vector
-	 * @returns {Vector}
-	 */
-	clone() {
-		return new Vector(this.x, this.y);
-	}
-
-	/**
-	 * Will return a nbew vector with the given initializers
-	 * @param x {Vector|Point|number} if a number is specified, the second parameter must used
-	 * @param y {number}
-	 */
-	static set(x, y) {
 		if ((x instanceof Vector) || (x instanceof Point)) {
-			return new Vector(x.x, x.y);
+			this.x = x.x;
+			this.y = x.y;
 		} else {
-			return new Vector(x, y);
+            this.x = x || 0;
+            this.y = y || 0;
 		}
 	}
 
 	/**
-	 * adds a Point or a Vector to this vector
-	 * @param x {Vector|Point|number}
-	 * @param y {number}
+	 * Immutable !
+	 * returns a new Vector which is the sum of this instance + the given argument
+	 * @param v {Vector|Point}
 	 * @returns {Vector}
 	 */
-	add(x, y) {
-		if ((x instanceof Vector) || (x instanceof Point)) {
-			return new Vector(this.x + x.x, this.y + x.y);
-		} else {
-			return new Vector(this.x + x, this.y + y);
-		}
+	add(v) {
+		return new Vector(v.x + this.x, v.y + this.y);
 	}
 
 	/**
-	 * scalar product
+	 * Immutable !
+	 * returns a scalar product
 	 * multiplies the vector components by a given value -(vector, point or number)
 	 * @param f {Vector|number}
 	 * @param y ({number})
 	 * @returns {Vector|number}
 	 */
-	mul(f, y) {
+	mul(f) {
 		if ((f instanceof Vector) || (f instanceof Point)) {
-			return this.x * x.x + this.y * x.y;
-		} else if (y === undefined) {
+			return this.x * f.x + this.y * f.y;
+		} else if (typeof f === 'number') {
 			return new Vector(this.x * f, this.y * f);
 		} else {
-			return this.mul(new Vector(f, y));
+			throw new Error('vector product accepts only vectors or number as parameter');
 		}
 	}
 

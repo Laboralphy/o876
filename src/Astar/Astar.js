@@ -25,76 +25,31 @@ import SB from '../SpellBook'
  */
 export default class {
 	constructor() {
-		this.bUseDiagonals = false;
-		this.MAX_ITERATIONS = 2048;
+		// configuration
+		this._bUseDiagonals = false;
+        this._grid = null;
+        this._width = 0;
+        this._height = 0;
+		this.MAX_ITERATIONS = 4096;
+        this.GRID_BLOCK_WALKABLE = 0;
+
+		// working objects and variables
+        this.oOpList = null;
+        this.oClList = null;
+        this.aPath = null;
 		this.nIterations = 0;
-		this._grid = null;
-		this.nWidth = 0;
-		this.nHeight = 0;
-		this.oOpList = null;
-		this.oClList = null;
-		this.aPath = null;
-		this.GRID_BLOCK_WALKABLE = 0;
+
+		// utilities
 		this.emitter = new Emitter();
         this.emitter.instance(this);
 	}
 
-    /**
-	 * Set a new grid, or ask for the current one
-	 * @param g {(array)}
-	 * @return {array|object}
-     */
-    grid(g) {
-    	if (g !== undefined) {
-            this.nHeight = g.length;
-            this.nWidth = g[0].length;
-		}
-    	return SB.prop(this, '_grid', g);
-	}
 
-	/**
-	 * initialize the grid
-	 * {
-	 * 		grid: [[......][.......]....],  // 2Dim Array containing the grid
-	 * 		diagonals: {bool} use the diagonals
-	 * 		max: (watch dog)
-	 *		walkable : specify a walkable code
-	 * }
-     * @param c {object}
-     * @param c.grid {array}
-     * @param c.diagonals {boolean}
-     * @param c.max {number}
-     * @param c.walkable {number}
-	 */
-	init(c) {
-		if ('grid' in c) {
-			this.grid(c.grid);
-		}
-		if ('diagonals' in c) {
-			this.bUseDiagonals = c.diagonals;
-		}
-		if ('max' in c) {
-			this.MAX_ITERATIONS = c.max;
-		}
-		if ('walkable' in c) {
-			this.GRID_BLOCK_WALKABLE = c.walkable;
-		}
-	}
-
-	/**
-	 * resets the grid
-	 */
-	reset() {
-		this.oOpList = new NoodList();
-		this.oClList = new NoodList();
-		this.aPath = [];
-		this.nIterations = 0;
-	}
 
     /**
 	 * modifies a cell value
      */
-	setCell(x, y, n) {
+	_setCell(x, y, n) {
 		if (this._grid[y] !== undefined && this._grid[y][x] !== undefined) {
 			this._grid[y][x] = n;
 		} else {
@@ -103,7 +58,7 @@ export default class {
 		}
 	}
 
-	getCell(x, y) {
+	_getCell(x, y) {
 		if (this._grid[y]) {
 			if (x < this._grid[y].length) {
 				return this._grid[y][x];
@@ -112,19 +67,10 @@ export default class {
 		throw new Error('O876.Astar: read tile out of Grid: ' + x + ', ' + y);
 	}
 
-	cell(x, y, v) {
-		if (v === undefined) {
-			return this.getCell(x, y);
-		} else {
-			this.setCell(x, y, v);
-			return this;
-		}
-	}
-
-	isCellWalkable(x, y) {
+	_isCellWalkable(x, y) {
 		try {
 			let r = {
-				walkable: this.getCell(x, y) === this.GRID_BLOCK_WALKABLE,
+				walkable: this._getCell(x, y) === this.GRID_BLOCK_WALKABLE,
 				cell: {
 					x: x,
 					y: y
@@ -137,7 +83,7 @@ export default class {
 		}
 	}
 
-	closeNood(x, y) {
+	_closeNood(x, y) {
 		let n = this.oOpList.get(x, y);
 		if (n) {
 			this.oClList.set(x, y, n);
@@ -145,11 +91,11 @@ export default class {
 		}
 	}
 
-	addAdjacent(x, y, xArrival, yArrival) {
+	_addAdjacent(x, y, xArrival, yArrival) {
 		let i, j;
 		let i0, j0;
 		let oTmp;
-		let w = this.nWidth, h = this.nHeight, bDiag = this.bUseDiagonals;
+		let w = this._width, h = this._height, bDiag = this._bUseDiagonals;
 		for (i0 = -1; i0 <= 1; i0++) {
 			i = x + i0;
 			if ((i < 0) || (i >= w)) {
@@ -166,7 +112,7 @@ export default class {
 				if ((i === x) && (j === y)) {
 					continue;
 				}
-				if (!this.isCellWalkable(i, j)) {
+				if (!this._isCellWalkable(i, j)) {
 					continue;
 				}
 
@@ -191,7 +137,7 @@ export default class {
 	}
 
 	// Recherche le meilleur noeud de la liste et le renvoi
-	bestNood(oList) {
+	_bestNood(oList) {
 		let oBest = null;
 		let oNood;
 
@@ -206,6 +152,19 @@ export default class {
 		return oBest;
 	}
 
+    _buildPath(xTo, yTo) {
+        let oCursor = this.oClList.get(xTo, yTo);
+        if (oCursor !== null) {
+            while (!oCursor.isRoot()) {
+                this.aPath.unshift({
+                    x: oCursor.oPos.x,
+                    y: oCursor.oPos.y
+                });
+                oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
+            }
+        }
+    }
+
 	find(xFrom, yFrom, xTo, yTo) {
 		this.reset();
 		let oBest;
@@ -215,21 +174,21 @@ export default class {
 		let xCurrent = xFrom;
 		let yCurrent = yFrom;
 		this.oOpList.add(oDepart);
-		this.closeNood(xCurrent, yCurrent);
-		this.addAdjacent(xCurrent, yCurrent, xTo, yTo);
+		this._closeNood(xCurrent, yCurrent);
+		this._addAdjacent(xCurrent, yCurrent, xTo, yTo);
 
 		let iIter = 0, MAX = this.MAX_ITERATIONS;
 
 		while (!((xCurrent === xTo) && (yCurrent === yTo)) && (!this.oOpList.empty())) {
-			oBest = this.bestNood(this.oOpList);
+			oBest = this._bestNood(this.oOpList);
 			if (!oBest) {
 				// could not find path
                 throw new Error('O876.Astar: no path to destination');
 			}
 			xCurrent = oBest.oPos.x;
 			yCurrent = oBest.oPos.y;
-			this.closeNood(xCurrent, yCurrent);
-			this.addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
+			this._closeNood(xCurrent, yCurrent);
+			this._addAdjacent(oBest.oPos.x, oBest.oPos.y, xTo, yTo);
 			if (++iIter > MAX) {
 				throw new Error('O876.Astar: too much iterations');
 			}
@@ -238,20 +197,57 @@ export default class {
 			throw new Error('O876.Astar: no path to destination');
 		}
 		this.nIterations = iIter;
-		this.buildPath(xTo, yTo);
+		this._buildPath(xTo, yTo);
 		return this.aPath;
 	}
 
-	buildPath(xTo, yTo) {
-		let oCursor = this.oClList.get(xTo, yTo);
-		if (oCursor !== null) {
-			while (!oCursor.isRoot()) {
-				this.aPath.unshift({
-					x: oCursor.oPos.x,
-					y: oCursor.oPos.y
-				});
-				oCursor = this.oClList.get(oCursor.oParent.x, oCursor.oParent.y);
-			}
-		}
-	}
+    /**
+	 * Changes a cell value inside the grid
+     * @param x {number} cell coordinates
+     * @param y {number} cell coordinates
+     * @param (v) {number} new value
+     * @return {*}
+     */
+	cell(x, y, v) {
+        if (v === undefined) {
+            return this._getCell(x, y);
+        } else {
+            this._setCell(x, y, v);
+            return this;
+        }
+    }
+
+    /**
+     * resets the grid
+     * @return {*}
+     */
+    reset() {
+        this.oOpList = new NoodList();
+        this.oClList = new NoodList();
+        this.aPath = [];
+        this.nIterations = 0;
+        return this;
+    }
+
+    /**
+     * Setter/Getter of the internal grid
+     * @param (g) {array}
+     * @return {array|object}
+     */
+    grid(g) {
+        if (g !== undefined) {
+            this._height = g.length;
+            this._width = g[0].length;
+        }
+        return SB.prop(this, '_grid', g);
+    }
+
+    /**
+	 * Setter/getter of the walkable code.
+     * @param w
+     * @return {*}
+     */
+    walkable(w) {
+        return SB.prop(this, 'GRID_BLOCK_WALKABLE', w);
+    }
 }

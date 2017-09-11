@@ -24,7 +24,7 @@ describe('Vector', function() {
 	describe('cloning', function () {
 		it('properly clones a vector', function () {
 			let v = new O876.Vector(-7, 66);
-			let w = v.clone();
+			let w = new O876.Vector(v);
 			expect(v.x).toEqual(w.x);
 			expect(v.y).toEqual(w.y);
 			expect(v === w).toBeFalsy();
@@ -371,8 +371,8 @@ describe('Astar', function() {
             expect(oAstar._grid[0].length).toEqual(7);
         });
         it('should have property width and height set to 7', function() {
-            expect(oAstar.nWidth).toEqual(7);
-            expect(oAstar.nHeight).toEqual(7);
+            expect(oAstar._width).toEqual(7);
+            expect(oAstar._height).toEqual(7);
         });
         it('should find the way', function() {
 			const aExpected =
