@@ -16,7 +16,7 @@ export default class Bresenham {
 	 * @param x1 ending point x
 	 * @param y1 ending point y
 	 * @param pCallback a plot function of type function(x, y, n) { return bool; }
-	 * avec x, y les coordonnée du point et n le numéro duj point
+	 * avec x, y les coordonnées du point et n le numéro duj point
 	 * @returns {Boolean} false if the fonction has been canceled
 	 */
 	static line(x0, y0, x1, y1, pCallback) {

@@ -164,15 +164,15 @@ export default class Rainbow {
 	 * @param xData une structure {r: int, g: int, b: int, a: float}
 	 * @return code couleur CSS au format rgb(r, g, b) ou rgba(r, g, b, a)
 	 */
-	rgba(xData) {
-		return Rainbow._buildRGBAFromStructure(this.parse(xData));
+	static rgba(xData) {
+		return Rainbow._buildRGBAFromStructure(Rainbow.parse(xData));
 	}
 	
 	/**
 	 * Analyse une valeur d'entrée pour construire une structure avec les 
 	 * composantes "r", "g", "b", et eventuellement "a".
 	 */ 
-	parse(xData) {
+	static parse(xData) {
 		if (typeof xData === "object") {
 			return xData;
 		} else if (typeof xData === "number") {
@@ -223,9 +223,9 @@ export default class Rainbow {
 	 * Génère un spectre entre deux valeurs de couleurs
 	 * La fonction renvoi 
 	 */
-	spectrum(sColor1, sColor2, nSteps) {
-		let c1 = this.parse(sColor1);
-		let c2 = this.parse(sColor2);
+	static spectrum(sColor1, sColor2, nSteps) {
+		let c1 = Rainbow.parse(sColor1);
+		let c2 = Rainbow.parse(sColor2);
 		
 		let nSecur = 100;
 		
@@ -259,7 +259,7 @@ export default class Rainbow {
 		}
 		
 		return fillArray([], c1, c2, 0, nSteps - 1).map(function(c) {
-			return this.rgba(c);
+			return Rainbow.rgba(c);
 		}, this);
 	}
 	
@@ -284,7 +284,7 @@ export default class Rainbow {
 	 * }
 	 * rappel : une palette d'indices de 0 à 100 dispose de 101 entrée
 	 */
-	gradient(oPalette) {
+	static gradient(oPalette) {
 		let aPalette = [];
 		let sColor;
 		let sLastColor = null;
@@ -294,9 +294,9 @@ export default class Rainbow {
 			nPal = iPal | 0;
 			sColor = oPalette[iPal];
 			if (sLastColor !== null) {
-				aPalette = aPalette.concat(this.spectrum(sLastColor, sColor, nPal - nLastPal + 1).slice(1));
+				aPalette = aPalette.concat(Rainbow.spectrum(sLastColor, sColor, nPal - nLastPal + 1).slice(1));
 			} else {
-				aPalette[nPal] = this.rgba(sColor);
+				aPalette[nPal] = Rainbow.rgba(sColor);
 			}
 			sLastColor = sColor;
 			nLastPal = nPal;

@@ -652,7 +652,7 @@ class Emitter {
     }
 
     /**
-     * Setter/Getter of the internal grid
+     * Setter/Getter of the internal grid.
      * @param (g) {array}
      * @return {array|object}
      */
@@ -664,265 +664,41 @@ class Emitter {
         return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, '_grid', g);
     }
 
-    /**
+	/**
 	 * Setter/getter of the walkable code.
-     * @param w
-     * @return {*}
-     */
-    walkable(w) {
-        return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, 'GRID_BLOCK_WALKABLE', w);
-    }
+	 * This code is use to determine if a grid cell is walkable or not.
+	 * @param w {*}
+	 * @return {*}
+	 */
+	walkable(w) {
+		return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, 'GRID_BLOCK_WALKABLE', w);
+	}
+
+	/**
+	 * Setter/getter of the diagonal flag.
+	 * if set to true, the path finder will cross the grid diagonaly if needed.
+	 * @param (b) {boolean}
+	 * @return {*}
+	 */
+	diagonals(b) {
+		return __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */].prop(this, '_bUseDiagonals', b);
+	}
 });
 
 
 /***/ }),
 /* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, __webpack_exports__) {
 
 "use strict";
-/**
- * This class implements the bresenham algorithm
- * and extend its use for other purpose than drawing pixel lines
- * good to GIT
- */
-class Bresenham {
-	/**
-	 * This function will virtually draw points along a line
-	 * and will call back a plot function. 
-	 * The line will start at x0, y0 and will end at x1, y1
-	 * Each time a points is "drawn" a callback is done 
-	 * if the callback returns false, the line function will stop and return false
-	 * else the line function will return an array of plots
-	 * @param x0 starting point x
-	 * @param y0 starting point y
-	 * @param x1 ending point x
-	 * @param y1 ending point y
-	 * @param pCallback a plot function of type function(x, y, n) { return bool; }
-	 * avec x, y les coordonnée du point et n le numéro duj point
-	 * @returns {Boolean} false if the fonction has been canceled
-	 */
-	static line(x0, y0, x1, y1, pCallback) {
-		x0 |= 0;
-		y0 |= 0;
-		x1 |= 0;
-		y1 |= 0;
-		let dx = Math.abs(x1 - x0);
-		let dy = Math.abs(y1 - y0);
-		let sx = (x0 < x1) ? 1 : -1;
-		let sy = (y0 < y1) ? 1 : -1;
-		let err = dx - dy;
-		let e2;
-		let n = 0;
-		while (true) {
-			if (pCallback) {
-				if (pCallback(x0, y0, n) === false) {
-					return false;
-				}
-			}
-			if (x0 === x1 && y0 === y1) {
-				break;
-			}
-			e2 = err << 1;
-			if (e2 > -dy) {
-				err -= dy;
-				x0 += sx;
-			}
-			if (e2 < dx) {
-				err += dx;
-				y0 += sy;
-			}
-			++n;
-		}
-		return true;
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Bresenham;
-
-
+throw new Error("Module build failed: Error: ENOENT: no such file or directory, open '/home/ralphy/public_html/O876/src/Bresenham.js'");
 
 /***/ }),
 /* 6 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, __webpack_exports__) {
 
 "use strict";
-/** Interface de controle des mobile 
- * O876 Raycaster project
- * @class O876.Easing
- * @date 2013-03-04
- * @author Raphaël Marandet 
- * Fait bouger un mobile de manière non-lineaire
- * Avec des coordonnée de dépat, d'arriver, et un temps donné
- * L'option lineaire est tout de même proposée.
- * good to GIT
- */
-class Easing {
-
-	constructor() {
-		this.xStart = 0;
-		this.xEnd = 0;
-		this.x = 0;
-		this.nTime = 0;
-		this.iTime = 0;
-		this.fWeight = 1;
-		this.pFunction = null;
-	}
-
-    /**
-	 * Will define de starting value
-     * @param x {number}
-     * @returns {O876.Easing}
-     */
-	from(x) {
-		this.xStart = this.x = x;
-		return this;
-	}
-
-    /**
-	 * Will define the ending value
-     * @param x {number}
-     * @returns {O876.Easing}
-     */
-	to(x) {
-		this.xEnd = x;
-		return this;
-	}
-
-    /**
-	 * Will define the duration of the transition
-     * @param t {number} arbitrary unit
-     * @returns {O876.Easing}
-     */
-	during(t) {
-		this.nTime = t;
-		this.iTime = 0;
-		return this;
-	}
-
-	/**
-	 * Définition de la fonction d'Easing
-	 * @param xFunction {string|Function} fonction à choisir parmi :
-	 * linear : mouvement lineaire uniforme
-	 * smoothstep : accelération et déccelération douce
-	 * smoothstepX2 : accelération et déccelération moyenne
-	 * smoothstepX3 : accelération et déccelération brutale
-	 * squareAccel : vitesse 0 à T-0 puis uniquement accelération 
-	 * squareDeccel : vitesse max à T-0 puis uniquement deccelération
-	 * cubeAccel : vitesse 0 à T-0 puis uniquement accelération brutale 
-	 * cubeDeccel : vitesse max à T-0 puis uniquement deccelération brutale
-	 * sine : accelération et deccelération brutal, vitesse nulle à mi chemin
-	 * cosine : accelération et deccelération selon le cosinus, vitesse max à mi chemin
-	 * weightAverage : ... me rapelle plus 
-	 */
-	use(xFunction) {
-		switch (typeof xFunction) {
-			case 'string':
-				this.pFunction = this['_' + xFunction].bind(this);
-			break;
-
-			case 'function':
-				this.pFunction = xFunction;
-			break;
-
-			default:
-				throw new Error('unknown function type');
-		}
-		return this;
-	}
-	
-	/**
-	 * Calcule les coordonnée pour le temps t
-	 * mets à jour les coordonnée x et y de l'objets
-	 * @param t {number} temps
-	 * si "t" est indéfini, utilise le timer interne 
-	 */
-	next(t) {
-		if (t === undefined) {
-			t = ++this.iTime;
-		} else {
-			this.iTime = t;
-		}
-		let p = this.pFunction;
-		if (typeof p !== 'function') {
-			throw new Error('easing function is invalid : ' + p);
-		}
-		let v = p(t / this.nTime);
-		this.x = this.xEnd * v + (this.xStart * (1 - v));
-		return this;
-	}
-
-	val() {
-		return this.x;
-	}
-
-	over() {
-		return this.iTime >= this.nTime;
-	}
-
-	_linear(v) {
-		return v;
-	}
-	
-	_smoothstep(v) {
-		return v * v * (3 - 2 * v);
-	}
-	
-	_smoothstepX2(v) {
-		v = v * v * (3 - 2 * v);
-		return v * v * (3 - 2 * v);
-	}
-	
-	_smoothstepX3(v) {
-		v = v * v * (3 - 2 * v);
-		v = v * v * (3 - 2 * v);
-		return v * v * (3 - 2 * v);
-	}
-	
-	_squareAccel(v) {
-		return v * v;
-	}
-	
-	_squareDeccel(v) {
-		return 1 - (1 - v) * (1 - v);
-	}
-	
-	_cubeAccel(v) {
-		return v * v * v;
-	}
-	
-	_cubeDeccel(v) {
-		return 1 - (1 - v) * (1 - v) * (1 - v);
-	}
-	
-	_cubeInOut(v) {
-		if (v < 0.5) {
-			v = 2 * v;
-			return v * v * v;
-		} else {
-			v = (1 - v) * 2;
-			return v * v * v;
-		}
-	}
-	
-	_sine(v) {
-		return Math.sin(v * Math.PI / 2);
-	}
-	
-	_cosine(v) {
-		return 0.5 - Math.cos(-v * Math.PI) * 0.5;
-	}
-	
-	_weightAverage(v) {
-		return ((v * (this.nTime - 1)) + this.fWeight) / this.nTime;
-	}
-	
-	_quinticBezier(v) {
-		let ts = v * this.nTime;
-		let tc = ts * this.nTime;
-		return 4 * tc - 9 * ts + 6 * v;
-	}
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Easing;
-
+throw new Error("Module build failed: Error: ENOENT: no such file or directory, open '/home/ralphy/public_html/O876/src/Easing.js'");
 
 /***/ }),
 /* 7 */
@@ -1185,15 +961,15 @@ class Rainbow {
 	 * @param xData une structure {r: int, g: int, b: int, a: float}
 	 * @return code couleur CSS au format rgb(r, g, b) ou rgba(r, g, b, a)
 	 */
-	rgba(xData) {
-		return Rainbow._buildRGBAFromStructure(this.parse(xData));
+	static rgba(xData) {
+		return Rainbow._buildRGBAFromStructure(Rainbow.parse(xData));
 	}
 	
 	/**
 	 * Analyse une valeur d'entrée pour construire une structure avec les 
 	 * composantes "r", "g", "b", et eventuellement "a".
 	 */ 
-	parse(xData) {
+	static parse(xData) {
 		if (typeof xData === "object") {
 			return xData;
 		} else if (typeof xData === "number") {
@@ -1244,9 +1020,9 @@ class Rainbow {
 	 * Génère un spectre entre deux valeurs de couleurs
 	 * La fonction renvoi 
 	 */
-	spectrum(sColor1, sColor2, nSteps) {
-		let c1 = this.parse(sColor1);
-		let c2 = this.parse(sColor2);
+	static spectrum(sColor1, sColor2, nSteps) {
+		let c1 = Rainbow.parse(sColor1);
+		let c2 = Rainbow.parse(sColor2);
 		
 		let nSecur = 100;
 		
@@ -1280,7 +1056,7 @@ class Rainbow {
 		}
 		
 		return fillArray([], c1, c2, 0, nSteps - 1).map(function(c) {
-			return this.rgba(c);
+			return Rainbow.rgba(c);
 		}, this);
 	}
 	
@@ -1305,7 +1081,7 @@ class Rainbow {
 	 * }
 	 * rappel : une palette d'indices de 0 à 100 dispose de 101 entrée
 	 */
-	gradient(oPalette) {
+	static gradient(oPalette) {
 		let aPalette = [];
 		let sColor;
 		let sLastColor = null;
@@ -1315,9 +1091,9 @@ class Rainbow {
 			nPal = iPal | 0;
 			sColor = oPalette[iPal];
 			if (sLastColor !== null) {
-				aPalette = aPalette.concat(this.spectrum(sLastColor, sColor, nPal - nLastPal + 1).slice(1));
+				aPalette = aPalette.concat(Rainbow.spectrum(sLastColor, sColor, nPal - nLastPal + 1).slice(1));
 			} else {
-				aPalette[nPal] = this.rgba(sColor);
+				aPalette[nPal] = Rainbow.rgba(sColor);
 			}
 			sLastColor = sColor;
 			nLastPal = nPal;
@@ -1437,7 +1213,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__Bresenham__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__Easing__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter__ = __webpack_require__(3);
@@ -1460,8 +1238,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony default export */ __webpack_exports__["default"] = ({
 	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__["a" /* default */],
 	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham__["a" /* default */],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing__["a" /* default */],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham__["default"],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing__["default"],
 	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow__["a" /* default */],
 	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */],
 	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter__["a" /* default */],
@@ -1955,19 +1733,15 @@ describe('Emitter', function() {
 describe('Astar', function() {
 	describe('simple path find', function() {
 		const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Astar();
-		oAstar.init({
-			grid: [
-                ('*******').split(''),
-                ('*     *').split(''),
-                ('*     *').split(''),
-                ('* **  *').split(''),
-                ('*  ** *').split(''),
-                ('*  *  *').split(''),
-                ('*******').split('')
-			],
-			walkable: ' ',
-			diagonals: false
-		});
+		oAstar.grid([
+			('*******').split(''),
+			('*   * *').split(''),
+			('*  *  *').split(''),
+			('* **  *').split(''),
+			('*  ** *').split(''),
+			('*  *  *').split(''),
+			('*******').split('')
+		]).walkable(' ').diagonals(false);
         it('should have initialized grid 7x7 grid', function() {
             expect(oAstar._grid.length).toEqual(7);
             expect(oAstar._grid[0].length).toEqual(7);
@@ -1997,19 +1771,15 @@ describe('Astar', function() {
 
     describe('impossible path', function() {
         const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Astar();
-        oAstar.init({
-            grid: [
-                ('*******').split(''),
-                ('*   * *').split(''),
-                ('*  *  *').split(''),
-                ('* **  *').split(''),
-                ('*  ** *').split(''),
-                ('*  *  *').split(''),
-                ('*******').split('')
-            ],
-            walkable: ' ',
-            diagonals: false
-        });
+        oAstar.grid([
+			('*******').split(''),
+			('*   * *').split(''),
+			('*  *  *').split(''),
+			('* **  *').split(''),
+			('*  ** *').split(''),
+			('*  *  *').split(''),
+			('*******').split('')
+		]).walkable(' ').diagonals(false);
         it('should not find path', function() {
             expect(() => oAstar.find(4, 5, 2, 5)).toThrow(new Error('O876.Astar: no path to destination'));
         });
@@ -2017,19 +1787,15 @@ describe('Astar', function() {
 
     describe('path is possible via diagonals', function() {
         const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Astar();
-        oAstar.init({
-            grid: [
-                ('*******').split(''),
-                ('*   * *').split(''),
-                ('*  *  *').split(''),
-                ('* **  *').split(''),
-                ('*  ** *').split(''),
-                ('*  *  *').split(''),
-                ('*******').split('')
-            ],
-            walkable: ' ',
-            diagonals: true
-        });
+        oAstar.grid([
+			('*******').split(''),
+			('*   * *').split(''),
+			('*  *  *').split(''),
+			('* **  *').split(''),
+			('*  ** *').split(''),
+			('*  *  *').split(''),
+			('*******').split('')
+		]).walkable(' ').diagonals(true);
         it('should not find path', function() {
             expect(Array.isArray(oAstar.find(4, 5, 2, 5))).toBeTruthy();
         });

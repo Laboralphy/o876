@@ -4,7 +4,7 @@ export default class SnailCrawler {
 	 * @param nLevel niveau
 	 * @return int nombre d'élément sur le coté
 	 */
-	static getLevelSquareWidth(nLevel) {
+	static _getLevelSquareWidth(nLevel) {
 		return nLevel * 2 + 1;
 	}
 	
@@ -13,8 +13,8 @@ export default class SnailCrawler {
 	 * @param nLevel niveau
 	 * @return int nombre d'élément
 	 */
-	static getLevelItemCount(nLevel) {
-		let w = SnailCrawler.getLevelSquareWidth(nLevel);
+	static _getLevelItemCount(nLevel) {
+		let w = SnailCrawler._getLevelSquareWidth(nLevel);
 		return 4 * w - 4;
 	}
 	
@@ -22,14 +22,14 @@ export default class SnailCrawler {
 	 * Renvoie le niveau auquel appartient ce secteur
 	 * le niveau 0 correspond au point 0, 0
 	 */
-	static getLevel(x, y) {
+	static _getLevel(x, y) {
 		x = Math.abs(x);
 		y = Math.abs(y);
 		return Math.max(x, y);
 	}
 	
 	/**
-	 * Renvoie tous les secteur de niveau spécifié
+	 * Renvoie tous les secteurs de niveau spécifié
 	 */
 	static crawl(nLevelMin, nLevelMax) {
 		if (nLevelMax === undefined) {
@@ -45,7 +45,7 @@ export default class SnailCrawler {
 		let n, x, y;
 		for (y = -nLevelMax; y <= nLevelMax; ++y) {
 			for (x = -nLevelMax; x <= nLevelMax; ++x) {
-				n = SnailCrawler.getLevel(x, y);
+				n = SnailCrawler._getLevel(x, y);
 				if (n >= nLevelMin && n <= nLevelMax) {
 					aSectors.push({x: x, y: y});
 				}

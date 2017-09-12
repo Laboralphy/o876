@@ -230,7 +230,7 @@ export default class {
     }
 
     /**
-     * Setter/Getter of the internal grid
+     * Setter/Getter of the internal grid.
      * @param (g) {array}
      * @return {array|object}
      */
@@ -242,12 +242,23 @@ export default class {
         return SB.prop(this, '_grid', g);
     }
 
-    /**
+	/**
 	 * Setter/getter of the walkable code.
-     * @param w
-     * @return {*}
-     */
-    walkable(w) {
-        return SB.prop(this, 'GRID_BLOCK_WALKABLE', w);
-    }
+	 * This code is use to determine if a grid cell is walkable or not.
+	 * @param w {*}
+	 * @return {*}
+	 */
+	walkable(w) {
+		return SB.prop(this, 'GRID_BLOCK_WALKABLE', w);
+	}
+
+	/**
+	 * Setter/getter of the diagonal flag.
+	 * if set to true, the path finder will cross the grid diagonaly if needed.
+	 * @param (b) {boolean}
+	 * @return {*}
+	 */
+	diagonals(b) {
+		return SB.prop(this, '_bUseDiagonals', b);
+	}
 }

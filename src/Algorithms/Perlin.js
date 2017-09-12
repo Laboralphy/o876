@@ -1,26 +1,27 @@
-O2.createClass('O876.Perlin', {
+import Random from './Random';
+import Rainbow from './Rainbow';
+import sb from './SpellBook';
 
-	_rand: null,	// pseudo random generator
-	_width: 0,		// tile width
-	_height: 0,		// tile height
-	_octaves: 0,	// octave counts
-	_interpolate: null,	// string : interpolation function. Allowed values are 'cosine', 'linear', defualt is 'cosine'
+export default class Perlin {
 
-
-	__construct: function() {
-		this._rand = new O876.Random();
+	constructor() {
+		this._width = 0;
+		this._height = 0;
+		this._octaves = 0;
+		this._interpolate = null;
+		this._rand = new Random();
 		this.interpolation('cosine');
-	},
+	}
 
 	/**
 	 * Generate white noise on a matrix
 	 * @param w matrix width
 	 * @param h matrix height
-	 * @return matrix
+	 * @return {array}
 	 */
-	generateWhiteNoise: function(w, h) {
-		var r, a = [];
-		for (var x, y = 0; y < h; ++y) {
+	generateWhiteNoise(w, h) {
+		let r, a = [];
+		for (let x, y = 0; y < h; ++y) {
 			r = []; 
 			for (x = 0; x < w; ++x) {
 				r.push(this._rand.rand());
@@ -28,33 +29,33 @@ O2.createClass('O876.Perlin', {
 			a.push(r);
 		}
 		return a;
-	},
+	}
 
 	/**
 	 * Linear interpolation
-	 * @param x1 minimum
-	 * @param x2 maximum
+	 * @param x0 minimum
+	 * @param x1 maximum
 	 * @param alpha value between 0 and 1
 	 * @return float, interpolation result
 	 */
-	linearInterpolate: function(x0, x1, alpha) {
+	linearInterpolate(x0, x1, alpha) {
 		return x0 * (1 - alpha) + alpha * x1;
-	},
+	}
 
 	/**
 	 * Cosine Interpolation
 	 */
-	cosineInterpolate: function(x0, x1, mu) {
-		var mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
+	cosineInterpolate(x0, x1, mu) {
+		let mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
    		return x0 * (1 - mu2) + x1 * mu2;
-	},
+	}
 
 	/**
-	 * selects an interpolation
+	 * selects or define an interpolation function
 	 * @param f string | function the new interpolation function
 	 * f can be either a string ('cosine', 'linear') or a custom function
 	 */
-	interpolation: function(f) {
+	interpolation(f) {
 		switch (typeof f) {
 			case 'string':
 				if ((f + 'Interpolate') in this) {
@@ -72,18 +73,18 @@ O2.createClass('O876.Perlin', {
 				return this._interpolate;
 		}
 		return this;
-	},
+	}
 
-	generateSmoothNoise: function(aBaseNoise, nOctave) {
-		var w = aBaseNoise.length;
-		var h = aBaseNoise[0].length;
-		var aSmoothNoise = [];
-		var r;
-		var nSamplePeriod = 1 << nOctave;
-		var fSampleFreq = 1 / nSamplePeriod;
-		var xs = [], ys = []
-		var hBlend, vBlend, fTop, fBottom;
-		for (var x, y = 0; y < h; ++y) {
+	generateSmoothNoise(aBaseNoise, nOctave) {
+		let w = aBaseNoise.length;
+		let h = aBaseNoise[0].length;
+		let aSmoothNoise = [];
+		let r;
+		let nSamplePeriod = 1 << nOctave;
+		let fSampleFreq = 1 / nSamplePeriod;
+		let xs = [], ys = [];
+		let hBlend, vBlend, fTop, fBottom;
+		for (let x, y = 0; y < h; ++y) {
       		ys[0] = (y / nSamplePeriod | 0) * nSamplePeriod;
       		ys[1] = (ys[0] + nSamplePeriod) % h;
       		hBlend = (y - ys[0]) * fSampleFreq;
@@ -102,22 +103,22 @@ O2.createClass('O876.Perlin', {
       		aSmoothNoise.push(r);
 		}
 		return aSmoothNoise;
-	},
+	}
 
-	generatePerlinNoise: function(aBaseNoise, nOctaveCount) {
-		var w = aBaseNoise.length;
-		var h = aBaseNoise[0].length;
-		var aSmoothNoise = [];
-		var fPersist = 0.5;
+	generatePerlinNoise(aBaseNoise, nOctaveCount) {
+		let w = aBaseNoise.length;
+		let h = aBaseNoise[0].length;
+		let aSmoothNoise = [];
+		let fPersist = 0.5;
 
-		for (var i = 0; i < nOctaveCount; ++i) {
+		for (let i = 0; i < nOctaveCount; ++i) {
 			aSmoothNoise.push(this.generateSmoothNoise(aBaseNoise, i));
 		}
 
-		var aPerlinNoise = [];
-		var fAmplitude = 1;
-		var fTotalAmp = 0;
-		var x, y, r;
+		let aPerlinNoise = [];
+		let fAmplitude = 1;
+		let fTotalAmp = 0;
+		let x, y, r;
 
 		for (y = 0; y < h; ++y) {
 			r = [];
@@ -127,7 +128,7 @@ O2.createClass('O876.Perlin', {
 			aPerlinNoise.push(r);
 		}
 
-		for (var iOctave = nOctaveCount - 1; iOctave >= 0; --iOctave) {
+		for (let iOctave = nOctaveCount - 1; iOctave >= 0; --iOctave) {
 			fAmplitude *= fPersist;
 			fTotalAmp += fAmplitude;
 
@@ -145,27 +146,27 @@ O2.createClass('O876.Perlin', {
 			}
 		}
 		return aPerlinNoise;
-	},
+	}
 
 
-	hash: function (a) {
+	hash (a) {
 	    a = (a ^ 61) ^ (a >> 16);
 	    a = a + (a << 3);
 	    a = a ^ (a >> 4);
 	    a = a * 0x27d4eb2d;
 	    a = a ^ (a >> 15);
     	return a;
-    },
+    }
 
 	/** 
 	 * Calcule le hash d'une région
 	 * Permet de choisir une graine aléatoire
 	 * et de raccorder seamlessly les région adjacente
 	 */
-	getPointHash: function(x, y) {
-		var xh = this.hash(x).toString().split('');
-		var yh = this.hash(y).toString().split('');
-		var s = xh.shift() + yh.shift() + '.';
+	getPointHash(x, y) {
+		let xh = this.hash(x).toString().split('');
+		let yh = this.hash(y).toString().split('');
+		let s = xh.shift() + yh.shift() + '.';
 		while (xh.length || yh.length) {
 			if (xh.length) {
 				s += xh.shift();
@@ -175,21 +176,21 @@ O2.createClass('O876.Perlin', {
 			}
 		}
 		return parseFloat(s);
-	},
+	}
 
-	generate: function(x, y) {
-		var _self = this;
+	generate(x, y) {
+		let _self = this;
 
 		function gwn(xg, yg) {
-			var nSeed = _self.getPointHash(xg, yg);
+			let nSeed = _self.getPointHash(xg, yg);
 			_self.rand().seed(nSeed);
 			return _self.generateWhiteNoise(_self.width(), _self.height());
 		}
 
 		function merge33(a33) {
-			var h = _self.height();
-			var a = [];
-			for (var y, ya = 0; ya < 3; ++ya) {
+			let h = _self.height();
+			let a = [];
+			for (let y, ya = 0; ya < 3; ++ya) {
 				for (y = 0; y < h; ++y) {
 					a.push(a33[ya][0][y].concat(a33[ya][1][y], a33[ya][2][y]));
 				}
@@ -198,27 +199,25 @@ O2.createClass('O876.Perlin', {
 		}
 
 		function extract33(a) {
-			var w = _self.width();
-			var h = _self.height();
+			let w = _self.width();
+			let h = _self.height();
 			return a.slice(h, h * 2).map(function(r) { return r.slice(w, w * 2); });
 		}
 
-		var a0 = [
+		let a0 = [
 			[gwn(x - 1, y - 1), gwn(x, y - 1), gwn(x + 1, y - 1)],
 			[gwn(x - 1, y), gwn(x, y), gwn(x + 1, y)],
 			[gwn(x - 1, y + 1), gwn(x, y + 1), gwn(x + 1, y + 1)]
 		];
 
-		var a1 = merge33(a0);
-		var a2 = this.generatePerlinNoise(a1, this.octaves());
-		var a3 = extract33(a2);
+		let a1 = merge33(a0);
+		let a2 = this.generatePerlinNoise(a1, this._octaves);
+		let a3 = extract33(a2);
 		return a3;
-	},
+	}
 
-
-	render: function(aNoise, oContext, aPalette) {
-		var oRainbow = new O876.Rainbow();
-		var aPalette = aPalette || oRainbow.gradient({
+	render(aNoise, oContext, aPalette) {
+		let aPalette = aPalette || Rainbow.gradient({
 			0: '#008',
 			49: '#00F',
 			50: '#840',
@@ -226,14 +225,13 @@ O2.createClass('O876.Perlin', {
 			85: '#888',
 			99: '#FFF'
 		});
-		var h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
-		var oImageData = oContext.createImageData(w, h);
-		var data = oImageData.data;
-		var oRainbow = new O876.Rainbow();
+		let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
+		let oImageData = oContext.createImageData(w, h);
+		let data = oImageData.data;
 		aNoise.forEach(function(r, y) {
 			r.forEach(function(p, x) {
-				var nOfs = (y * w + x) << 2;
-				var rgb = oRainbow.parse(aPalette[p * pl | 0]);
+				let nOfs = (y * w + x) << 2;
+				let rgb = Rainbow.parse(aPalette[p * pl | 0]);
 				data[nOfs] = rgb.r;
 				data[nOfs + 1] = rgb.g;
 				data[nOfs + 2] = rgb.b;
@@ -242,8 +240,4 @@ O2.createClass('O876.Perlin', {
 		});
 		oContext.putImageData(oImageData, 0, 0);
 	}
-
-});
-
-
-O2.mixin(O876.Perlin, O876.Mixin.Prop);
+}
