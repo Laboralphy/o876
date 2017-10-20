@@ -688,17 +688,252 @@ class Emitter {
 
 /***/ }),
 /* 5 */
-/***/ (function(module, __webpack_exports__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-throw new Error("Module build failed: Error: ENOENT: no such file or directory, open '/home/ralphy/public_html/O876/src/Bresenham.js'");
+/**
+ * This class implements the bresenham algorithm
+ * and extend its use for other purpose than drawing pixel lines
+ * good to GIT
+ */
+class Bresenham {
+	/**
+	 * This function will virtually draw points along a line
+	 * and will call back a plot function. 
+	 * The line will start at x0, y0 and will end at x1, y1
+	 * Each time a points is "drawn" a callback is done 
+	 * if the callback returns false, the line function will stop and return false
+	 * else the line function will return an array of plots
+	 * @param x0 starting point x
+	 * @param y0 starting point y
+	 * @param x1 ending point x
+	 * @param y1 ending point y
+	 * @param pCallback a plot function of type function(x, y, n) { return bool; }
+	 * avec x, y les coordonnées du point et n le numéro duj point
+	 * @returns {Boolean} false if the fonction has been canceled
+	 */
+	static line(x0, y0, x1, y1, pCallback) {
+		x0 |= 0;
+		y0 |= 0;
+		x1 |= 0;
+		y1 |= 0;
+		let dx = Math.abs(x1 - x0);
+		let dy = Math.abs(y1 - y0);
+		let sx = (x0 < x1) ? 1 : -1;
+		let sy = (y0 < y1) ? 1 : -1;
+		let err = dx - dy;
+		let e2;
+		let n = 0;
+		while (true) {
+			if (pCallback) {
+				if (pCallback(x0, y0, n) === false) {
+					return false;
+				}
+			}
+			if (x0 === x1 && y0 === y1) {
+				break;
+			}
+			e2 = err << 1;
+			if (e2 > -dy) {
+				err -= dy;
+				x0 += sx;
+			}
+			if (e2 < dx) {
+				err += dx;
+				y0 += sy;
+			}
+			++n;
+		}
+		return true;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Bresenham;
+
+
 
 /***/ }),
 /* 6 */
-/***/ (function(module, __webpack_exports__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-throw new Error("Module build failed: Error: ENOENT: no such file or directory, open '/home/ralphy/public_html/O876/src/Easing.js'");
+/** Interface de controle des mobile 
+ * O876 Raycaster project
+ * @class O876.Easing
+ * @date 2013-03-04
+ * @author Raphaël Marandet 
+ * Fait bouger un mobile de manière non-lineaire
+ * Avec des coordonnée de dépat, d'arriver, et un temps donné
+ * L'option lineaire est tout de même proposée.
+ * good to GIT
+ */
+class Easing {
+
+	constructor() {
+		this.xStart = 0;
+		this.xEnd = 0;
+		this.x = 0;
+		this.nTime = 0;
+		this.iTime = 0;
+		this.fWeight = 1;
+		this.pFunction = null;
+	}
+
+    /**
+	 * Will define de starting value
+     * @param x {number}
+     * @returns {O876.Easing}
+     */
+	from(x) {
+		this.xStart = this.x = x;
+		return this;
+	}
+
+    /**
+	 * Will define the ending value
+     * @param x {number}
+     * @returns {O876.Easing}
+     */
+	to(x) {
+		this.xEnd = x;
+		return this;
+	}
+
+    /**
+	 * Will define the duration of the transition
+     * @param t {number} arbitrary unit
+     * @returns {O876.Easing}
+     */
+	during(t) {
+		this.nTime = t;
+		this.iTime = 0;
+		return this;
+	}
+
+	/**
+	 * Définition de la fonction d'Easing
+	 * @param xFunction {string|Function} fonction à choisir parmi :
+	 * linear : mouvement lineaire uniforme
+	 * smoothstep : accelération et déccelération douce
+	 * smoothstepX2 : accelération et déccelération moyenne
+	 * smoothstepX3 : accelération et déccelération brutale
+	 * squareAccel : vitesse 0 à T-0 puis uniquement accelération 
+	 * squareDeccel : vitesse max à T-0 puis uniquement deccelération
+	 * cubeAccel : vitesse 0 à T-0 puis uniquement accelération brutale 
+	 * cubeDeccel : vitesse max à T-0 puis uniquement deccelération brutale
+	 * sine : accelération et deccelération brutal, vitesse nulle à mi chemin
+	 * cosine : accelération et deccelération selon le cosinus, vitesse max à mi chemin
+	 * weightAverage : ... me rapelle plus 
+	 */
+	use(xFunction) {
+		switch (typeof xFunction) {
+			case 'string':
+				this.pFunction = this['_' + xFunction].bind(this);
+			break;
+
+			case 'function':
+				this.pFunction = xFunction;
+			break;
+
+			default:
+				throw new Error('unknown function type');
+		}
+		return this;
+	}
+	
+	/**
+	 * Calcule les coordonnée pour le temps t
+	 * mets à jour les coordonnée x et y de l'objets
+	 * @param t {number} temps
+	 * si "t" est indéfini, utilise le timer interne 
+	 */
+	next(t) {
+		if (t === undefined) {
+			t = ++this.iTime;
+		} else {
+			this.iTime = t;
+		}
+		let p = this.pFunction;
+		if (typeof p !== 'function') {
+			throw new Error('easing function is invalid : ' + p);
+		}
+		let v = p(t / this.nTime);
+		this.x = this.xEnd * v + (this.xStart * (1 - v));
+		return this;
+	}
+
+	val() {
+		return this.x;
+	}
+
+	over() {
+		return this.iTime >= this.nTime;
+	}
+
+	_linear(v) {
+		return v;
+	}
+	
+	_smoothstep(v) {
+		return v * v * (3 - 2 * v);
+	}
+	
+	_smoothstepX2(v) {
+		v = v * v * (3 - 2 * v);
+		return v * v * (3 - 2 * v);
+	}
+	
+	_smoothstepX3(v) {
+		v = v * v * (3 - 2 * v);
+		v = v * v * (3 - 2 * v);
+		return v * v * (3 - 2 * v);
+	}
+	
+	_squareAccel(v) {
+		return v * v;
+	}
+	
+	_squareDeccel(v) {
+		return 1 - (1 - v) * (1 - v);
+	}
+	
+	_cubeAccel(v) {
+		return v * v * v;
+	}
+	
+	_cubeDeccel(v) {
+		return 1 - (1 - v) * (1 - v) * (1 - v);
+	}
+	
+	_cubeInOut(v) {
+		if (v < 0.5) {
+			v = 2 * v;
+			return v * v * v;
+		} else {
+			v = (1 - v) * 2;
+			return v * v * v;
+		}
+	}
+	
+	_sine(v) {
+		return Math.sin(v * Math.PI / 2);
+	}
+	
+	_cosine(v) {
+		return 0.5 - Math.cos(-v * Math.PI) * 0.5;
+	}
+	
+	_weightAverage(v) {
+		return ((v * (this.nTime - 1)) + this.fWeight) / this.nTime;
+	}
+	
+	_quinticBezier(v) {
+		let ts = v * this.nTime;
+		let tc = ts * this.nTime;
+		return 4 * tc - 9 * ts + 6 * v;
+	}
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = Easing;
+
 
 /***/ }),
 /* 7 */
@@ -1212,14 +1447,12 @@ class Rainbow {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Bresenham___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2__Bresenham__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Easing___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3__Easing__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Algorithms_Bresenham__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Algorithms_Easing__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Rainbow__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SpellBook__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__Emitter__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Astar_Astar__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__Algorithms_Astar_Astar__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__Random__ = __webpack_require__(9);
 /**
  * includes all modules
@@ -1238,12 +1471,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony default export */ __webpack_exports__["default"] = ({
 	Point: __WEBPACK_IMPORTED_MODULE_0__Geometry_Point__["a" /* default */],
 	Vector: __WEBPACK_IMPORTED_MODULE_1__Geometry_Vector__["a" /* default */],
-	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Bresenham__["default"],
-	Easing: __WEBPACK_IMPORTED_MODULE_3__Easing__["default"],
+	Bresenham: __WEBPACK_IMPORTED_MODULE_2__Algorithms_Bresenham__["a" /* default */],
+	Easing: __WEBPACK_IMPORTED_MODULE_3__Algorithms_Easing__["a" /* default */],
 	Rainbow: __WEBPACK_IMPORTED_MODULE_4__Rainbow__["a" /* default */],
 	SpellBook: __WEBPACK_IMPORTED_MODULE_5__SpellBook__["a" /* default */],
 	Emitter: __WEBPACK_IMPORTED_MODULE_6__Emitter__["a" /* default */],
-	Astar: __WEBPACK_IMPORTED_MODULE_7__Astar_Astar__["a" /* default */],
+	Astar: __WEBPACK_IMPORTED_MODULE_7__Algorithms_Astar_Astar__["a" /* default */],
 	Random: __WEBPACK_IMPORTED_MODULE_8__Random__["a" /* default */]
 });
 
@@ -1377,7 +1610,7 @@ class NoodList {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__src_o876_js__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__src_index_js__ = __webpack_require__(10);
 /**
  * Created by ralphy on 04/09/17.
  */
@@ -1387,7 +1620,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 describe('Vector', function() {
 	describe('initialisation 0', function () {
 		it('creates a zero vector', function () {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector();
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector();
 			expect(v.x).toEqual(0);
 			expect(v.y).toEqual(0);
 		});
@@ -1395,7 +1628,7 @@ describe('Vector', function() {
 
 	describe('initialisation not 0', function () {
 		it('creates an initialized vector', function () {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(7, 89);
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(7, 89);
 			expect(v.x).toEqual(7);
 			expect(v.y).toEqual(89);
 		});
@@ -1403,8 +1636,8 @@ describe('Vector', function() {
 
 	describe('cloning', function () {
 		it('properly clones a vector', function () {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(-7, 66);
-			let w = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(v);
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(-7, 66);
+			let w = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(v);
 			expect(v.x).toEqual(w.x);
 			expect(v.y).toEqual(w.y);
 			expect(v === w).toBeFalsy();
@@ -1413,7 +1646,7 @@ describe('Vector', function() {
 
 	describe('zero vector', function() {
 		it('should build a 0, 0 vector', function() {
-			let v = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector.zero();
+			let v = __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector.zero();
 			expect(v.x).toEqual(0);
 			expect(v.y).toEqual(0);
 		});
@@ -1421,8 +1654,8 @@ describe('Vector', function() {
 
 	describe('adding two vectors', function() {
 		it('should add 2 vectors', function() {
-			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(10, 15);
-			let v2 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(2, -2);
+			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(10, 15);
+			let v2 = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(2, -2);
 			let v3 = v1.add(v2);
 			// immutability
 			expect(v1.x).toEqual(10);
@@ -1436,7 +1669,7 @@ describe('Vector', function() {
 
 	describe('scaling a vector', function() {
 		it('should scale a vector', function() {
-			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(30, 4);
+			let v1 = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(30, 4);
 			let v2 = v1.mul(6);
 			expect(v1.x).toEqual(30);
 			expect(v1.y).toEqual(4);
@@ -1447,18 +1680,18 @@ describe('Vector', function() {
 
 	describe('get vector distance', function() {
 		it('should compute vector distance', function() {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(5, 5);
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(5, 5);
 			expect(v.distance()).toBeCloseTo(5 * Math.sqrt(2), 4);
 		});
 		it('should compute vector distance 2', function() {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(-3, 2);
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(-3, 2);
 			expect(v.distance()).toBeCloseTo(Math.sqrt(9 + 4), 4);
 		});
 	});
 
 	describe('normalize vector', function() {
 		it('should build a normalized vector', function() {
-			let v = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Vector(64, 4123);
+			let v = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Vector(64, 4123);
 			expect(v.normalize().distance()).toBeCloseTo(1, 5);
 		});
 	});
@@ -1467,7 +1700,7 @@ describe('Vector', function() {
 describe('Bresenham', function() {
 	it('should build a line', function() {
 		let aList = [];
-		let bOk = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Bresenham.line(10, 10, 15, 12, function (x, y) {
+		let bOk = __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Bresenham.line(10, 10, 15, 12, function (x, y) {
 			aList.push(x + ';' + y);
 		});
 		expect(aList.join('-')).toEqual('10;10-11;10-12;11-13;11-14;12-15;12');
@@ -1477,7 +1710,7 @@ describe('Bresenham', function() {
 
 describe('Rainbow', function() {
 	it ('should parse colors without error', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Rainbow();
 		expect(r.parse('741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
 		expect(r.parse('774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
 		expect(r.parse('#741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
@@ -1487,18 +1720,18 @@ describe('Rainbow', function() {
 	});
 
 	it('should convert rgba', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Rainbow();
 		expect(r.rgba('#FFF')).toEqual('rgb(255, 255, 255)');
 	});
 
 	it('should make an array of 4 items', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Rainbow();
 		let a = r.spectrum('#F41', '#8A5', 4);
 		expect(a.length).toEqual(4);
 	});
 
 	it('should build a big gradient array', function() {
-		const r = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Rainbow();
+		const r = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Rainbow();
 		let a;
 
 		a = r.gradient({
@@ -1573,7 +1806,7 @@ describe('Rainbow', function() {
 describe('Easing', function() {
 	describe('setting move', function() {
 		it('should initialize correctly', function() {
-			const e = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Easing();
+			const e = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Easing();
 			e.from(4).to(17).during(10);
 			expect(e.x).toEqual(4);
 			expect(e.xStart).toEqual(4);
@@ -1584,7 +1817,7 @@ describe('Easing', function() {
 	});
 	describe('setting move', function() {
 		it('should correctly use a simple linear function', function() {
-			const e = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Easing();
+			const e = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Easing();
 			e.from(4).to(17).during(10).use(function(v) {
 				return v * 2;
 			});
@@ -1615,36 +1848,36 @@ describe('SpellBook', function() {
 	describe('#array', function() {
 		it('should return the same array', function() {
 			let a = ['a', 'b', 'c'];
-			let b = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(a);
+			let b = __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(a);
             expect(a).toEqual(b);
             expect(a === b).toBeTruthy();
 		});
         it('should convert a simple object', function() {
             let aSource = {3:'t', 2:'o', 1: 'i', 0:'y'};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource))
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(aSource))
                 .toEqual(['y', 'i', 'o', 't']);
         });
         it('should convert a simple object with quoted keys', function() {
             let aSource = {'3':'t', '2':'o', '1':'i', '0':'y'};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource))
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(aSource))
                 .toEqual(['y', 'i', 'o', 't']);
         });
         it('should convert an array like object', function() {
             let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 4};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toEqual([111, 222, 333, 444]);
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(aSource)).toEqual([111, 222, 333, 444]);
         });
         it('should fail to convert an array like object (bad length)', function() {
             let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 5};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toBeFalsy();
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(aSource)).toBeFalsy();
         });
         it('should fail to convert an array like object (missing key)', function() {
             let aSource = {0:111, 1:222, 2:333, 4:444};
-            expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(aSource)).toBeFalsy();
+            expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(aSource)).toBeFalsy();
         });
         it('should convert argument', function() {
         	let a;
 			(function() {
-        		a = __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.array(arguments);
+        		a = __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.array(arguments);
 			})(4, 5, 6);
 			expect(a).toEqual([4, 5, 6]);
 		});
@@ -1652,17 +1885,17 @@ describe('SpellBook', function() {
 
 	describe('#typeMap', function() {
 		it('should map this type', function() {
-			expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.typeMap([1, 0, {}, [], null, true, false, Infinity, undefined, function() {}])).toEqual('nnoaubbnuf');
+			expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.typeMap([1, 0, {}, [], null, true, false, Infinity, undefined, function() {}])).toEqual('nnoaubbnuf');
 		});
 	});
 
 	describe('#parseSearch', function() {
 		it ('should parse a simple query', function() {
-			expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.parseSearch('?x=1&y=5')).toEqual({
+			expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.parseSearch('?x=1&y=5')).toEqual({
 				x: '1',
 				y: '5'
 			});
-			expect(__WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].SpellBook.parseSearch('?text=abc+def')).toEqual({
+			expect(__WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].SpellBook.parseSearch('?text=abc+def')).toEqual({
 				text: 'abc def'
 			});
 		});
@@ -1674,7 +1907,7 @@ describe('SpellBook', function() {
 describe('Emitter', function() {
 	describe('#on', function() {
         it('should trigger an event', function () {
-            const E = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Emitter();
+            const E = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Emitter();
             let sTemoin = 0;
             E.on('test', function (v) {
                 sTemoin = v;
@@ -1692,7 +1925,7 @@ describe('Emitter', function() {
     });
     describe('#one', function() {
         it('should trigger an event only once', function() {
-            const E = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Emitter();
+            const E = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Emitter();
             let sTemoin = 0;
             E.one('test', function(v) {
                 sTemoin += v*2;
@@ -1707,7 +1940,7 @@ describe('Emitter', function() {
     });
     describe('#off', function() {
         it('should not trigger anything', function() {
-            const E = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Emitter();
+            const E = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Emitter();
             let sTemoin = 0;
             let pHandler = function(v) {
                 sTemoin += v*2;
@@ -1732,7 +1965,7 @@ describe('Emitter', function() {
 
 describe('Astar', function() {
 	describe('simple path find', function() {
-		const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Astar();
+		const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Astar();
 		oAstar.grid([
 			('*******').split(''),
 			('*   * *').split(''),
@@ -1770,7 +2003,7 @@ describe('Astar', function() {
 	});
 
     describe('impossible path', function() {
-        const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Astar();
+        const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Astar();
         oAstar.grid([
 			('*******').split(''),
 			('*   * *').split(''),
@@ -1786,7 +2019,7 @@ describe('Astar', function() {
     });
 
     describe('path is possible via diagonals', function() {
-        const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_o876_js__["default"].Astar();
+        const oAstar = new __WEBPACK_IMPORTED_MODULE_0__src_index_js__["default"].Astar();
         oAstar.grid([
 			('*******').split(''),
 			('*   * *').split(''),

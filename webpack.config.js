@@ -5,7 +5,7 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        dist: path.resolve(__dirname, 'src/o876.js'),
+        dist: path.resolve(__dirname, 'src/index.js'),
         test: path.resolve(__dirname, 'test/o876-test.js'),
 	},
     output: {

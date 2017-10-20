@@ -2,7 +2,7 @@
  * Created by ralphy on 04/09/17.
  */
 
-import O876 from '../src/o876.js';
+import O876 from '../src/index.js';
 
 describe('Vector', function() {
 	describe('initialisation 0', function () {

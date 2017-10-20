@@ -2,12 +2,12 @@
  * Created by ralphy on 06/09/17.
  */
 
-import Helper from '../Geometry/Helper';
+import Helper from '../../Geometry/Helper';
 import Nood from './Nood';
 import NoodList from './NoodList';
-import Emitter from '../Emitter';
-import Point from '../Geometry/Point';
-import SB from '../SpellBook'
+import Emitter from '../../Emitter';
+import Point from '../../Geometry/Point';
+import SB from '../../SpellBook'
 
 
 /**

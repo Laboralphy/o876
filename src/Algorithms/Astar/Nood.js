@@ -2,7 +2,7 @@
  * Created by ralphy on 04/09/17.
  */
 
-import Point from '../Geometry/Point.js';
+import Point from '../../Geometry/Point.js';
 
 export default class Nood {
 	constructor() {
