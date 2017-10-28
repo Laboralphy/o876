@@ -10,7 +10,6 @@ import Bresenham from './Algorithms/Bresenham';
 import Easing from './Algorithms/Easing';
 import SquareSpiral from './Algorithms/SquareSpiral';
 import Perlin from './Algorithms/Perlin';
-
 import Rainbow from './Rainbow';
 import SpellBook from './SpellBook';
 import Emitter from './Emitter';
