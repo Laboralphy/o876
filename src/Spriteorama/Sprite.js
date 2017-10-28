@@ -1,11 +1,20 @@
-O2.createClass('Fairy.Sprite', {
-	_origin: null,
-	_color: 'red',
-	_tileset: null,
-	_animations: null,
-	_animation: null,
-	_zoom: 1,
-	
+/**
+ * @class Sprite
+ * This class is able to render sprite
+ * it holds an Animation instance.
+ */
+
+export default class Sprite {
+
+	constructor() {
+        this._origin = null;
+		this._color = 'red';
+		this._tileset = null;
+		this._animations = null;
+		this._animation = null;
+		this._zoom = 1;
+	}
+
 	__construct: function() {
 		this._origin = new Fairy.Vector();
 		this._animations = [];

@@ -19,16 +19,6 @@ import SB from './SpellBook';
 export default class Emitter {
     constructor() {
         this._oEventHandlers = {};
-        this._oInstance = null;
-    }
-
-    /**
-	 * defines or returns the client instance associated with this
-     * @param oInst {object}
-     * @return {*}
-     */
-    instance(oInst) {
-    	return SB.prop(this, '_oInstance', oInst);
     }
 
     /**
@@ -42,11 +32,11 @@ export default class Emitter {
         aArgs.shift();
         let eh = this._oEventHandlers;
         if (sEvent in eh) {
-			eh[sEvent].one.forEach(f => f.apply(this._oInstance, aArgs));
+			eh[sEvent].one.forEach(f => f.apply(this, aArgs));
 			eh[sEvent].one = [];
-            eh[sEvent].on.forEach(f => f.apply(this._oInstance, aArgs));
+            eh[sEvent].on.forEach(f => f.apply(this, aArgs));
         }
-		return this.instance();
+		return this;
     }
 
     /**

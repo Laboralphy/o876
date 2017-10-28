@@ -2,13 +2,12 @@
  * Created by ralphy on 06/09/17.
  */
 
-import Helper from '../Geometry/Helper';
+import Helper from '../../Geometry/Helper';
 import Nood from './Nood';
 import NoodList from './NoodList';
-import Emitter from '../Emitter';
-import Point from '../Geometry/Point';
-import SB from '../SpellBook'
-
+import Emitter from '../../Emitter';
+import Point from '../../Geometry/Point';
+import SB from '../../SpellBook'
 
 /**
  * @class
@@ -23,7 +22,7 @@ import SB from '../SpellBook'
  * })
  * pf.find(xfrom, yfrom, xto, yto)
  */
-export default class {
+export default class Astar {
 	constructor() {
 		// configuration
 		this._bUseDiagonals = false;
@@ -41,10 +40,12 @@ export default class {
 
 		// utilities
 		this.emitter = new Emitter();
-        this.emitter.instance(this);
 	}
 
-
+    on() { this.emitter.on(...arguments); return this; }
+    off() { this.emitter.off(...arguments); return this; }
+    one() { this.emitter.one(...arguments); return this; }
+    trigger() { this.emitter.trigger(...arguments); return this; }
 
     /**
 	 * modifies a cell value
@@ -76,7 +77,7 @@ export default class {
 					y: y
 				}
 			};
-			this.emitter.trigger('walkable', r);
+			this.trigger('walkable', r);
 			return r.walkable;
 		} catch (e) {
 			return false;
@@ -231,8 +232,8 @@ export default class {
 
     /**
      * Setter/Getter of the internal grid.
-     * @param (g) {array}
-     * @return {array|object}
+     * @param (g) {[]}
+     * @return {[]|Astar}
      */
     grid(g) {
         if (g !== undefined) {
@@ -245,8 +246,8 @@ export default class {
 	/**
 	 * Setter/getter of the walkable code.
 	 * This code is use to determine if a grid cell is walkable or not.
-	 * @param w {*}
-	 * @return {*}
+	 * @param (w) {string|number}
+	 * @return {string|number|Astar}
 	 */
 	walkable(w) {
 		return SB.prop(this, 'GRID_BLOCK_WALKABLE', w);
@@ -256,7 +257,7 @@ export default class {
 	 * Setter/getter of the diagonal flag.
 	 * if set to true, the path finder will cross the grid diagonaly if needed.
 	 * @param (b) {boolean}
-	 * @return {*}
+	 * @return {boolean|Astar}
 	 */
 	diagonals(b) {
 		return SB.prop(this, '_bUseDiagonals', b);

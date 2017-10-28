@@ -1,4 +1,11 @@
-export default class SnailCrawler {
+/**
+ * @class SquareSpiral
+ * This simple class builds a squared shape spiral
+ * and reports all cells into an ordered list of Point
+ * starting from the spiral center.
+ */
+
+export default class SquareSpiral {
 	/**
 	 * Renvoie la largeur d'un carré de snail selon le niveau
 	 * @param nLevel niveau
@@ -14,7 +21,7 @@ export default class SnailCrawler {
 	 * @return int nombre d'élément
 	 */
 	static _getLevelItemCount(nLevel) {
-		let w = SnailCrawler._getLevelSquareWidth(nLevel);
+		let w = SquareSpiral._getLevelSquareWidth(nLevel);
 		return 4 * w - 4;
 	}
 	
@@ -31,7 +38,7 @@ export default class SnailCrawler {
 	/**
 	 * Renvoie tous les secteurs de niveau spécifié
 	 */
-	static crawl(nLevelMin, nLevelMax) {
+	static build(nLevelMin, nLevelMax) {
 		if (nLevelMax === undefined) {
 			nLevelMax = nLevelMin;
 		}
@@ -45,7 +52,7 @@ export default class SnailCrawler {
 		let n, x, y;
 		for (y = -nLevelMax; y <= nLevelMax; ++y) {
 			for (x = -nLevelMax; x <= nLevelMax; ++x) {
-				n = SnailCrawler._getLevel(x, y);
+				n = SquareSpiral._getLevel(x, y);
 				if (n >= nLevelMin && n <= nLevelMax) {
 					aSectors.push({x: x, y: y});
 				}

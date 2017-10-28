@@ -36,6 +36,15 @@ export default class Vector {
 		return new Vector(v.x + this.x, v.y + this.y);
 	}
 
+    /**
+     * Immutable !
+     * returns a new Vector which is the diffrence of this instance and the given argument
+     * @param v
+     */
+	sub(v) {
+        return new Vector(this.x - v.x, this.y - v.y);
+	}
+
 	/**
 	 * Immutable !
 	 * returns a scalar product

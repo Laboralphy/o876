@@ -1,6 +1,5 @@
-import Random from './Random';
-import Rainbow from './Rainbow';
-import sb from './SpellBook';
+import Random from '../Random';
+import Rainbow from '../Rainbow';
 
 export default class Perlin {
 
@@ -217,7 +216,7 @@ export default class Perlin {
 	}
 
 	render(aNoise, oContext, aPalette) {
-		let aPalette = aPalette || Rainbow.gradient({
+		aPalette = aPalette || Rainbow.gradient({
 			0: '#008',
 			49: '#00F',
 			50: '#840',

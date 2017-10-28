@@ -97,7 +97,7 @@ describe('Bresenham', function() {
 
 describe('Rainbow', function() {
 	it ('should parse colors without error', function() {
-		const r = new O876.Rainbow();
+		const r = O876.Rainbow;
 		expect(r.parse('741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
 		expect(r.parse('774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
 		expect(r.parse('#741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
@@ -107,18 +107,18 @@ describe('Rainbow', function() {
 	});
 
 	it('should convert rgba', function() {
-		const r = new O876.Rainbow();
+		const r = O876.Rainbow;
 		expect(r.rgba('#FFF')).toEqual('rgb(255, 255, 255)');
 	});
 
 	it('should make an array of 4 items', function() {
-		const r = new O876.Rainbow();
+		const r = O876.Rainbow;
 		let a = r.spectrum('#F41', '#8A5', 4);
 		expect(a.length).toEqual(4);
 	});
 
 	it('should build a big gradient array', function() {
-		const r = new O876.Rainbow();
+		const r = O876.Rainbow;
 		let a;
 
 		a = r.gradient({
@@ -356,7 +356,7 @@ describe('Astar', function() {
 		oAstar.grid([
 			('*******').split(''),
 			('*   * *').split(''),
-			('*  *  *').split(''),
+			('*     *').split(''),
 			('* **  *').split(''),
 			('*  ** *').split(''),
 			('*  *  *').split(''),

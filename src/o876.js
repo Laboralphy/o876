@@ -4,22 +4,34 @@
 
 import Point from './Geometry/Point';
 import Vector from './Geometry/Vector';
-import Bresenham from './Bresenham';
-import Easing from './Easing';
+
+import Astar from './Algorithms/Astar/Astar';
+import Bresenham from './Algorithms/Bresenham';
+import Easing from './Algorithms/Easing';
+import SquareSpiral from './Algorithms/SquareSpiral';
+import Perlin from './Algorithms/Perlin';
+
 import Rainbow from './Rainbow';
 import SpellBook from './SpellBook';
 import Emitter from './Emitter';
-import Astar from './Astar/Astar';
 import Random from './Random';
 
 export default {
+
+	// Geometry
 	Point,
 	Vector,
-	Bresenham,
-	Easing,
-	Rainbow,
-	SpellBook,
-	Emitter,
-	Astar,
-	Random
+
+	// Algorithms
+    Astar,
+    Bresenham,
+    Easing,
+	Perlin,
+	SquareSpiral,
+
+	// Tools
+    Emitter,
+    Rainbow,
+    Random,
+    SpellBook,
 }
