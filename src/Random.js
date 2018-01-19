@@ -13,15 +13,35 @@ export default class {
         this._seed = Math.random();
 	}
 
+    /**
+	 * Will define a new seed
+     * @param x {number}
+     * @returns {*}
+     */
 	seed(x) {
     	return SB.prop(this, '_seed', x);
 	}
 
-
+    /**
+	 * Return a random generated number using the simple sine-66 function
+     * @returns {number} a number between 0 and 1
+     * @private
+     */
 	_rand() {
 		return this._seed = Math.abs(((Math.sin(this._seed) * 1e12) % 1e6) / 1e6);
 	}
 
+    /**
+	 * returns a random generated number.
+	 * the result will vary according to the given parameter values
+	 * - two integer (a, b) gives a random number between a and b
+	 * - an array gives a random item of this array
+	 * - an object gives a random key of this object
+	 * - no parameter gives a random float value between 0 and 1
+     * @param a {number|Array|Object} lower limit
+     * @param b {number} upper limit
+     * @returns {*}
+     */
 	rand(a, b) {
 		let r = this._rand();
 		switch (typeof a) {
