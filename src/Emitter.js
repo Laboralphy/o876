@@ -12,6 +12,7 @@ import SB from './SpellBook.js';
  * .one to define a "one triggered" handler
  * .trigger to cast an event
  *
+ * Only usefull in javascript, as node.js is provided with the "events" module.
  */
 
 import SB from './SpellBook';
