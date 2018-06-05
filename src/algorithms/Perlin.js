@@ -1,15 +1,50 @@
+const SpellBook = require('../SpellBook');
 const Random = require('../Random');
 const Rainbow = require('../Rainbow');
+
 
 module.exports = class Perlin {
 
 	constructor() {
-		this._width = 0;
-		this._height = 0;
-		this._octaves = 0;
+		this._size = 64;
+		this._width = 64;
+		this._height = 64;
+		this._octaves = 8;
 		this._interpolate = null;
 		this._rand = new Random();
 		this.interpolation('cosine');
+	}
+	
+	size(n) {
+		if (n === undefined) {
+			return this._size;
+		} else {
+			let i = 10;
+			while (i > 0) {
+				let i2 = 1 << i;
+				if (i2 === n) {
+					this._width = i2;
+					this._height = i2;
+					this._octaves = i;
+					this._size = n;
+					return this;
+				}
+				--i;
+			}
+			throw new Error('size must be a power of 2 between 2 and 1024');
+		}
+	}
+	
+	width() {
+		return this._width;
+	}
+
+	height(h) {
+		return this._height;
+	}
+	
+	octaves(n) {
+		return this._octaves;
 	}
 
 	/**
@@ -182,7 +217,7 @@ module.exports = class Perlin {
 
 		function gwn(xg, yg) {
 			let nSeed = _self.getPointHash(xg, yg);
-			_self.rand().seed(nSeed);
+			_self._rand.seed(nSeed);
 			return _self.generateWhiteNoise(_self.width(), _self.height());
 		}
 
@@ -215,6 +250,10 @@ module.exports = class Perlin {
 		return a3;
 	}
 
+	/**
+	 * @param aNoise {Array} an array produced by generate()
+	 * @param oContext {CanvasRenderingContext2D}
+	 */
 	render(aNoise, oContext, aPalette) {
 		aPalette = aPalette || Rainbow.gradient({
 			0: '#008',

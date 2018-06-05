@@ -1,3 +1,5 @@
 # WebStorm directory
-.idea/*
+.idea
 
+# npm
+node_modules
