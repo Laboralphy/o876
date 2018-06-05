@@ -5,7 +5,7 @@
 /**
  * The NoodList class is a simple class aimed at facilitating nood list manipulations
  */
-export default class NoodList {
+module.exports = class NoodList {
 	constructor() {
 		this.oList = {};
 	}
@@ -84,4 +84,4 @@ export default class NoodList {
 	empty() {
 		return this.count() === 0;
 	}
-}
+};

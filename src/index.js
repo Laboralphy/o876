@@ -1,36 +1,23 @@
-/**
- * includes all modules
- */
+const geometry = require('./geometry');
+const algorithms = require('./algorithms');
+const SpellBook = require('./SpellBook');
+const Random = require('./Random');
+const Rainbow = require('./Rainbow');
+const Emitter = require('./Emitter');
+const collider = require('./collider');
+const structures = require('./structures');
 
-import Point from './Geometry/Point';
-import Vector from './Geometry/Vector';
+module.exports = {
 
-import Astar from './Algorithms/Astar/Astar';
-import Bresenham from './Algorithms/Bresenham';
-import Easing from './Algorithms/Easing';
-import SquareSpiral from './Algorithms/SquareSpiral';
-import Perlin from './Algorithms/Perlin';
-import Rainbow from './Rainbow';
-import SpellBook from './SpellBook';
-import Emitter from './Emitter';
-import Random from './Random';
+	// namespaces
+	algorithms,
+	collider,
+	geometry,
+	structures,
 
-export default {
-
-	// Geometry
-	Point,
-	Vector,
-
-	// Algorithms
-    Astar,
-    Bresenham,
-    Easing,
-	Perlin,
-	SquareSpiral,
-
-	// Tools
-    Emitter,
-    Rainbow,
-    Random,
-    SpellBook,
-}
+	// classes
+	SpellBook,
+	Random,
+	Rainbow,
+	Emitter
+};

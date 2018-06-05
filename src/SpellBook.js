@@ -2,7 +2,7 @@
  * Created by ralphy on 07/09/17.
  */
 
-export default class SpellBook {
+class SpellBook {
     /**
      * Turns an array-like-structure into an array (a real one)
      */
@@ -36,6 +36,32 @@ export default class SpellBook {
         return false;
     }
 
+    static catsortArray(aInput, {cat, sort = null}) {
+    	let oOutput = {};
+    	aInput.forEach(e => {
+    		let sCat = cat(e);
+    		if (!(sCat in oOutput)) {
+    			oOutput[sCat] = [];
+			}
+			oOutput[sCat].push(e);
+		});
+    	if (typeof sort === 'function') {
+			for (let sCat in oOutput) {
+				oOutput[sCat] = oOutput[sCat].sort(sort)
+			}
+		}
+		return oOutput;
+	}
+
+	/**
+	 * élimine tout les doubloons de l'array spécifié. Ne modifie par l'array, mais renvoie un nouveau tableau
+	 * @param aArray
+	 * @returns {*}
+	 */
+	static uniqArray(aArray) {
+    	return aArray.filter((x, i, a) => a.indexOf(x) === i)
+	}
+
     /**
      * quickly clones an array into a new one
      * this method is mainly used for turning "arguments" pseudo array into a real array
@@ -45,6 +71,29 @@ export default class SpellBook {
     static cloneArray(a) {
         return Array.prototype.slice.call(a, 0)
     }
+
+	/**
+	 * Renvoie le type d'une variable (différencie les Tableau Array des objet}
+	 * @param x {*}
+	 * @returns {string}
+	 */
+	static typeof(x) {
+		let tx = (typeof x);
+		switch (tx) {
+			case 'object':
+				if (x === null) {
+					return 'u';
+				} else if (Array.isArray(x)) {
+					return 'a';
+				} else {
+					return 'o';
+				}
+				break;
+
+			default:
+				return tx.charAt(0);
+		}
+	}
 
     /**
      * maps an array into a string
@@ -68,21 +117,7 @@ export default class SpellBook {
      */
     static typeMap(aArgs) {
 		return this.cloneArray(aArgs).map(function(x) {
-			let tx = (typeof x);
-			switch (tx) {
-				case 'object':
-					if (x === null) {
-						return 'u';
-					} else if (Array.isArray(x)) {
-						return 'a';
-					} else {
-						return 'o';
-					}
-					break;
-
-				default:
-					return tx.charAt(0);
-			}
+			return SpellBook.typeof(x);
 		}).join('');
     }
 
@@ -124,4 +159,7 @@ export default class SpellBook {
             return oInstance;
         }
     }
-}
+};
+
+
+module.exports = SpellBook;

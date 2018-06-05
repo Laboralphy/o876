@@ -3,7 +3,7 @@
  * and extend its use for other purpose than drawing pixel lines
  * good to GIT
  */
-export default class Bresenham {
+module.exports = class Bresenham {
 	/**
 	 * This function will virtually draw points along a line
 	 * and will call back a plot function. 
@@ -53,4 +53,4 @@ export default class Bresenham {
 		}
 		return true;
 	}
-}
+};

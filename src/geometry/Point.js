@@ -2,12 +2,17 @@
  * Created by ralphy on 04/09/17.
  */
 
-import Helper from './Helper.js';
+const Helper = require('./Helper');
 
-export default class Point {
+module.exports = class Point {
 	constructor(x, y) {
-		this.x = x;
-		this.y = y;
+		if (typeof x === 'object' && ('x' in x) && ('y' in x)) {
+			this.x = x.x;
+			this.y = x.y;
+		} else {
+            this.x = x;
+            this.y = y;
+		}
 	}
 
 	/**
@@ -18,4 +23,4 @@ export default class Point {
 	distance(p) {
 		return Helper.distance(p.x, p.y, this.x, this.y);
 	}
-}
+};

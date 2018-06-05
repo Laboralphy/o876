@@ -2,9 +2,9 @@
  * Created by ralphy on 04/09/17.
  */
 
-import Point from '../../Geometry/Point.js';
+const Point = require('../../geometry/Point.js');
 
-export default class Nood {
+module.exports = class Nood {
 	constructor() {
 		this.fGCost = 0.0;
 		this.fHCost = 0.0;
@@ -16,4 +16,4 @@ export default class Nood {
 	isRoot() {
 		return this.oParent.x === this.oPos.x && this.oParent.y === this.oPos.y;
 	}
-}
+};

@@ -4,10 +4,10 @@
  * When new items are needed (when the grid changes size and gets larger)
  * an event is fired : "rebuild" which can be handled to construct cell content.
  */
-import sb from '../SpellBook';
-import Emitter from '../Emitter';
+const sb = require('../SpellBook');
+const Emitter = require('../Emitter');
 
-export default class Grid {
+module.exports = class Grid {
 	constructor() {
         this._cells = null;
         this._width = 0;
@@ -48,7 +48,7 @@ export default class Grid {
 		if (w !== undefined) {
 			this._rebuild(w, this._height);
 		}
-        return sb.prop(this, '_width', x);
+        return sb.prop(this, '_width', w);
     }
 
     /**
@@ -61,7 +61,7 @@ export default class Grid {
         if (h !== undefined) {
             this._rebuild(this._width, h);
         }
-        return sb.prop(this, '_height', x);
+        return sb.prop(this, '_height', h);
     }
 
     /**
@@ -109,4 +109,4 @@ export default class Grid {
 			return this;
 		}
 	}
-}
+};

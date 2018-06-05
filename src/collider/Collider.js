@@ -5,10 +5,12 @@
  * Each sprites is tested against all other sprite in the surroundiing cells.
  */
 
-import Vector from '../Geometry/Vector';
-import Grid from './Grid';
+const Vector = require('../geometry/Vector');
+const Grid = require('../structures/Grid');
+const Sector = require('./Sector');
+const SB = require('../SpellBook');
 
-export default class Collider {
+module.exports = class Collider {
 	constructor() {
         this._origin = new Vector(); // vector origine du layer
         this._grid = new Grid();
@@ -21,6 +23,14 @@ export default class Collider {
         this._cellWidth = 0;
         this._cellHeight = 0;
 	}
+
+    cellWidth(w) {
+        return SB.prop(this, '_cellWidth', w);
+    }
+
+    cellHeight(h) {
+        return SB.prop(this, '_cellHeight', h);
+    }
 
     width(w) {
         if (w === undefined) {
@@ -39,15 +49,18 @@ export default class Collider {
             return this;
         }
     }
+
 	/**
 	 * Return the sector corresponding to the given coordinates
+     * if the parameters are number, the real sector indices are used (0, 1, 2...)
+	 * if the parameter is a Vector, its components are int-divided by cell size before application
 	 * @param x {number} position x
 	 * @param y {number} position y
 	 * @return {*}
 	 */
 	sector(x, y) {
 		if (y === undefined) {
-			return this._grid.cell(x.x / this._cellWidth, x.y / this._cellHeight);
+			return this._grid.cell(x.x / this._cellWidth | 0, x.y / this._cellHeight | 0);
 		} else {
 			return this._grid.cell(x, y);
 		}
@@ -56,40 +69,39 @@ export default class Collider {
 	/**
 	 * Registers an object in the sector it belongs
 	 * Unregisters the objet in all other sector
-	 * @param oObject {Mobile}
+	 * @param oDummy {Dummy}
 	 */
-	track(oObject) {
-		let oOldSector = oObject.colliderSector;
-		let v = oObject.flight().position().sub(this._origin);
-		let s = oObject.dead() ? null : this.sector(v);
+	track(oDummy) {
+		let oOldSector = oDummy.colliderSector;
+		let v = oDummy.position().sub(this._origin);
+		let s = oDummy.dead() ? null : this.sector(v);
 		if (s && oOldSector && s === oOldSector) {
 			return;
 		}
 		if (oOldSector) {
-			oOldSector.remove(oObject);
+			oOldSector.remove(oDummy);
 		}
 		if (s) {
-			s.add(oObject);
+			s.add(oDummy);
 		}
-		oObject.colliderSector = s;
+		oDummy.colliderSector = s;
 		return this;
 	}
 
 	/**
 	 * Effectue tous les test de collision entre un objet et tous les autres objets
 	 * contenus dans les secteur adjacent a celui de l'objet
-	 * @param oObject {Mobile}
-	 * @return {Mobile[]} liste d'objet collisionnant
+	 * @param oDummy {Dummy}
+	 * @return {Dummy[]} liste d'objet collisionnant
 	 */
-	collides(oObject) {
-		let aObjects = [];
-		let oSector = this.sector(oObject.flight().position().sub(this._origin));
+	collides(oDummy) {
+		let a = [];
+		let oSector = this.sector(oDummy.position().sub(this._origin));
 		if (!oSector) {
-			return aObjects;
+			return a;
 		}
 		let x = oSector.x;
 		let y = oSector.y;
-		let a = [];
 		let xMin = Math.max(0, x - 1);
 		let yMin = Math.max(0, y - 1);
 		let xMax = Math.min(this.width() - 1, x + 1);
@@ -97,9 +109,9 @@ export default class Collider {
 		let ix, iy;
 		for (iy = yMin; iy <= yMax; ++iy) {
 			for (ix = xMin; ix <= xMax; ++ix) {
-				a = a.concat(this.sector(ix, iy).collides(oObject));
+				a = a.concat(this.sector(ix, iy).collides(oDummy));
 			}
 		}
 		return a;
 	}
-}
+};

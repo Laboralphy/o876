@@ -2,7 +2,7 @@
  * Created by ralphy on 07/09/17.
  */
 
-import SB from './SpellBook.js';
+const SB = require('./SpellBook');
 /**
  * this class is similar to the node.js Emitter system
  * it emits events
@@ -12,11 +12,11 @@ import SB from './SpellBook.js';
  * .one to define a "one triggered" handler
  * .trigger to cast an event
  *
+ * Only usefull in javascript, as node.js is provided with the "events" module.
  */
 
-import SB from './SpellBook';
 
-export default class Emitter {
+module.exports = class Emitter {
     constructor() {
         this._oEventHandlers = {};
     }
@@ -123,4 +123,4 @@ export default class Emitter {
         }
 		return this;
 	}
-}
+};

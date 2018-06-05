@@ -5,7 +5,7 @@
  * starting from the spiral center.
  */
 
-export default class SquareSpiral {
+module.exports = class SquareSpiral {
 	/**
 	 * Renvoie la largeur d'un carré de snail selon le niveau
 	 * @param nLevel niveau
@@ -60,4 +60,4 @@ export default class SquareSpiral {
 		}
 		return aSectors;
 	}
-}
+};

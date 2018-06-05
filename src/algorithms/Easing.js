@@ -8,7 +8,7 @@
  * L'option lineaire est tout de même proposée.
  * good to GIT
  */
-export default class Easing {
+module.exports = class Easing {
 
 	constructor() {
 		this.xStart = 0;
@@ -173,4 +173,4 @@ export default class Easing {
 		let tc = ts * this.nTime;
 		return 4 * tc - 9 * ts + 6 * v;
 	}
-}
+};

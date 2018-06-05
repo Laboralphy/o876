@@ -1,7 +1,7 @@
-import Random from '../Random';
-import Rainbow from '../Rainbow';
+const Random = require('../Random');
+const Rainbow = require('../Rainbow');
 
-export default class Perlin {
+module.exports = class Perlin {
 
 	constructor() {
 		this._width = 0;
@@ -239,4 +239,4 @@ export default class Perlin {
 		});
 		oContext.putImageData(oImageData, 0, 0);
 	}
-}
+};

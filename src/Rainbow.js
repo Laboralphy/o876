@@ -157,7 +157,7 @@ const COLORS = {
 	yellowgreen : '#9ACD32'
 };
 
-export default class Rainbow {
+module.exports = class Rainbow {
 
 	/** 
 	 * Fabrique une chaine de caractère représentant une couleur au format CSS
@@ -341,4 +341,16 @@ export default class Rainbow {
 		let sb = ((oData.b >> 4) & 0xF).toString(16);
 		return sr + sg + sb;
 	}
-}
+
+	static byte(n) {
+		return Math.min(255, Math.max(0, n | 0));
+	}
+
+	static brightness(color, f) {
+		let c = Rainbow.parse(color);
+		c.r = Rainbow.byte(f * c.r);
+		c.g = Rainbow.byte(f * c.g);
+		c.b = Rainbow.byte(f * c.b);
+		return c;
+	}
+};
