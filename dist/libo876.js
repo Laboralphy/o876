@@ -1608,6 +1608,12 @@ module.exports = class Perlin {
 		this._interpolate = null;
 		this._rand = new Random();
 		this.interpolation('cosine');
+		this._cache = [];
+		this._seed = 1;
+	}
+
+	seed(n) {
+		return SpellBook.prop(this, '_seed', n);
 	}
 	
 	size(n) {
@@ -1806,18 +1812,52 @@ module.exports = class Perlin {
 		}
 		return parseFloat(s);
 	}
-
-	generate(x, y) {
-		let _self = this;
-
-		function gwn(xg, yg) {
-			let nSeed = _self.getPointHash(xg, yg);
-			_self._rand.seed(nSeed);
-			return _self.generateWhiteNoise(_self.width(), _self.height());
+	
+	getCache(x, y) {
+		if (this._cache.length) {
+			let k = this.getPointHash(x, y);
+			let c = this._cache.find(cc => cc.key === k);
+			if (c) {
+				return c.data;
+			}
 		}
+		return null;	
+	}
+	
+	pushCache(x, y, data) {
+		this._cache.push({
+			key: this.getPointHash(x, y),
+			data: data
+		});
+		while (this._cache.length > 16) {
+			this._cache.shift();
+		}
+	}
+	
+	generate(x, y, callbacks) {
+		if (x >= Number.MAX_SAFE_INTEGER || x <= -Number.MAX_SAFE_INTEGER || y >= Number.MAX_SAFE_INTEGER || y <= -Number.MAX_SAFE_INTEGER) {
+			throw new Error('trying to generate x:' + x + ' - y:' + y + ' - maximum safe integer is ' + Number.MAX_SAFE_INTEGER + ' !');
+		}
+		callbacks = callbacks || {};
+		let perlin = 'perlin' in callbacks ? callbacks.perlin : null;
+		let noise = 'noise' in callbacks ? callbacks.noise : null;
+		let cached = this.getCache(x, y);
+		if (cached) {
+			return cached;
+		}
+		
+		const gwn = (xg, yg) => {
+			let nSeed = this.getPointHash(xg, yg);
+			this._rand.seed(nSeed + this._seed);
+			let aNoise = this.generateWhiteNoise(this.width(), this.height());
+			if (noise) {
+				aNoise = noise(xg, yg, aNoise);
+			}
+			return aNoise;
+		};
 
-		function merge33(a33) {
-			let h = _self.height();
+		const merge33 = a33 => {
+			let h = this.height();
 			let a = [];
 			for (let y, ya = 0; ya < 3; ++ya) {
 				for (y = 0; y < h; ++y) {
@@ -1825,13 +1865,13 @@ module.exports = class Perlin {
 				}
 			}
 			return a;
-		}
+		};
 
-		function extract33(a) {
-			let w = _self.width();
-			let h = _self.height();
+		const extract33 = a => {
+			let w = this.width();
+			let h = this.height();
 			return a.slice(h, h * 2).map(function(r) { return r.slice(w, w * 2); });
-		}
+		};
 
 		let a0 = [
 			[gwn(x - 1, y - 1), gwn(x, y - 1), gwn(x + 1, y - 1)],
@@ -1842,6 +1882,10 @@ module.exports = class Perlin {
 		let a1 = merge33(a0);
 		let a2 = this.generatePerlinNoise(a1, this._octaves);
 		let a3 = extract33(a2);
+		if (perlin) {
+			a3 = perlin(x, y, a3);
+		}
+		this.pushCache(x, y, a3);
 		return a3;
 	}
 
@@ -1867,7 +1911,10 @@ module.exports = class Perlin {
 		aNoise.forEach(function(r, y) {
 			r.forEach(function(p, x) {
 				let nOfs = (y * w + x) << 2;
-				let rgb = Rainbow.parse(aPalette[p * pl | 0]);
+				let rgb = Rainbow.parse(aPalette[Math.min(aPalette.length - 1, p * pl | 0)]);
+				if (rgb === undefined) {
+					throw new Error('entry "' + (p * pl | 0) + '" is not in palette');
+				}
 				data[nOfs] = rgb.r;
 				data[nOfs + 1] = rgb.g;
 				data[nOfs + 2] = rgb.b;
