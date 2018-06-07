@@ -256,10 +256,11 @@ module.exports = class Perlin {
 	 */
 	render(aNoise, oContext, aPalette) {
 		aPalette = aPalette || Rainbow.gradient({
-			0: '#008',
+			0: '#006',
 			49: '#00F',
 			50: '#840',
-			84: '#0A0',
+			75: '#840',
+			84: '#0F0',
 			85: '#888',
 			99: '#FFF'
 		});
