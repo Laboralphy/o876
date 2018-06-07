@@ -1,12 +1,5 @@
 describe('o876', function() {
-    const o876 = require('../index.js');
-
-
-
-
-
-
-
+    const o876 = require('../src');
 
 
 
@@ -592,7 +585,7 @@ describe('o876', function() {
 //
 
     describe('Rainbow', function() {
-        const Rainbow = require('../Rainbow');
+        const Rainbow = o876.Rainbow;
 		describe('parse', function() {
 			it('should parse correctly', function() {
 				expect(Rainbow.parse('red')).toEqual({r: 255, g: 0, b: 0});

@@ -39,10 +39,10 @@ function main() {
 	let oCanvas = document.querySelector('canvas');
 	let oContext = oCanvas.getContext('2d');
 	let perlin = new O876.algorithms.Perlin();
-	let wPerlin = 256;
+	let wPerlin = 128;
 	perlin.size(wPerlin);
-	let wWorld = 7;
-	let hWorld = 3;
+	let wWorld = 8;
+	let hWorld = 4;
 	oCanvas.width = wPerlin * wWorld;
 	oCanvas.height = wPerlin * hWorld;
 	let aData;

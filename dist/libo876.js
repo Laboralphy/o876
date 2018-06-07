@@ -1852,10 +1852,13 @@ module.exports = class Perlin {
 	render(aNoise, oContext, aPalette) {
 		aPalette = aPalette || Rainbow.gradient({
 			0: '#008',
-			49: '#00F',
-			50: '#840',
-			84: '#0A0',
-			85: '#888',
+			44: '#00F',
+			49: '#44F',
+			50: '#864',
+			74: '#080',
+			75: '#555',
+			89: '#777',
+			90: '#AAA',
 			99: '#FFF'
 		});
 		let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
