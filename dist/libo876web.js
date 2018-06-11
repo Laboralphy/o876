@@ -1598,7 +1598,7 @@ const Random = __webpack_require__(/*! ../Random */ "./src/Random.js");
 const Rainbow = __webpack_require__(/*! ../Rainbow */ "./src/Rainbow.js");
 
 
-module.exports = class Perlin {
+class Perlin {
 
 	constructor() {
 		this._size = 64;
@@ -1784,7 +1784,15 @@ module.exports = class Perlin {
 	}
 
 
-	hash (a) {
+	static hash (a) {
+		if (a < 0) {
+			let b = 0, h = Perlin.hash(-a);
+			while (h) {
+				b = (b << 4) | h & 15;
+				h >>= 4;
+			}
+			return Math.abs(b);
+		}
 	    a = (a ^ 61) ^ (a >> 16);
 	    a = a + (a << 3);
 	    a = a ^ (a >> 4);
@@ -1798,9 +1806,9 @@ module.exports = class Perlin {
 	 * Permet de choisir une graine aléatoire
 	 * et de raccorder seamlessly les région adjacente
 	 */
-	getPointHash(x, y) {
-		let xh = this.hash(x).toString().split('');
-		let yh = this.hash(y).toString().split('');
+	static getPointHash(x, y) {
+		let xh = Perlin.hash(x).toString().split('');
+		let yh = Perlin.hash(y).toString().split('');
 		let s = xh.shift() + yh.shift() + '.';
 		if (s === '--.') {
 		//	s = '0.';
@@ -1818,7 +1826,7 @@ module.exports = class Perlin {
 	
 	getCache(x, y) {
 		if (this._cache.length) {
-			let k = this.getPointHash(x, y);
+			let k = Perlin.getPointHash(x, y);
 			let c = this._cache.find(cc => cc.key === k);
 			if (c) {
 				return c.data;
@@ -1829,7 +1837,7 @@ module.exports = class Perlin {
 	
 	pushCache(x, y, data) {
 		this._cache.push({
-			key: this.getPointHash(x, y),
+			key: Perlin.getPointHash(x, y),
 			data: data
 		});
 		while (this._cache.length > 16) {
@@ -1850,8 +1858,7 @@ module.exports = class Perlin {
 		}
 		
 		const gwn = (xg, yg) => {
-			let nSeed = this.getPointHash(xg, yg);
-			console.log(xg, yg, '->', nSeed);
+			let nSeed = Perlin.getPointHash(xg, yg);
 			this._rand.seed(nSeed + this._seed);
 			let aNoise = this.generateWhiteNoise(this.width(), this.height());
 			if (noise) {
@@ -1929,6 +1936,7 @@ module.exports = class Perlin {
 	}
 };
 
+module.exports = Perlin;
 
 /***/ }),
 
