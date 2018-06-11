@@ -2,211 +2,113 @@
 
 const Perlin = O876.algorithms.Perlin;
 
-class WorldGenerator {
-	constructor({size, seed, zoom, coords}) {
-		if (!size || isNaN(size)) {
-			throw new Error('invalid size : ' + size);
-		}
-		this._perlin = new Perlin();
-		this._perlin.size(size);
-		this._perlin.seed(seed);
 
-		this._metaPerlin = new Perlin();
-		this._metaPerlin.size(16);
-		this._metaPerlin.seed(seed);
+
+
+
+class WorldGenerator {
+	constructor({cellSize, clusterSize, seed}) {
+		let ps = new Perlin();
+		ps.size(cellSize);
+		ps.seed(seed);
+
+
+		let cp = new Perlin();
+		cp.size(clusterSize);
+		cp.seed(seed);
+
+		this._perlinCell = ps;
+		this._perlinCluster = cp;
+
 
 		this._tile = document.createElement('canvas');
-		this._tile.width = this._tile.height = size;
+		this._tile.width = this._tile.height = clusterSize;
 
-		this._fZoom = zoom;
-		this._bWriteCoords = coords;
+		this._sectorData = null;
 	}
 
-	getBaseElevation(x, y) {
-		let p = this._metaPerlin;
-		let w = p.size();
-		let aData = p.generate(Math.floor(x / w), Math.floor(y / w));
-		let xMod = x % w;
-		if (xMod < 0) {
-			xMod += w;
-		}
-		let yMod = y % w;
-		if (yMod < 0) {
-			yMod += w;
-		}
-		return aData[yMod][xMod];
-	}
 
-	// relief maritime trop accidenté
-	refineLinear(base, value) {
-		return 0.5 * (value + base);
-	}
-
-	// très peu de terrain
-	refineSquare(base, value) {
-		let vb = 0.5 * (value + base);
-		return vb * vb;
-	}
-
-	// très peu de mer
-	refineSquareInverse(base, value) {
-		let vb = 0.5 * (value + base);
-		let vb1 = vb - 1;
-		let vb2 = vb1 * vb1;
-		return -vb2 + 1;
-	}
-
-	// aucune variation
-	refineThreshold75(base, value) {
-		if (base < 0.75) {
-			return value * 0.75;
+	_mod(n, d) {
+		if (n > 0) {
+			return n % d;
 		} else {
-			return value * 0.75 + (base - 0.75);
+			return (d - (-n % d)) % 16;
 		}
 	}
+	
+	_canvas(w, h) {
+		let c = document.createElement('canvas');
+		c.width = w;
+		c.height = h;
+		c.imageSmoothingEnabled = false;
+		return c;
+	}
 
-	refineThreshold50(base, value) {
+	generateCluster(xSector, ySector) {
+		return this._perlinCluster.generate(xSector, ySector);
+	}
+
+	renderCluster(oDestCanvas, xCluster, yCluster, xScreen, yScreen) {
+		let data = this.generateCluster(xCluster, yCluster);
+		let p = this._perlinCluster;
+		let oCanvas = this._canvas(p.size(), p.size());
+		this._perlinCluster.render(data, oCanvas.getContext('2d'));
+		oDestCanvas.getContext('2d').drawImage(oCanvas, xScreen, yScreen);
+	}
+
+	_cellFilterDirac(base, value) {
 		if (base < 0.5) {
-			return (base + value) * 0.25;
+			return value * 0.5;
 		} else {
-			return (base + value - 0.5) / 1.5;
+			return value * 0.5 + 0.5;
 		}
 	}
 
-
-
-	generate(x, y) {
-		return this._perlin.generate(x, y, {
-			noise: (xg, yg, data) => {
-				let nBase = this.getBaseElevation(xg, yg);
-				return data.map(row => row.map(cell => this.refineThreshold50(nBase, cell)));
-			}
-		});
+	renderCell(oDestCanvas, xCell, yCell, xScreen, yScreen) {
+		let data = this._perlinCell.generate(xCell, yCell);
+		let p = this._perlinCell;
+		let oCanvas = this._canvas(p.size(), p.size());
+		this._perlinCell.render(data, oCanvas.getContext('2d'));
+		oDestCanvas.getContext('2d').drawImage(oCanvas, xScreen, yScreen);
 	}
 
-	async renderSector(x, y) {
-		return new Promise(resolve => {
-			this._perlin.render(
-				this.generate(x, y),
-				this._tile.getContext('2d'),
-				O876.Rainbow.gradient({
-					0: '#dec673',
-					40: '#efd69c',
-					48: '#d6a563',
-					50: '#572507',
-					53: '#d2a638',
-					75: '#b97735',
-					99: '#efce8c'
-				})
-			);
-			resolve();
-		});
-	}
-
-	/**
-	 *
-	 * @param oDestCanvas {HTMLCanvasElement}
-	 * @param xPos {number} position pixel du point qui sera affiché en haut à gauche du canvas
-	 * @param yPos {number} position pixel du point qui sera affiché en haut à gauche du canvas
-	 * @returns {Promise<void>}
-	 */
-	async render(oDestCanvas, xPos, yPos) {
-		let ps = this._perlin.size();
-		let width = Math.ceil(oDestCanvas.width / ps);
-		let height = Math.ceil(oDestCanvas.height / ps);
-		let long = Math.floor(xPos / ps);
-		let lat = Math.floor(yPos / ps);
-		let xOfs = xPos - long * ps;
-		let yOfs = yPos - lat * ps;
-		for (let y = 0; y <= height / this._fZoom; ++y) {
-			for (let x = 0; x <= width / this._fZoom; ++x) {
-				await this.renderSector(long + x, lat + y);
-				await this.drawSector(
+	renderClusterCells(oDestCanvas, xCluster, yCluster) {
+		let cellSize = this._perlinCell.size();
+		let clusterSize = this._perlinCluster.size();
+		let data = this.generateCell(xCluster, yCluster);
+		/*
+		for (let yCell = 0; yCell < clusterSize; ++yCell) {
+			for (let xCell = 0; xCell < clusterSize; ++xCell) {
+				this.renderCell(
 					oDestCanvas,
-					(x * ps - xOfs) * this._fZoom,
-					(y * ps - yOfs) * this._fZoom,
-					long + x,
-					lat + y
+					xCluster * clusterSize + xCell,
+					yCluster * clusterSize + yCell
 				);
 			}
-		}
+		}*/
 	}
 
-
-	async drawSector(oDestCanvas, x, y, long, lat) {
-		return new Promise(resolve =>
-			requestAnimationFrame(() => {
-				let ctx = oDestCanvas.getContext('2d');
-				ctx.drawImage(this._tile, 0, 0, this._tile.width, this._tile.height, x, y, this._tile.width * this._fZoom, this._tile.height * this._fZoom);
-				if (this._bWriteCoords) {
-					ctx.fillStyle = 'white';
-					ctx.strokeStyle = 'black';
-					ctx.font = '10px monospace';
-					ctx.strokeText(long + ':' + lat, x + 10, y + 10);
-					ctx.fillText(long + ':' + lat, x + 10, y + 10);
-				}
-				resolve();
-			})
-		);
-	}
 }
 
-const WORLD = {
-	instance: null,
-	x: 0, y: 0,
-	width: 8, height: 4,
-	screen: document.querySelector('canvas.world')
-};
-
-function initWorld(config) {
-	WORLD.instance = new WorldGenerator(config);
-	WORLD.x = -5120;
-	WORLD.y = 0;
-	WORLD.screen = document.querySelector('canvas.world');
-}
 
 
 function main() {
-	initWorld({
-		size: 32,
-		seed: 0.111,
-		zoom: 1,
-		coords: false
+	const world = new WorldGenerator({
+		cellSize: 16,
+		clusterSize: 16,
+		seed: 0.111
 	});
-	renderWorld();
-}
-
-function renderWorld() {
-	WORLD.instance.render(
-		WORLD.screen,
-		WORLD.x,
-		WORLD.y
-	).then(() => console.log('done.'));
-}
-
-function kbHandler(event) {
-	switch (event.key) {
-		case 'ArrowUp':
-			WORLD.y -= 512;
-			renderWorld();
-			break;
-
-		case 'ArrowDown':
-			WORLD.y += 512;
-			renderWorld();
-			break;
-
-		case 'ArrowLeft':
-			WORLD.x -= 512;
-			renderWorld();
-			break;
-
-		case 'ArrowRight':
-			WORLD.x += 512;
-			renderWorld();
-			break;
+	world.renderCluster(document.querySelector('.map'), 0, 0, 0, 0);
+	let xOfs = 0;
+	let yOfs = 0;
+	for (let y = 0; y < 16; ++y) {
+		for (let x = 0; x < 16; ++x) {
+			world.renderCluster(document.querySelector('.world'), x + xOfs, y + yOfs, x * 16, y * 16);
+		}
 	}
+//	world.renderCell(document.querySelector('.world'), 0, 0, 0, 0);
 }
+
+
 
 window.addEventListener('load', main);
-document.addEventListener('keydown', kbHandler);

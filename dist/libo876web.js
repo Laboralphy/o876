@@ -1729,8 +1729,8 @@ module.exports = class Perlin {
       			xs[1] = (xs[0] + nSamplePeriod) % w;
       			vBlend = (x - xs[0]) * fSampleFreq;
 
-      			fTop = this._interpolate(aBaseNoise[ys[0]][xs[0]], aBaseNoise[ys[1]][xs[0]], hBlend)
-      			fBottom = this._interpolate(aBaseNoise[ys[0]][xs[1]], aBaseNoise[ys[1]][xs[1]], hBlend)
+      			fTop = this._interpolate(aBaseNoise[ys[0]][xs[0]], aBaseNoise[ys[1]][xs[0]], hBlend);
+      			fBottom = this._interpolate(aBaseNoise[ys[0]][xs[1]], aBaseNoise[ys[1]][xs[1]], hBlend);
      			
      			r.push(this._interpolate(fTop, fBottom, vBlend));
       		}
@@ -1802,6 +1802,9 @@ module.exports = class Perlin {
 		let xh = this.hash(x).toString().split('');
 		let yh = this.hash(y).toString().split('');
 		let s = xh.shift() + yh.shift() + '.';
+		if (s === '--.') {
+		//	s = '0.';
+		}
 		while (xh.length || yh.length) {
 			if (xh.length) {
 				s += xh.shift();
@@ -1848,6 +1851,7 @@ module.exports = class Perlin {
 		
 		const gwn = (xg, yg) => {
 			let nSeed = this.getPointHash(xg, yg);
+			console.log(xg, yg, '->', nSeed);
 			this._rand.seed(nSeed + this._seed);
 			let aNoise = this.generateWhiteNoise(this.width(), this.height());
 			if (noise) {
