@@ -6,6 +6,7 @@ const Rainbow = require('./Rainbow');
 const Emitter = require('./Emitter');
 const collider = require('./collider');
 const structures = require('./structures');
+const Cache2D = require('./structures/Cache2D');
 
 module.exports = {
 

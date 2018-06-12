@@ -1596,6 +1596,7 @@ module.exports = class Easing {
 const SpellBook = __webpack_require__(/*! ../SpellBook */ "./src/SpellBook.js");
 const Random = __webpack_require__(/*! ../Random */ "./src/Random.js");
 const Rainbow = __webpack_require__(/*! ../Rainbow */ "./src/Rainbow.js");
+const Cache2D = __webpack_require__(/*! ../structures/Cache2D */ "./src/structures/Cache2D.js");
 
 
 class Perlin {
@@ -1608,7 +1609,7 @@ class Perlin {
 		this._interpolate = null;
 		this._rand = new Random();
 		this.interpolation('cosine');
-		this._cache = [];
+		this._cache = new Cache2D();
 		this._seed = 1;
 	}
 
@@ -1824,27 +1825,6 @@ class Perlin {
 		return parseFloat(s);
 	}
 	
-	getCache(x, y) {
-		if (this._cache.length) {
-			let k = Perlin.getPointHash(x, y);
-			let c = this._cache.find(cc => cc.key === k);
-			if (c) {
-				return c.data;
-			}
-		}
-		return null;	
-	}
-	
-	pushCache(x, y, data) {
-		this._cache.push({
-			key: Perlin.getPointHash(x, y),
-			data: data
-		});
-		while (this._cache.length > 16) {
-			this._cache.shift();
-		}
-	}
-	
 	generate(x, y, callbacks) {
 		if (x >= Number.MAX_SAFE_INTEGER || x <= -Number.MAX_SAFE_INTEGER || y >= Number.MAX_SAFE_INTEGER || y <= -Number.MAX_SAFE_INTEGER) {
 			throw new Error('trying to generate x:' + x + ' - y:' + y + ' - maximum safe integer is ' + Number.MAX_SAFE_INTEGER + ' !');
@@ -1852,7 +1832,7 @@ class Perlin {
 		callbacks = callbacks || {};
 		let perlin = 'perlin' in callbacks ? callbacks.perlin : null;
 		let noise = 'noise' in callbacks ? callbacks.noise : null;
-		let cached = this.getCache(x, y);
+		let cached = this._cache.getPayload(x, y);
 		if (cached) {
 			return cached;
 		}
@@ -1896,7 +1876,7 @@ class Perlin {
 		if (perlin) {
 			a3 = perlin(x, y, a3);
 		}
-		this.pushCache(x, y, a3);
+		this._cache.push(x, y, a3);
 		return a3;
 	}
 
@@ -1904,7 +1884,7 @@ class Perlin {
 	 * @param aNoise {Array} an array produced by generate()
 	 * @param oContext {CanvasRenderingContext2D}
 	 */
-	render(aNoise, oContext, aPalette) {
+	render(aNoise, aPalette) {
 		aPalette = aPalette || Rainbow.gradient({
 			0: '#008',
 			44: '#00F',
@@ -1917,8 +1897,7 @@ class Perlin {
 			99: '#FFF'
 		});
 		let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
-		let oImageData = oContext.createImageData(w, h);
-		let data = oImageData.data;
+		let data = [];
 		aNoise.forEach(function(r, y) {
 			r.forEach(function(p, x) {
 				let nOfs = (y * w + x) << 2;
@@ -1932,7 +1911,7 @@ class Perlin {
 				data[nOfs + 3] = 255;
 			});
 		});
-		oContext.putImageData(oImageData, 0, 0);
+		return data;
 	}
 };
 
@@ -2589,6 +2568,53 @@ module.exports = class Vector {
 
 /***/ }),
 
+/***/ "./src/geometry/View.js":
+/*!******************************!*\
+  !*** ./src/geometry/View.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const Vector = __webpack_require__(/*! ./Vector */ "./src/geometry/Vector.js");
+const sb =  __webpack_require__(/*! ../SpellBook */ "./src/SpellBook.js");
+
+class View {
+	constructor() {
+		this._offset = new Vector();
+		this._position = new Vector();
+		this._width = 0;
+		this._height = 0;
+	}
+
+	offset(v) {
+		return sb.prop(this, '_offset', v);
+	}
+
+	position(v) {
+		return sb.prop(this, '_position', v);
+	}
+
+	width(n) {
+		return sb.prop(this, '_width', n);
+	}
+
+	height(n) {
+		return sb.prop(this, '_height', n);
+	}
+
+	center() {
+		this.offset(new Vector(this.width() >> 1, this.height() >> 1));
+	}
+
+	points() {
+		let p0 = this._position.sub(this._offset);
+		let p1 = p0.add(new Vector(this._width, this._height));
+		return [p0, p1];
+	}
+}
+
+/***/ }),
+
 /***/ "./src/geometry/index.js":
 /*!*******************************!*\
   !*** ./src/geometry/index.js ***!
@@ -2599,11 +2625,13 @@ module.exports = class Vector {
 const Helper = __webpack_require__(/*! ./Helper */ "./src/geometry/Helper.js");
 const Point = __webpack_require__(/*! ./Point */ "./src/geometry/Point.js");
 const Vector = __webpack_require__(/*! ./Vector */ "./src/geometry/Vector.js");
+const View = __webpack_require__(/*! ../geometry/View */ "./src/geometry/View.js");
 
 module.exports = {
 	Helper,
 	Point,
-	Vector
+	Vector,
+	View
 };
 
 /***/ }),
@@ -2623,6 +2651,7 @@ const Rainbow = __webpack_require__(/*! ./Rainbow */ "./src/Rainbow.js");
 const Emitter = __webpack_require__(/*! ./Emitter */ "./src/Emitter.js");
 const collider = __webpack_require__(/*! ./collider */ "./src/collider/index.js");
 const structures = __webpack_require__(/*! ./structures */ "./src/structures/index.js");
+const Cache2D = __webpack_require__(/*! ./structures/Cache2D */ "./src/structures/Cache2D.js");
 
 module.exports = {
 
@@ -2638,6 +2667,52 @@ module.exports = {
 	Rainbow,
 	Emitter
 };
+
+/***/ }),
+
+/***/ "./src/structures/Cache2D.js":
+/*!***********************************!*\
+  !*** ./src/structures/Cache2D.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Permet de mettre en cache des information indéxées par une coordonnées 2D
+ */
+class Cache2D {
+	constructor() {
+		this._cache = [];
+		this._cacheSize = 64;
+	}
+
+	getMetaData(x, y) {
+		return this._cache.find(o => o.x === x && o.y === y);
+	}
+
+	getPayload(x, y) {
+		let o = this.getMetaData(x, y);
+		if (o) {
+			return o.payload;
+		} else {
+			return null;
+		}
+	}
+
+	push(x, y, payload) {
+		let c = this._cache;
+		if (!this.getMetaData(x, y)) {
+			c.push({
+				x, y, payload
+			});
+		}
+		while (c.length > this._cacheSize) {
+			c.shift();
+		}
+	}
+}
+
+module.exports = Cache2D;
 
 /***/ }),
 
@@ -2764,6 +2839,188 @@ module.exports = class Grid {
 
 /***/ }),
 
+/***/ "./src/structures/TileLayer.js":
+/*!*************************************!*\
+  !*** ./src/structures/TileLayer.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * @class TileLayer
+ * TileLayer est capable de gérer une infinité de portion de terrain
+ * Seules les portions a l'interieur de la zone de vue sont affichée.
+ * lors de la phase de rendu, le WorldPlayer génère des évènements
+ * indiquant les coordonnées des portions qu'il souhaite afficher
+ * C'est à l'appli, en réponse à ces évènements, de fournir les portions
+ * sous forme d'un canvas ou d'une image.
+ *
+ *
+ *
+ */
+const View = __webpack_require__(/*! ../geometry/View */ "./src/geometry/View.js");
+const sb = __webpack_require__(/*! ../SpellBook */ "./src/SpellBook.js");
+
+class TileLayer {
+	constructor() {
+		this._view = new View();
+		this._zones = {};
+		this._zoneWidth = 0;
+		this._zoneHeight = 0;
+		this._zones = null;
+		this._moreZones = false;  // a true ce flag permet de gérer également les zone
+		// adjacentes aux zones qui sont partiellement visible dans la vue
+		// utile pour permettre au système d'eventuellement précharger les zones
+		// si la conception des zone dépend d'un résultat ajax ou d'un Worker.
+	}
+
+	/**
+	 * Setter / getter d'un objet Fairy.View
+	 * Cet objet permet de définir la fenetre de vue du world layer
+	 * @param v {View}
+	 * @return {View|TileLayer}
+	 */
+	view(v) {
+		return sb.prop(this, '_view', v);
+	}
+
+	/**
+	 * Setter / Getter de la largeur des zones.
+	 * On considère le monde infini. Une zone est une portion de ce monde infini.
+	 *
+	 * @param z {int=} largeur d'une zone
+	 * @return {object|Fairy.TileLayer}
+	 */
+	zoneWidth(z) {
+		return sb.prop(this, '_zoneWidth', z);
+	}
+
+	/**
+	 * Setter / Getter de la hauteur des zones.
+	 * On considère le monde infini. Une zone est une portion de ce monde infini.
+	 *
+	 * @param z {int=} hauteur d'une zone
+	 * @return {int|Fairy.TileLayer}
+	 */
+	zoneHeight(z) {
+		return sb.prop(this, '_zoneHeight', z);
+	}
+
+	/**
+	 * Setter / Getter de zones
+	 * C'est une collection de Zones : celle qui sont actuellement chargée et qui peuvent etre affichées à tout moement
+	 * Généralement cet accesseur n'est utilisé qu'en tant que getter.
+	 * @param o {object=} liste des zone
+	 * @return {object|Fairy.TileLayer}
+	 */
+	zones(o) {
+		return sb.prop(this, '_zones', o);
+	}
+
+	/**
+	 * Setter / Getter du flag moreZone
+	 * Quand la fenetre de View penetre dans une zone, cela déclenche immédiatemennt un évènement
+	 * réclamenet le chargement de la zone. avec ce Flag l'évènement est déclenché pour toutes les zones contigues.
+	 * @param b {boolean=}
+	 * @return {boolean|Fairy.TileLayer}
+	 */
+	moreZones(b) {
+		return sb.prop(this, '_moreZone', b);
+	}
+
+	/**
+	 * Calcule la liste des zones balayées par la vue
+	 * Renvoi des évèbnements
+	 * zone.(a|d|n) {
+	 *	x, coordonnée x de la portion
+	 *	y, coordonnée y de la portion
+	 *	key, clé d'identification de la portion
+	 * 	canvas: canvas/image qu'il faudra fournir en retour
+	 * }
+	 */
+	update() {
+		let p = this.view().points();
+		let cw = this.zoneWidth();
+		let ch = this.zoneHeight();
+		let vx = p[0].x;
+		let vy = p[0].y;
+		let xs = Math.floor(vx / cw);
+		let ys = Math.floor(vy / ch);
+		let xe = Math.floor(p[1].x / cw);
+		let ye = Math.floor(p[1].y / ch);
+		if (this.moreZones()) {
+			--xs;
+			--ys;
+			++xe;
+			++ye;
+		}
+		let sKey, oNow = {};
+		let oPrev = this.zones();
+		let a = {
+			d: [], // zone à décharger (ne sert plus car sort de la zone de vue)
+			n: [], // nouvelle zone à charger, vien d'apparaitre dans la vue
+			a: [] // zone toucjourr affichée
+		};
+
+		for (let x, y = ys; y <= ye; ++y) {
+			for (x = xs; x <= xe; ++x) {
+				sKey = x.toString() + ':' + y.toString();
+				if (oPrev[sKey]) {
+					a.a.push(sKey);
+					oNow[sKey] = oPrev[sKey];
+					delete oPrev[sKey];
+				} else {
+					// ajout
+					oNow[sKey] = {
+						x: x,
+						y: y,
+						key: sKey,
+						canvas: null
+					};
+					a.n.push(sKey);
+				}
+			}
+		}
+		for (sKey in oPrev) {
+			a.d.push(sKey);
+		}
+		this.zones(oNow);
+		for (let s in a) {
+			a[s].forEach((function(key) {
+				this.trigger('zone.' + s, oNow[key]);
+			}).bind(this));
+		}
+		return this;
+	}
+
+	trigger(sEvent, ...args) {
+		console.log(sEvent, ...args);
+	}
+
+	/**
+	 * Rendu du layer
+	 * @param oContext {object}
+	 */
+	render(oContext) {
+		let zc;
+		let z = this.zones();
+		let p = this.view().points();
+		let cw = this.zoneWidth();
+		let vx = p[0].x;
+		let vy = p[0].y;
+		for (let c in z) {
+			zc = z[c];
+			if (zc.canvas) {
+				oContext.drawImage(zc.canvas, zc.x * cw - vx, zc.y * cw - vy);
+			}
+		}
+	}
+}
+
+
+
+/***/ }),
+
 /***/ "./src/structures/index.js":
 /*!*********************************!*\
   !*** ./src/structures/index.js ***!
@@ -2772,9 +3029,11 @@ module.exports = class Grid {
 /***/ (function(module, exports, __webpack_require__) {
 
 const Grid = __webpack_require__(/*! ./Grid */ "./src/structures/Grid.js");
+const TileLayer = __webpack_require__(/*! ./TileLayer */ "./src/structures/TileLayer.js");
+const Cache2D = __webpack_require__(/*! ./Cache2D */ "./src/structures/Cache2D.js");
 
 module.exports = {
-    Grid
+    Grid, TileLayer, Cache2D
 };
 
 /***/ })

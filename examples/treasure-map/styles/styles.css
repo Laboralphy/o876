@@ -1,0 +1,7 @@
+html, body {
+    background-color: #2c0707;
+}
+
+canvas.world {
+    box-shadow: 0 0 4em rgba(0, 0, 0, 0.75);
+}

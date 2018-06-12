@@ -1,6 +1,7 @@
 const SpellBook = require('../SpellBook');
 const Random = require('../Random');
 const Rainbow = require('../Rainbow');
+const Cache2D = require('../structures/Cache2D');
 
 
 class Perlin {
@@ -13,7 +14,7 @@ class Perlin {
 		this._interpolate = null;
 		this._rand = new Random();
 		this.interpolation('cosine');
-		this._cache = [];
+		this._cache = new Cache2D();
 		this._seed = 1;
 	}
 
@@ -229,27 +230,6 @@ class Perlin {
 		return parseFloat(s);
 	}
 	
-	getCache(x, y) {
-		if (this._cache.length) {
-			let k = Perlin.getPointHash(x, y);
-			let c = this._cache.find(cc => cc.key === k);
-			if (c) {
-				return c.data;
-			}
-		}
-		return null;	
-	}
-	
-	pushCache(x, y, data) {
-		this._cache.push({
-			key: Perlin.getPointHash(x, y),
-			data: data
-		});
-		while (this._cache.length > 16) {
-			this._cache.shift();
-		}
-	}
-	
 	generate(x, y, callbacks) {
 		if (x >= Number.MAX_SAFE_INTEGER || x <= -Number.MAX_SAFE_INTEGER || y >= Number.MAX_SAFE_INTEGER || y <= -Number.MAX_SAFE_INTEGER) {
 			throw new Error('trying to generate x:' + x + ' - y:' + y + ' - maximum safe integer is ' + Number.MAX_SAFE_INTEGER + ' !');
@@ -257,7 +237,7 @@ class Perlin {
 		callbacks = callbacks || {};
 		let perlin = 'perlin' in callbacks ? callbacks.perlin : null;
 		let noise = 'noise' in callbacks ? callbacks.noise : null;
-		let cached = this.getCache(x, y);
+		let cached = this._cache.getPayload(x, y);
 		if (cached) {
 			return cached;
 		}
@@ -301,7 +281,7 @@ class Perlin {
 		if (perlin) {
 			a3 = perlin(x, y, a3);
 		}
-		this.pushCache(x, y, a3);
+		this._cache.push(x, y, a3);
 		return a3;
 	}
 
@@ -309,7 +289,7 @@ class Perlin {
 	 * @param aNoise {Array} an array produced by generate()
 	 * @param oContext {CanvasRenderingContext2D}
 	 */
-	render(aNoise, oContext, aPalette) {
+	render(aNoise, aPalette) {
 		aPalette = aPalette || Rainbow.gradient({
 			0: '#008',
 			44: '#00F',
@@ -322,8 +302,7 @@ class Perlin {
 			99: '#FFF'
 		});
 		let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
-		let oImageData = oContext.createImageData(w, h);
-		let data = oImageData.data;
+		let data = [];
 		aNoise.forEach(function(r, y) {
 			r.forEach(function(p, x) {
 				let nOfs = (y * w + x) << 2;
@@ -337,7 +316,7 @@ class Perlin {
 				data[nOfs + 3] = 255;
 			});
 		});
-		oContext.putImageData(oImageData, 0, 0);
+		return data;
 	}
 };
 
