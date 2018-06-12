@@ -60,10 +60,10 @@ function kbHandler(event) {
 	}
 }
 
-let pwrunner, X = 15, Y = 0;
+let pwrunner, X = 14 * 256, Y = 0;
 function main() {
 	pwrunner = new PWRunner();
-	pwrunner.render(document.querySelector('.world'), 14 * 256, 0);
+	pwrunner.render(document.querySelector('.world'), X, Y);
 }
 
 window.addEventListener('load', main);

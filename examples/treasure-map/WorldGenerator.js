@@ -95,8 +95,6 @@ class WorldGenerator {
 	}
 
 	renderCell(xCurs, yCurs) {
-		let clusterSize = this._perlinCluster.size();
-
 		let c = this._canvasCell;
 		let ctx = c.getContext('2d');
 		let oCached = this._cache.getPayload(xCurs, yCurs);
@@ -105,6 +103,7 @@ class WorldGenerator {
 			return;
 		}
 
+        let clusterSize = this._perlinCluster.size();
 		let heightMap = this._perlinCell.generate(
 			xCurs,
 			yCurs, {
@@ -121,7 +120,7 @@ class WorldGenerator {
 			}
 		);
 		let oImageData = ctx.createImageData(c.width, c.height);
-		let data = this._perlinCell.render(heightMap, this._gradient);
+		let data = Perlin.colorize(heightMap, this._gradient);
 		data.forEach((x, i) => oImageData.data[i] = x);
 		ctx.putImageData(oImageData, 0, 0);
 

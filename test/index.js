@@ -1,5 +1,5 @@
+const o876 = require('../src');
 describe('o876', function() {
-    const o876 = require('../src');
 
 
 
@@ -599,5 +599,44 @@ describe('o876', function() {
 				expect(Rainbow.brightness(Rainbow.parse('red'), 0.5)).toEqual({r: 127, g: 0, b: 0});
 			});
 		});
+    });
+});
+
+
+
+describe('#name generator', function() {
+    describe('#indexListProb3', function() {
+        it('should generate a coherent registry', function() {
+            let u = new o876.algorithms.UnivGeneList();
+            let r = u.indexListProb([
+                'albator',
+                'albatruc',
+                'albaxalbay'
+            ], 3);
+            expect(r).toEqual({
+                alb: 'aaaa',
+                lba: 'ttxy',
+                bat: 'or',
+                ato: 'r',
+                atr: 'u',
+                tru: 'c',
+                bax: 'a',
+                axa: 'l',
+                xal: 'b' });
+        });
+
+        it('should generate a coherent registry final', function() {
+            let u = new o876.algorithms.UnivGeneList();
+            let r = u.indexListFinal([
+                'albator',
+                'albatruc',
+                'albaxalbay'
+            ], 3);
+            expect(r).toEqual({
+                ato: 'r',
+                tru: 'c',
+                lba: 'y'
+            });
+        });
     });
 });

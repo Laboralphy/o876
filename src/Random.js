@@ -125,9 +125,9 @@ module.exports = class Random {
     }
 
     /**
-     * randomly pick an item from an array
-     * @param aArray {array}
-     * @param bRemove {boolean} if true the item is removed from the array
+     * randomly pick an item from an array or a string
+     * @param aArray {array|string}
+     * @param [bRemove] {boolean} if true the item is removed from the array
      */
     randPick(aArray, bRemove) {
         let n = this.rand(aArray.length);
