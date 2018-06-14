@@ -81,10 +81,1012 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./examples/treasure-map/main.js");
 /******/ })
 /************************************************************************/
 /******/ ({
+
+/***/ "./examples/treasure-map/PirateWorld.js":
+/*!**********************************************!*\
+  !*** ./examples/treasure-map/PirateWorld.js ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/treasure-map/WorldGenerator.js");
+const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
+
+class PirateWorld {
+	constructor(wgd) {
+		let wg = new WorldGenerator(wgd);
+		wg.gradient({
+			0: '#dec673',
+			40: '#efd69c',
+			48: '#d6a563',
+			50: '#572507',
+			55: '#d2a638',
+			75: '#b97735',
+			99: '#efce8c'
+		});
+		wg.on('cell-rendered', ({x, y, tile, map}) => this.renderCell(x, y, tile, map));
+		this._generator = wg;
+
+		this._cliparts = {};
+		this._buildCliparts();
+	}
+
+	_buildCliparts() {
+		const MESH_SIZE = 16;
+		const WAVE_SIZE = 3;
+		const HERB_SIZE = 3;
+		const MNT_LENGTH = 7;
+		const MNT_HEIGHT = MNT_LENGTH | 0.75 | 0;
+		const FOREST_SIZE = 4;
+		let xMesh = MESH_SIZE >> 1;
+		let yMesh = MESH_SIZE >> 1;
+		let c, ctx;
+
+		// vague
+		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		ctx = c.getContext('2d');
+		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
+		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.moveTo(xMesh - WAVE_SIZE, yMesh + WAVE_SIZE);
+		ctx.lineTo(xMesh, yMesh);
+		ctx.lineTo(xMesh + WAVE_SIZE, yMesh + WAVE_SIZE);
+		ctx.stroke();
+		this._cliparts.wave = c;
+
+		// forest
+		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		ctx = c.getContext('2d');
+		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
+		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.arc(xMesh, yMesh,FOREST_SIZE, 0, Math.PI * 2);
+		ctx.rect(xMesh - 1, yMesh + FOREST_SIZE, 2, FOREST_SIZE);
+		ctx.fill();
+		ctx.stroke();
+		this._cliparts.forest = c;
+
+		// herbe
+		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		ctx = c.getContext('2d');
+		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
+		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.moveTo(xMesh - HERB_SIZE, yMesh - HERB_SIZE);
+		ctx.lineTo(xMesh, yMesh);
+		ctx.lineTo(xMesh + HERB_SIZE, yMesh - HERB_SIZE);
+		ctx.stroke();
+		this._cliparts.grass = c;
+
+		// Montagne
+		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		ctx = c.getContext('2d');
+		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
+		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
+		ctx.lineWidth = 1.2;
+		let g = ctx.createLinearGradient(xMesh, 0, MESH_SIZE, MESH_SIZE);
+		g.addColorStop(0, 'rgba(154, 117, 61, 1)');
+		g.addColorStop(1, 'rgba(154, 117, 61, 0.5)');
+		ctx.fillStyle = g;
+		ctx.moveTo(xMesh, yMesh);
+		ctx.beginPath();
+		ctx.lineTo(xMesh + MNT_LENGTH, yMesh + MNT_HEIGHT);
+		ctx.lineTo(xMesh, yMesh + (MNT_HEIGHT * 0.75 | 0));
+		ctx.lineTo(xMesh + (MNT_LENGTH * 0.25 | 0), yMesh + (MNT_HEIGHT * 0.4 | 0));
+		ctx.lineTo(xMesh, yMesh);
+		ctx.closePath();
+		ctx.fill();
+		ctx.beginPath();
+		ctx.moveTo(xMesh, yMesh);
+		ctx.lineTo(xMesh + MNT_LENGTH, yMesh + MNT_HEIGHT);
+		ctx.moveTo(xMesh, yMesh);
+		ctx.lineTo(xMesh, yMesh + (MNT_HEIGHT >> 1));
+		ctx.moveTo(xMesh, yMesh);
+		ctx.lineTo(xMesh - MNT_LENGTH, yMesh + MNT_HEIGHT);
+		ctx.stroke();
+		this._cliparts.mount = c;
+	}
+
+	generator() {
+		return this._generator;
+	}
+
+	/**
+	 * Permet d'indexer des zone physique de terrain (déduite à partir de l'altitude min et l'altitude max
+	 * @param data
+	 * @param meshSize
+	 * @returns {Array}
+	 */
+	indexCell(data, meshSize) {
+		let aInd = [];
+		function disc(n) {
+			if (n < 0.5) {
+				return 1;
+			}
+			if (n < 0.65) {
+				return 2;
+			}
+			if (n < 0.75) {
+				return 3;
+			}
+			if (n < 0.85) {
+				return 4;
+			}
+			return 5;
+		}
+		data.forEach((row, y) => {
+			let yMesh = Math.floor(y / meshSize);
+			if (!aInd[yMesh]) {
+				aInd[yMesh] = [];
+			}
+			row.forEach((cell, x) => {
+				let xMesh = Math.floor(x / meshSize);
+				if (!aInd[yMesh][xMesh]) {
+					aInd[yMesh][xMesh] = {
+						min: 5,
+						max: 0,
+						type: 0
+					};
+				}
+				let m = aInd[yMesh][xMesh];
+				m.min = Math.min(m.min, cell);
+				m.max = Math.max(m.max, cell);
+				m.type = disc(m.min) * 10 + disc(m.max);
+			});
+		});
+		return aInd;
+	}
+
+	render(cvs, xCurs, yCurs, xScreen, yScreen, wScreen, hScreen) {
+		this._generator.renderClusterCells(cvs, xCurs, yCurs, xScreen, yScreen, wScreen, hScreen);
+	}
+
+	renderTerrainType(xCurs, yCurs, tile, aHeightIndex) {
+		let ctx = tile.getContext('2d');
+		ctx.font = '12px italic serif';
+		ctx.textBaseline = 'top';
+		const MESH_SIZE = 16;
+		aHeightIndex.forEach((row, y) => row.forEach((cell, x) => {
+			if ((x & 1) ^ (y & 1)) {
+				switch (cell.type) {
+					case 11: // vague
+						ctx.drawImage(this._cliparts.wave, x * MESH_SIZE, y * MESH_SIZE);
+						break;
+
+					case 23: // herbe
+						ctx.drawImage(this._cliparts.grass, x * MESH_SIZE, y * MESH_SIZE);
+						break;
+
+					case 33: // foret
+						ctx.drawImage(this._cliparts.forest, x * MESH_SIZE, y * MESH_SIZE);
+						break;
+
+					case 55: // montagne
+						ctx.drawImage(this._cliparts.mount, x * MESH_SIZE, y * MESH_SIZE);
+						break;
+				}
+			}
+		}));
+	}
+
+	renderLinesCoordinates(xCurs, yCurs, tile, aHeightIndex) {
+		let ctx = tile.getContext('2d');
+		ctx.font = '12px italic serif';
+		ctx.textBaseline = 'top';
+		ctx.strokeStyle = 'rgba(57, 25, 7, 0.5)';
+		ctx.beginPath();
+		ctx.moveTo(0, tile.height - 1);
+		ctx.lineTo(0, 0);
+		ctx.lineTo(tile.width - 1, 0);
+		ctx.stroke();
+		ctx.strokeStyle = '#efce8c';
+		ctx.fillStyle = 'rgba(57, 25, 7)';
+		let sText = yCurs.toString() + '" ' + xCurs.toString();
+		ctx.strokeText(sText, 10, 10);
+		ctx.fillText(sText, 10, 10);
+	}
+
+	renderGoodSectorsForPort(xCurs, yCurs, tile, aHeightIndex) {
+		// rechercher du [[11, 11, 11][12, 12, 12][22, 22, 22]];
+	}
+
+
+	renderCell(xCurs, yCurs, tile, map) {
+		const MESH_SIZE = 16;
+		let aHeightIndex = this.indexCell(map, MESH_SIZE);
+		this.renderTerrainType(xCurs, yCurs, tile, aHeightIndex);
+		this.renderLinesCoordinates(xCurs, yCurs, tile, aHeightIndex);
+	}
+}
+
+module.exports = PirateWorld;
+
+/***/ }),
+
+/***/ "./examples/treasure-map/PixelProcessor.js":
+/*!*************************************************!*\
+  !*** ./examples/treasure-map/PixelProcessor.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+class PixelProcessor {
+    process(oCanvas, cb) {
+        let ctx = oCanvas.getContext('2d');
+        let oImageData = ctx.createImageData(oCanvas.width, oCanvas.height);
+        let pixels = oImageData.data;
+        let h = oCanvas.height;
+        let w = oCanvas.width;
+        let oPixelCtx = {
+            pixel: (x, y) => {
+                let nOffset = (y * w + x) << 2;
+                return {
+                    r: pixels[nOffset],
+                    g: pixels[nOffset + 1],
+                    b: pixels[nOffset + 2],
+                    a: pixels[nOffset + 3]
+                }
+            },
+            width: w,
+            height: h,
+            x: 0,
+            y: 0,
+            color: {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 255
+            }
+        };
+        for (let y = 0; y < h; ++y) {
+            for (let x = 0; x < w; ++x) {
+                let nOffset = (y * w + x) << 2;
+                oPixelCtx.x = x;
+                oPixelCtx.y = y;
+                oPixelCtx.color.r = pixels[nOffset];
+                oPixelCtx.color.g = pixels[nOffset + 1];
+                oPixelCtx.color.b = pixels[nOffset + 2];
+                oPixelCtx.color.a = pixels[nOffset + 3];
+                cb(oPixelCtx);
+                pixels[nOffset] = oPixelCtx.color.r;
+                pixels[nOffset + 1] = oPixelCtx.color.g;
+                pixels[nOffset + 2] = oPixelCtx.color.b;
+                pixels[nOffset + 3] = oPixelCtx.color.a;
+            }
+        }
+        ctx.putImageData(oImageData, 0, 0);
+    }
+}
+
+module.exports = PixelProcessor;
+
+/***/ }),
+
+/***/ "./examples/treasure-map/WorldGenerator.js":
+/*!*************************************************!*\
+  !*** ./examples/treasure-map/WorldGenerator.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
+const EventManager = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const Perlin = o876.algorithms.Perlin;
+
+class WorldGenerator {
+	constructor({cellSize, clusterSize, seed}) {
+		let pcell = new Perlin();
+		pcell.size(cellSize);
+		pcell.seed(seed);
+
+
+		let pclust = new Perlin();
+		pclust.size(clusterSize);
+		pclust.seed(seed);
+
+		// les cellule, détail jusqu'au pixel
+		// défini l'élévaltion finale du terrain
+		this._perlinCell = pcell;
+
+		// les cluster, détail jusqu'au cellule
+		// défini l'élévation de base de la cellule correspondante
+		this._perlinCluster = pclust;
+
+		this._canvasCell = WorldGenerator._canvas(cellSize, cellSize);
+		this._canvasCluster = WorldGenerator._canvas(clusterSize, clusterSize);
+		this._gradient = null;
+		this._eventManager = new EventManager();
+		this._cache = new o876.structures.Cache2D();
+	}
+
+	on(...args) {
+		return this._eventManager.on(...args);
+	}
+
+	gradient(a) {
+		this._gradient = o876.Rainbow.gradient(a);
+	}
+
+	static _mod(n, d) {
+		return o876.SpellBook.mod(n, d);
+	}
+
+	static _canvas(w, h) {
+		let c = document.createElement('canvas');
+		c.width = w;
+		c.height = h;
+		c.imageSmoothingEnabled = false;
+		return c;
+	}
+
+	/**
+	 * Génération d'un cluster
+	 * @param x {number} coordonnées
+	 * @param y {number} du cluster
+	 */
+	generateCluster(x, y) {
+		return this._perlinCluster.generate(x, y);
+	}
+
+
+	_cellFilter15(base, value) {
+		if (base < 0.5) {
+			return value * base;
+		} else {
+			return Math.min(0.99, value * base * 1.5) ;
+		}
+	}
+
+	_cellFilterBinary(base, value) {
+		if (base < 0.5) {
+			return value * 0.5;
+		} else {
+			return value * 0.5 + 0.5;
+		}
+	}
+
+	_cellFilterMed(base, value) {
+		return (base + value) / 2;
+	}
+
+	_cellFilterMinMax(base, value) {
+		if (base < 0.45) {
+			return base * value;
+		} else {
+			return Math.max(0, Math.min(0.99, 1.333333333 * (base - value / 4)));
+		}
+	}
+
+	_cellFilterMinMax2(base, value) {
+		return Math.max(0, Math.min(0.99, 1.333333333 * (base - value / 4)));
+	}
+
+	_axisModulationFactor(xPix, xg, clusterSize) {
+        let size = this._perlinCell.size();
+        let xg32 = WorldGenerator._mod(xg, clusterSize);
+        let xfactor = 1;
+        switch (xg32) {
+            case 0:
+                xfactor = 0.25 * xPix / size;
+                break;
+
+            case 1:
+                xfactor = 0.25 * xPix / size + 0.25;
+                break;
+
+            case 2:
+                xfactor = 0.5 * xPix / size + 0.5;
+                break;
+
+            case clusterSize - 1:
+                xfactor = 0.25 * (1 - xPix / size) + 0.25;
+                break;
+
+            case clusterSize - 2:
+                xfactor = 0.5 * (1 - xPix / size) + 0.5;
+                break;
+        }
+        return xfactor;
+	}
+
+	_cellProcess(xPix, yPix, xg, yg, base, cell) {
+		return this._cellFilterMinMax(base, cell) *
+            this._axisModulationFactor(xPix, xg, 32) *
+            this._axisModulationFactor(yPix, yg, 32);
+
+	}
+
+	renderCell(xCurs, yCurs) {
+		let c = this._canvasCell;
+		let ctx = c.getContext('2d');
+		let oCached = this._cache.getPayload(xCurs, yCurs);
+		if (oCached) {
+			ctx.drawImage(oCached.tile, 0, 0);
+			return;
+		}
+
+        let clusterSize = this._perlinCluster.size();
+		let heightMap = this._perlinCell.generate(
+			xCurs,
+			yCurs, {
+				noise: (xg, yg, cellData) => {
+					let xCluster = Math.floor((xg) / clusterSize);
+					let yCluster = Math.floor((yg) / clusterSize);
+					let xClusterMod = WorldGenerator._mod(xg, clusterSize);
+					let yClusterMod = WorldGenerator._mod(yg, clusterSize);
+					let data = this.generateCluster(xCluster, yCluster);
+					return cellData.map((row, y) =>
+						row.map((cell, x) =>
+							this._cellProcess(x, y, xg, yg, data[yClusterMod][xClusterMod], cell)
+						)
+					);
+				}
+			}
+		);
+		let oImageData = ctx.createImageData(c.width, c.height);
+		let data = Perlin.colorize(heightMap, this._gradient);
+		data.forEach((x, i) => oImageData.data[i] = x);
+		ctx.putImageData(oImageData, 0, 0);
+
+		this._eventManager.emit('cell-rendered', {
+			x: xCurs,
+			y: yCurs,
+			tile: c,
+			map: heightMap
+		});
+		if (!this._cache.getPayload(xCurs, yCurs)) {
+			let oCachedCanvas = WorldGenerator._canvas(c.width, c.height);
+			oCachedCanvas.getContext('2d').drawImage(c, 0, 0);
+			this._cache.push(xCurs, yCurs, {tile: oCachedCanvas});
+		}
+	}
+
+	renderClusterCells(oDestCanvas, xFrom, yFrom, xScreen, yScreen, wScreen, hScreen) {
+		let cellSize = this._perlinCell.size();
+		let c = this._canvasCell;
+		let ctx = c.getContext('2d');
+		ctx.font = '10px italic serif';
+		wScreen = Math.ceil(wScreen / cellSize);
+		hScreen = Math.ceil(hScreen / cellSize);
+
+		for (let yCell = 0; yCell < hScreen; ++yCell) {
+			for (let xCell = 0; xCell < wScreen; ++xCell) {
+				let xCurs = xCell + xFrom;
+				let yCurs = yCell + yFrom;
+				let c = this._canvasCell;
+				this.renderCell(xCurs, yCurs);
+				oDestCanvas.getContext('2d').drawImage(c, xScreen + xCell * cellSize, yScreen + yCell * cellSize);
+			}
+		}
+	}
+}
+
+module.exports = WorldGenerator;
+
+/***/ }),
+
+/***/ "./examples/treasure-map/main.js":
+/*!***************************************!*\
+  !*** ./examples/treasure-map/main.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
+const PirateWorld = __webpack_require__(/*! ./PirateWorld */ "./examples/treasure-map/PirateWorld.js");
+const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/treasure-map/WorldGenerator.js");
+const PixelProcessor = __webpack_require__(/*! ./PixelProcessor */ "./examples/treasure-map/PixelProcessor.js");
+
+class PWRunner {
+	constructor() {
+		this.WORLD_DEF = {
+			cellSize: 8,
+			clusterSize: 16,
+			seed: 0.111
+		};
+		this.world = new PirateWorld(this.WORLD_DEF);
+		this.xView = 0;
+		this.yView = 0;
+		this.oRenderCanvas = null;
+	}
+
+	render(cvs, x, y) {
+		this.oRenderCanvas = cvs;
+		this.xView = x;
+		this.yView = y;
+
+		let w = cvs.width;
+		let h = cvs.height;
+		let x0 = x - (w >> 1);
+		let y0 = y - (h >> 1);
+		let xTile = Math.floor(x0 / this.WORLD_DEF.cellSize);
+		let yTile = Math.floor(y0 / this.WORLD_DEF.cellSize);
+		let xMod = WorldGenerator._mod(x0, this.WORLD_DEF.cellSize);
+		let yMod = WorldGenerator._mod(y0, this.WORLD_DEF.cellSize);
+		this.world.render(
+			cvs,
+			xTile, yTile,
+			-xMod, -yMod,
+			cvs.width + this.WORLD_DEF.cellSize, cvs.height + this.WORLD_DEF.cellSize
+		);
+	}
+
+	move(dx, dy) {console.log('moving', this.xView + dx, this.yView + dy);
+		this.render(this.oRenderCanvas, this.xView + dx, this.yView + dy);
+	}
+}
+
+function kbHandler(event) {
+	switch (event.key) {
+		case 'ArrowUp':
+			pwrunner.render(document.querySelector('.world'), X, Y -= 16);
+			break;
+
+		case 'ArrowDown':
+			pwrunner.render(document.querySelector('.world'), X, Y += 16);
+			break;
+
+		case 'ArrowLeft':
+			pwrunner.render(document.querySelector('.world'), X -= 16, Y);
+			break;
+
+		case 'ArrowRight':
+			pwrunner.render(document.querySelector('.world'), X += 16, Y);
+			break;
+	}
+}
+
+let pwrunner, X = 0, Y = 0;
+
+
+function pixelProcHexa(nSize) {
+    const lte = (n, a) => n <= a * nSize;
+    const gte = (n, a) => n >= a * nSize;
+    const bt = (n, a, b) => gte(n, a) && lte(n, b);
+    const ar = (a, b) => a === b;
+    const mod = o876.SpellBook.mod;
+    const isHexa = (ctx, dx, dy) => {
+        let x = ctx.x + dx;
+        let y = ctx.y + dy;
+        let s2 = 2 * nSize;
+        let s4 = 4 * nSize;
+        let s6 = 6 * nSize;
+
+        let ymod6 = mod(y, s6);
+        let xmod4 = mod(x, s4);
+        let xmod6 = mod(x, s6);
+
+        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+            return true;
+        }
+        if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+            return true;
+        }
+
+        let p6 = mod(Math.floor(0.5 * x), s6);
+        let p6i = mod(Math.floor(-0.5 * x), s6);
+
+        let q60 = ymod6;
+        let q62 = mod(y + s2, s6);
+        let q64 = mod(y + s4, s6);
+
+
+        if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+            return true;
+        }
+
+        if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+            return true;
+        }
+
+        if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+            return true;
+        }
+
+        return false;
+    };
+    const isHexa3 = ctx => {
+        ctx.color = {r: 0, g: 0, b: 0, a: 255};
+    	if (isHexa(ctx, 0, 0) ||
+			isHexa(ctx, 1, 0) ||
+			isHexa(ctx, 0, 1) ||
+			isHexa(ctx, -1, 0) ||
+			isHexa(ctx, 0, -1)) {
+            ctx.color = {r: 255, g: 255, b: 255, a: 255};
+        }
+	};
+	return isHexa3;
+}
+
+function pixelProcHexa2(nSize, nThinkness) {
+    const lte = (n, a) => (n - nThinkness) <= a * nSize;
+    const gte = (n, a) => (n + nThinkness) >= a * nSize;
+    const bt = (n, a, b) => gte(n, a) && lte(n, b);
+    const ar = (a, b) => Math.abs(a - b) < nThinkness;
+    const mod = o876.SpellBook.mod;
+	return ctx => {
+		let x = ctx.x;
+		let y = ctx.y;
+        let s2 = 2 * nSize;
+        let s4 = 4 * nSize;
+        let s6 = 6 * nSize;
+
+        let ymod6 = mod(y, s6);
+        let xmod4 = mod(x, s4);
+        let xmod6 = mod(x, s6);
+
+
+        ctx.color = {r: 255, g: 255, b: 255, a: 255};
+
+        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+            return;
+        }
+        if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+            return;
+        }
+
+        let p6 = mod(Math.floor(0.5 * x), s6);
+        let p6i = mod(Math.floor(-0.5 * x), s6);
+
+        let q60 = ymod6;
+        let q62 = mod(y + s2, s6);
+        let q64 = mod(y + s4, s6);
+
+
+        if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+			return;
+        }
+
+        if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+			return;
+        }
+
+        if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+			return;
+        }
+
+        ctx.color = {r: 0, g: 0, b: 0, a: 255};
+    };
+}
+
+
+
+
+function main() {
+	let pp = new PixelProcessor();
+	pp.process(document.querySelector('.world'), pixelProcHexa(20, 1));
+}
+
+function main2() {
+    pwrunner = new PWRunner();
+    pwrunner.render(document.querySelector('.world'), X, Y);
+    window.addEventListener('keydown', kbHandler);
+}
+
+window.addEventListener('load', main);
+
+
+/***/ }),
+
+/***/ "./node_modules/events/events.js":
+/*!***************************************!*\
+  !*** ./node_modules/events/events.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+
+/***/ }),
 
 /***/ "./src/Emitter.js":
 /*!************************!*\
@@ -3178,4 +4180,4 @@ module.exports = {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=libo876.js.map
+//# sourceMappingURL=examples-treasure-map.js.map

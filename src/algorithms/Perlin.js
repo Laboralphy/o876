@@ -285,39 +285,40 @@ class Perlin {
 		return a3;
 	}
 
-	/**
-	 * @param aNoise {Array} an array produced by generate()
-	 * @param oContext {CanvasRenderingContext2D}
-	 */
-	render(aNoise, aPalette) {
-		aPalette = aPalette || Rainbow.gradient({
-			0: '#008',
-			44: '#00F',
-			49: '#44F',
-			50: '#864',
-			74: '#080',
-			75: '#555',
-			89: '#777',
-			90: '#AAA',
-			99: '#FFF'
-		});
-		let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
-		let data = [];
-		aNoise.forEach(function(r, y) {
-			r.forEach(function(p, x) {
-				let nOfs = (y * w + x) << 2;
-				let rgb = Rainbow.parse(aPalette[Math.min(aPalette.length - 1, p * pl | 0)]);
-				if (rgb === undefined) {
-					throw new Error('entry "' + (p * pl | 0) + '" is not in palette');
-				}
-				data[nOfs] = rgb.r;
-				data[nOfs + 1] = rgb.g;
-				data[nOfs + 2] = rgb.b;
-				data[nOfs + 3] = 255;
-			});
-		});
-		return data;
-	}
-};
+    /**
+     * Applique une palette au bruit généré
+     * @param aNoise {Array} an array produced by generate()
+     * @param oContext {CanvasRenderingContext2D}
+     */
+    static colorize(aNoise, aPalette) {
+        aPalette = aPalette || Rainbow.gradient({
+            0: '#008',
+            44: '#00F',
+            49: '#44F',
+            50: '#864',
+            74: '#080',
+            75: '#555',
+            89: '#777',
+            90: '#AAA',
+            99: '#FFF'
+        });
+        let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
+        let data = [];
+        aNoise.forEach(function(r, y) {
+            r.forEach(function(p, x) {
+                let nOfs = (y * w + x) << 2;
+                let rgb = Rainbow.parse(aPalette[Math.min(aPalette.length - 1, p * pl | 0)]);
+                if (rgb === undefined) {
+                    throw new Error('entry "' + (p * pl | 0) + '" is not in palette');
+                }
+                data[nOfs] = rgb.r;
+                data[nOfs + 1] = rgb.g;
+                data[nOfs + 2] = rgb.b;
+                data[nOfs + 3] = 255;
+            });
+        });
+        return data;
+    }
+}
 
 module.exports = Perlin;
