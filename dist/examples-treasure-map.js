@@ -345,6 +345,7 @@ class PixelProcessor {
                 a: 255
             }
         };
+        let aColors = [];
         for (let y = 0; y < h; ++y) {
             for (let x = 0; x < w; ++x) {
                 let nOffset = (y * w + x) << 2;
@@ -355,12 +356,16 @@ class PixelProcessor {
                 oPixelCtx.color.b = pixels[nOffset + 2];
                 oPixelCtx.color.a = pixels[nOffset + 3];
                 cb(oPixelCtx);
-                pixels[nOffset] = oPixelCtx.color.r;
-                pixels[nOffset + 1] = oPixelCtx.color.g;
-                pixels[nOffset + 2] = oPixelCtx.color.b;
-                pixels[nOffset + 3] = oPixelCtx.color.a;
+				aColors.push({...oPixelCtx.color});
             }
         }
+        aColors.forEach((c, i) => {
+            let nOffset = i << 2;
+			pixels[nOffset] = c.r;
+			pixels[nOffset + 1] = c.g;
+			pixels[nOffset + 2] = c.b;
+			pixels[nOffset + 3] = c.a;
+		});
         ctx.putImageData(oImageData, 0, 0);
     }
 }
@@ -464,10 +469,14 @@ class WorldGenerator {
 		}
 	}
 
-	_cellFilterMinMax2(base, value) {
-		return Math.max(0, Math.min(0.99, 1.333333333 * (base - value / 4)));
-	}
-
+	/**
+	 * fabrique des canaux
+	 * @param xPix
+	 * @param xg
+	 * @param clusterSize
+	 * @returns {number}
+	 * @private
+	 */
 	_axisModulationFactor(xPix, xg, clusterSize) {
         let size = this._perlinCell.size();
         let xg32 = WorldGenerator._mod(xg, clusterSize);
@@ -496,10 +505,78 @@ class WorldGenerator {
         return xfactor;
 	}
 
+	_cellDepthModulator(x, y, xg, yg, meshSize) {
+		let c = 6;
+		let bInHexagon = this.isOnHexaMesh(xg, yg, meshSize, c);
+		if (!bInHexagon) {
+			return 1;
+		}
+		if (this.isOnHexaMesh(xg, yg, meshSize, c >> 2)) {
+			return 0.111;
+		} else if (this.isOnHexaMesh(xg, yg, meshSize, c >> 1)) {
+			return 0.333;
+		} else {
+			return 0.666;
+		}
+	}
+
+
+	/**
+	 * Renvoie true si le point spécifié se trouve sur les lignes d'un maillage hexagonal
+	 * @param x {number} coordonnées du point à tester
+	 * @param y {number}
+	 * @param nSize {number} taille du maillage
+	 * @param nThickness {number} épaisseur des ligne du maillage
+	 * @returns {boolean}
+	 */
+	isOnHexaMesh(x, y, nSize, nThickness) {
+		const lte = (n, a) => (n - nThickness) <= a * nSize;
+		const gte = (n, a) => (n + nThickness) >= a * nSize;
+		const bt = (n, a, b) => gte(n, a) && lte(n, b);
+		const ar = (a, b) => Math.abs(a - b) < nThickness;
+		const mod = o876.SpellBook.mod;
+
+		let s2 = 2 * nSize;
+		let s4 = 4 * nSize;
+		let s6 = 6 * nSize;
+
+		let ymod6 = mod(y, s6);
+		let xmod4 = mod(x, s4);
+		let xmod6 = mod(x, s6);
+
+		if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+			return true;
+		}
+		if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+			return true;
+		}
+
+		let p6 = mod(Math.floor(0.5 * x), s6);
+		let p6i = mod(Math.floor(-0.5 * x), s6);
+
+		let q60 = ymod6;
+		let q62 = mod(y + s2, s6);
+		let q64 = mod(y + s4, s6);
+
+
+		if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+			return true;
+		}
+
+		if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+			return true;
+		}
+
+		if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+			return true;
+		}
+
+		return false;
+	};
+
 	_cellProcess(xPix, yPix, xg, yg, base, cell) {
 		return this._cellFilterMinMax(base, cell) *
-            this._axisModulationFactor(xPix, xg, 32) *
-            this._axisModulationFactor(yPix, yg, 32);
+            this._cellDepthModulator(xPix, yPix, xg, yg, 16);
 
 	}
 
@@ -522,6 +599,7 @@ class WorldGenerator {
 					let xClusterMod = WorldGenerator._mod(xg, clusterSize);
 					let yClusterMod = WorldGenerator._mod(yg, clusterSize);
 					let data = this.generateCluster(xCluster, yCluster);
+					///let bHexa = this.isOnHexaMesh(xg, yg, 32, 3)
 					return cellData.map((row, y) =>
 						row.map((cell, x) =>
 							this._cellProcess(x, y, xg, yg, data[yClusterMod][xClusterMod], cell)
@@ -587,7 +665,7 @@ const PixelProcessor = __webpack_require__(/*! ./PixelProcessor */ "./examples/t
 class PWRunner {
 	constructor() {
 		this.WORLD_DEF = {
-			cellSize: 8,
+			cellSize: 256,
 			clusterSize: 16,
 			seed: 0.111
 		};
@@ -623,6 +701,89 @@ class PWRunner {
 	}
 }
 
+/**
+ * Renvoie true si le point spécifié se trouve sur les lignes d'un maillage hexagonal
+ * @param x {number} coordonnées du point à tester
+ * @param y {number}
+ * @param nSize {number} taille du maillage
+ * @param nThickness {number} épaisseur des ligne du maillage
+ * @returns {boolean}
+ */
+function isOnHexaMesh(x, y, nSize, nThickness) {
+	const lte = (n, a) => (n - nThickness) <= a * nSize;
+	const gte = (n, a) => (n + nThickness) >= a * nSize;
+	const bt = (n, a, b) => gte(n, a) && lte(n, b);
+	const ar = (a, b) => Math.abs(a - b) < nThickness;
+	const inCircle = (xp, yp, xc, yc, r) =>
+		o876.geometry.Helper.distance(xc, yc, xp, yp) <= r
+		;
+	const mod = o876.SpellBook.mod;
+
+	let s2 = 2 * nSize;
+	let s4 = 4 * nSize;
+	let s6 = 6 * nSize;
+	let s8 = 8 * nSize;
+	let s10 = 10 * nSize;
+	let s12 = 12 * nSize;
+
+	let ymod6 = mod(y, s6);
+	let ymod8 = mod(y, s8);
+	let ymod10 = mod(y, s10);
+	let ymod12 = mod(y, s12);
+
+	let xmod4 = mod(x, s4);
+	let xmod6 = mod(x, s6);
+	let xmod8 = mod(x, s8);
+	let xmod10 = mod(x, s10);
+	let xmod12 = mod(x, s12);
+
+
+	if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+		return true;
+	}
+	if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+		return true;
+	}
+
+	let p6 = mod(Math.floor(0.5 * x), s6);
+	let p6i = mod(Math.floor(-0.5 * x), s6);
+
+	let p12 = mod(Math.floor(0.5 * x), s12);
+	let p12i = mod(Math.floor(-0.5 * x), s12);
+
+	let q60 = ymod6;
+	let q62 = mod(y + s2, s6);
+	let q64 = mod(y + s4, s6);
+
+
+	if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+		return true;
+	}
+
+	if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+		return true;
+	}
+
+	if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+		return true;
+	}
+
+
+
+	if (inCircle(xmod8 - nSize * 4, ymod8 - nSize * 4, 0, 0, nSize * 2)) {
+		return true;
+	}
+
+
+
+
+	return false;
+}
+
+
+
+
+
 function kbHandler(event) {
 	switch (event.key) {
 		case 'ArrowUp':
@@ -643,129 +804,19 @@ function kbHandler(event) {
 	}
 }
 
-let pwrunner, X = 0, Y = 0;
-
-
-function pixelProcHexa(nSize) {
-    const lte = (n, a) => n <= a * nSize;
-    const gte = (n, a) => n >= a * nSize;
-    const bt = (n, a, b) => gte(n, a) && lte(n, b);
-    const ar = (a, b) => a === b;
-    const mod = o876.SpellBook.mod;
-    const isHexa = (ctx, dx, dy) => {
-        let x = ctx.x + dx;
-        let y = ctx.y + dy;
-        let s2 = 2 * nSize;
-        let s4 = 4 * nSize;
-        let s6 = 6 * nSize;
-
-        let ymod6 = mod(y, s6);
-        let xmod4 = mod(x, s4);
-        let xmod6 = mod(x, s6);
-
-        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
-            return true;
-        }
-        if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
-            return true;
-        }
-
-        let p6 = mod(Math.floor(0.5 * x), s6);
-        let p6i = mod(Math.floor(-0.5 * x), s6);
-
-        let q60 = ymod6;
-        let q62 = mod(y + s2, s6);
-        let q64 = mod(y + s4, s6);
-
-
-        if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
-            return true;
-        }
-
-        if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
-            return true;
-        }
-
-        if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
-            return true;
-        }
-
-        return false;
-    };
-    const isHexa3 = ctx => {
-        ctx.color = {r: 0, g: 0, b: 0, a: 255};
-    	if (isHexa(ctx, 0, 0) ||
-			isHexa(ctx, 1, 0) ||
-			isHexa(ctx, 0, 1) ||
-			isHexa(ctx, -1, 0) ||
-			isHexa(ctx, 0, -1)) {
-            ctx.color = {r: 255, g: 255, b: 255, a: 255};
-        }
-	};
-	return isHexa3;
-}
-
-function pixelProcHexa2(nSize, nThinkness) {
-    const lte = (n, a) => (n - nThinkness) <= a * nSize;
-    const gte = (n, a) => (n + nThinkness) >= a * nSize;
-    const bt = (n, a, b) => gte(n, a) && lte(n, b);
-    const ar = (a, b) => Math.abs(a - b) < nThinkness;
-    const mod = o876.SpellBook.mod;
-	return ctx => {
-		let x = ctx.x;
-		let y = ctx.y;
-        let s2 = 2 * nSize;
-        let s4 = 4 * nSize;
-        let s6 = 6 * nSize;
-
-        let ymod6 = mod(y, s6);
-        let xmod4 = mod(x, s4);
-        let xmod6 = mod(x, s6);
-
-
-        ctx.color = {r: 255, g: 255, b: 255, a: 255};
-
-        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
-            return;
-        }
-        if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
-            return;
-        }
-
-        let p6 = mod(Math.floor(0.5 * x), s6);
-        let p6i = mod(Math.floor(-0.5 * x), s6);
-
-        let q60 = ymod6;
-        let q62 = mod(y + s2, s6);
-        let q64 = mod(y + s4, s6);
-
-
-        if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
-			return;
-        }
-
-        if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
-			return;
-        }
-
-        if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
-			return;
-        }
-
-        ctx.color = {r: 0, g: 0, b: 0, a: 255};
-    };
-}
-
-
-
-
-function main() {
-	let pp = new PixelProcessor();
-	pp.process(document.querySelector('.world'), pixelProcHexa(20, 1));
-}
+let pwrunner, X, Y;
 
 function main2() {
+	let pp = new PixelProcessor();
+	pp.process(document.querySelector('.world'), ctx => {
+		ctx.color = isOnHexaMesh(ctx.x, ctx.y, 32, 1) ? {r:255, g:255, b:255, a:255} : {r:0, g:0, b:0, a:255};
+	});
+}
+
+function main() {
     pwrunner = new PWRunner();
+	X = 34 * pwrunner.WORLD_DEF.cellSize;
+	Y = 8 * pwrunner.WORLD_DEF.cellSize;
     pwrunner.render(document.querySelector('.world'), X, Y);
     window.addEventListener('keydown', kbHandler);
 }

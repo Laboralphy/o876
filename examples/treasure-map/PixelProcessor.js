@@ -26,6 +26,7 @@ class PixelProcessor {
                 a: 255
             }
         };
+        let aColors = [];
         for (let y = 0; y < h; ++y) {
             for (let x = 0; x < w; ++x) {
                 let nOffset = (y * w + x) << 2;
@@ -36,12 +37,16 @@ class PixelProcessor {
                 oPixelCtx.color.b = pixels[nOffset + 2];
                 oPixelCtx.color.a = pixels[nOffset + 3];
                 cb(oPixelCtx);
-                pixels[nOffset] = oPixelCtx.color.r;
-                pixels[nOffset + 1] = oPixelCtx.color.g;
-                pixels[nOffset + 2] = oPixelCtx.color.b;
-                pixels[nOffset + 3] = oPixelCtx.color.a;
+				aColors.push({...oPixelCtx.color});
             }
         }
+        aColors.forEach((c, i) => {
+            let nOffset = i << 2;
+			pixels[nOffset] = c.r;
+			pixels[nOffset + 1] = c.g;
+			pixels[nOffset + 2] = c.b;
+			pixels[nOffset + 3] = c.a;
+		});
         ctx.putImageData(oImageData, 0, 0);
     }
 }

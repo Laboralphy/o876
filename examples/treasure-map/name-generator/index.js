@@ -19,7 +19,7 @@ function loadList() {
 
 function main() {
     loadList();
-    for (let i = 0; i < 20; ++i) {
+    for (let i = 0; i < 2000; ++i) {
         let w = univList.generate(univList._random.rand(5, 10), 3);
         if (w) {
             console.log(w);
