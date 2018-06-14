@@ -37,11 +37,7 @@ class WorldGenerator {
 	}
 
 	static _mod(n, d) {
-		if (n > 0) {
-			return n % d;
-		} else {
-			return (d - (-n % d)) % d;
-		}
+		return o876.SpellBook.mod(n, d);
 	}
 
 	static _canvas(w, h) {
@@ -94,6 +90,41 @@ class WorldGenerator {
 		return Math.max(0, Math.min(0.99, 1.333333333 * (base - value / 4)));
 	}
 
+	_axisModulationFactor(xPix, xg, clusterSize) {
+        let size = this._perlinCell.size();
+        let xg32 = WorldGenerator._mod(xg, clusterSize);
+        let xfactor = 1;
+        switch (xg32) {
+            case 0:
+                xfactor = 0.25 * xPix / size;
+                break;
+
+            case 1:
+                xfactor = 0.25 * xPix / size + 0.25;
+                break;
+
+            case 2:
+                xfactor = 0.5 * xPix / size + 0.5;
+                break;
+
+            case clusterSize - 1:
+                xfactor = 0.25 * (1 - xPix / size) + 0.25;
+                break;
+
+            case clusterSize - 2:
+                xfactor = 0.5 * (1 - xPix / size) + 0.5;
+                break;
+        }
+        return xfactor;
+	}
+
+	_cellProcess(xPix, yPix, xg, yg, base, cell) {
+		return this._cellFilterMinMax(base, cell) *
+            this._axisModulationFactor(xPix, xg, 32) *
+            this._axisModulationFactor(yPix, yg, 32);
+
+	}
+
 	renderCell(xCurs, yCurs) {
 		let c = this._canvasCell;
 		let ctx = c.getContext('2d');
@@ -113,9 +144,11 @@ class WorldGenerator {
 					let xClusterMod = WorldGenerator._mod(xg, clusterSize);
 					let yClusterMod = WorldGenerator._mod(yg, clusterSize);
 					let data = this.generateCluster(xCluster, yCluster);
-					return cellData.map(row => {
-						return row.map(cell => this._cellFilterMinMax(data[yClusterMod][xClusterMod], cell))
-					});
+					return cellData.map((row, y) =>
+						row.map((cell, x) =>
+							this._cellProcess(x, y, xg, yg, data[yClusterMod][xClusterMod], cell)
+						)
+					);
 				}
 			}
 		);

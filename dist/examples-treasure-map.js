@@ -310,6 +310,65 @@ module.exports = PirateWorld;
 
 /***/ }),
 
+/***/ "./examples/treasure-map/PixelProcessor.js":
+/*!*************************************************!*\
+  !*** ./examples/treasure-map/PixelProcessor.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+class PixelProcessor {
+    process(oCanvas, cb) {
+        let ctx = oCanvas.getContext('2d');
+        let oImageData = ctx.createImageData(oCanvas.width, oCanvas.height);
+        let pixels = oImageData.data;
+        let h = oCanvas.height;
+        let w = oCanvas.width;
+        let oPixelCtx = {
+            pixel: (x, y) => {
+                let nOffset = (y * w + x) << 2;
+                return {
+                    r: pixels[nOffset],
+                    g: pixels[nOffset + 1],
+                    b: pixels[nOffset + 2],
+                    a: pixels[nOffset + 3]
+                }
+            },
+            width: w,
+            height: h,
+            x: 0,
+            y: 0,
+            color: {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 255
+            }
+        };
+        for (let y = 0; y < h; ++y) {
+            for (let x = 0; x < w; ++x) {
+                let nOffset = (y * w + x) << 2;
+                oPixelCtx.x = x;
+                oPixelCtx.y = y;
+                oPixelCtx.color.r = pixels[nOffset];
+                oPixelCtx.color.g = pixels[nOffset + 1];
+                oPixelCtx.color.b = pixels[nOffset + 2];
+                oPixelCtx.color.a = pixels[nOffset + 3];
+                cb(oPixelCtx);
+                pixels[nOffset] = oPixelCtx.color.r;
+                pixels[nOffset + 1] = oPixelCtx.color.g;
+                pixels[nOffset + 2] = oPixelCtx.color.b;
+                pixels[nOffset + 3] = oPixelCtx.color.a;
+            }
+        }
+        ctx.putImageData(oImageData, 0, 0);
+    }
+}
+
+module.exports = PixelProcessor;
+
+/***/ }),
+
 /***/ "./examples/treasure-map/WorldGenerator.js":
 /*!*************************************************!*\
   !*** ./examples/treasure-map/WorldGenerator.js ***!
@@ -356,11 +415,7 @@ class WorldGenerator {
 	}
 
 	static _mod(n, d) {
-		if (n > 0) {
-			return n % d;
-		} else {
-			return (d - (-n % d)) % d;
-		}
+		return o876.SpellBook.mod(n, d);
 	}
 
 	static _canvas(w, h) {
@@ -413,6 +468,41 @@ class WorldGenerator {
 		return Math.max(0, Math.min(0.99, 1.333333333 * (base - value / 4)));
 	}
 
+	_axisModulationFactor(xPix, xg, clusterSize) {
+        let size = this._perlinCell.size();
+        let xg32 = WorldGenerator._mod(xg, clusterSize);
+        let xfactor = 1;
+        switch (xg32) {
+            case 0:
+                xfactor = 0.25 * xPix / size;
+                break;
+
+            case 1:
+                xfactor = 0.25 * xPix / size + 0.25;
+                break;
+
+            case 2:
+                xfactor = 0.5 * xPix / size + 0.5;
+                break;
+
+            case clusterSize - 1:
+                xfactor = 0.25 * (1 - xPix / size) + 0.25;
+                break;
+
+            case clusterSize - 2:
+                xfactor = 0.5 * (1 - xPix / size) + 0.5;
+                break;
+        }
+        return xfactor;
+	}
+
+	_cellProcess(xPix, yPix, xg, yg, base, cell) {
+		return this._cellFilterMinMax(base, cell) *
+            this._axisModulationFactor(xPix, xg, 32) *
+            this._axisModulationFactor(yPix, yg, 32);
+
+	}
+
 	renderCell(xCurs, yCurs) {
 		let c = this._canvasCell;
 		let ctx = c.getContext('2d');
@@ -432,9 +522,11 @@ class WorldGenerator {
 					let xClusterMod = WorldGenerator._mod(xg, clusterSize);
 					let yClusterMod = WorldGenerator._mod(yg, clusterSize);
 					let data = this.generateCluster(xCluster, yCluster);
-					return cellData.map(row => {
-						return row.map(cell => this._cellFilterMinMax(data[yClusterMod][xClusterMod], cell))
-					});
+					return cellData.map((row, y) =>
+						row.map((cell, x) =>
+							this._cellProcess(x, y, xg, yg, data[yClusterMod][xClusterMod], cell)
+						)
+					);
 				}
 			}
 		);
@@ -487,13 +579,15 @@ module.exports = WorldGenerator;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
+const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
 const PirateWorld = __webpack_require__(/*! ./PirateWorld */ "./examples/treasure-map/PirateWorld.js");
 const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/treasure-map/WorldGenerator.js");
+const PixelProcessor = __webpack_require__(/*! ./PixelProcessor */ "./examples/treasure-map/PixelProcessor.js");
 
 class PWRunner {
 	constructor() {
 		this.WORLD_DEF = {
-			cellSize: 256,
+			cellSize: 8,
 			clusterSize: 16,
 			seed: 0.111
 		};
@@ -549,14 +643,134 @@ function kbHandler(event) {
 	}
 }
 
-let pwrunner, X = 14 * 256, Y = 0;
+let pwrunner, X = 0, Y = 0;
+
+
+function pixelProcHexa(nSize) {
+    const lte = (n, a) => n <= a * nSize;
+    const gte = (n, a) => n >= a * nSize;
+    const bt = (n, a, b) => gte(n, a) && lte(n, b);
+    const ar = (a, b) => a === b;
+    const mod = o876.SpellBook.mod;
+    const isHexa = (ctx, dx, dy) => {
+        let x = ctx.x + dx;
+        let y = ctx.y + dy;
+        let s2 = 2 * nSize;
+        let s4 = 4 * nSize;
+        let s6 = 6 * nSize;
+
+        let ymod6 = mod(y, s6);
+        let xmod4 = mod(x, s4);
+        let xmod6 = mod(x, s6);
+
+        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+            return true;
+        }
+        if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+            return true;
+        }
+
+        let p6 = mod(Math.floor(0.5 * x), s6);
+        let p6i = mod(Math.floor(-0.5 * x), s6);
+
+        let q60 = ymod6;
+        let q62 = mod(y + s2, s6);
+        let q64 = mod(y + s4, s6);
+
+
+        if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+            return true;
+        }
+
+        if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+            return true;
+        }
+
+        if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+            return true;
+        }
+
+        return false;
+    };
+    const isHexa3 = ctx => {
+        ctx.color = {r: 0, g: 0, b: 0, a: 255};
+    	if (isHexa(ctx, 0, 0) ||
+			isHexa(ctx, 1, 0) ||
+			isHexa(ctx, 0, 1) ||
+			isHexa(ctx, -1, 0) ||
+			isHexa(ctx, 0, -1)) {
+            ctx.color = {r: 255, g: 255, b: 255, a: 255};
+        }
+	};
+	return isHexa3;
+}
+
+function pixelProcHexa2(nSize, nThinkness) {
+    const lte = (n, a) => (n - nThinkness) <= a * nSize;
+    const gte = (n, a) => (n + nThinkness) >= a * nSize;
+    const bt = (n, a, b) => gte(n, a) && lte(n, b);
+    const ar = (a, b) => Math.abs(a - b) < nThinkness;
+    const mod = o876.SpellBook.mod;
+	return ctx => {
+		let x = ctx.x;
+		let y = ctx.y;
+        let s2 = 2 * nSize;
+        let s4 = 4 * nSize;
+        let s6 = 6 * nSize;
+
+        let ymod6 = mod(y, s6);
+        let xmod4 = mod(x, s4);
+        let xmod6 = mod(x, s6);
+
+
+        ctx.color = {r: 255, g: 255, b: 255, a: 255};
+
+        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+            return;
+        }
+        if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+            return;
+        }
+
+        let p6 = mod(Math.floor(0.5 * x), s6);
+        let p6i = mod(Math.floor(-0.5 * x), s6);
+
+        let q60 = ymod6;
+        let q62 = mod(y + s2, s6);
+        let q64 = mod(y + s4, s6);
+
+
+        if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+			return;
+        }
+
+        if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+			return;
+        }
+
+        if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+			return;
+        }
+
+        ctx.color = {r: 0, g: 0, b: 0, a: 255};
+    };
+}
+
+
+
+
 function main() {
-	pwrunner = new PWRunner();
-	pwrunner.render(document.querySelector('.world'), X, Y);
+	let pp = new PixelProcessor();
+	pp.process(document.querySelector('.world'), pixelProcHexa(20, 1));
+}
+
+function main2() {
+    pwrunner = new PWRunner();
+    pwrunner.render(document.querySelector('.world'), X, Y);
+    window.addEventListener('keydown', kbHandler);
 }
 
 window.addEventListener('load', main);
-window.addEventListener('keydown', kbHandler);
 
 
 /***/ }),
@@ -1697,6 +1911,16 @@ class SpellBook {
             return oInstance;
         }
     }
+
+    static mod(n, d) {
+        if (n > 0) {
+            return n % d;
+        } else {
+            return (d - (-n % d)) % d;
+        }
+    }
+
+
 };
 
 
