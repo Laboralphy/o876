@@ -1,5 +1,4 @@
 const o876 = require('../../src');
-const EventManager = require('events');
 const Perlin = o876.algorithms.Perlin;
 
 class WorldGenerator {
@@ -21,12 +20,7 @@ class WorldGenerator {
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
 
-		this._eventManager = new EventManager();
 		this._cache = new o876.structures.Cache2D({size: 256});
-	}
-
-	on(...args) {
-		return this._eventManager.on(...args);
 	}
 
 	static _mod(n, d) {

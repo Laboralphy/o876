@@ -4,9 +4,7 @@ const Perlin = o876.algorithms.Perlin;
 
 class PirateWorld {
 	constructor(wgd) {
-        let cellSize = wgd.cellSize;
-        this._cellSize = cellSize;
- 		let wg = new WorldGenerator(wgd);
+        this._cellSize = wgd.cellSize;
 		this._gradient = o876.Rainbow.gradient({
 			0: '#dec673',
 			40: '#efd69c',
@@ -17,8 +15,7 @@ class PirateWorld {
 			99: '#efce8c'
 		});
 
-		wg.on('cell-rendered', (data) => this.cellRendered(data));
-		this._generator = wg;
+		this._generator = new WorldGenerator(wgd);
 		this._cache = new o876.structures.Cache2D({size: 256});
 		this._cliparts = {};
 		this._buildCliparts();
@@ -209,7 +206,7 @@ class PirateWorld {
      * @param hScreen {number} taille de la portion de dessin
      */
     render(oDestCanvas, xFrom, yFrom, xScreen, yScreen, wScreen, hScreen) {
-        let cellSize = this._generator._perlinCell.size();
+        let cellSize = this._cellSize;
         wScreen = Math.ceil(wScreen / cellSize);
         hScreen = Math.ceil(hScreen / cellSize);
 

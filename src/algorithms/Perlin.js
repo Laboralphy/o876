@@ -288,7 +288,7 @@ class Perlin {
     /**
      * Applique une palette au bruit généré
      * @param aNoise {Array} an array produced by generate()
-     * @param oContext {CanvasRenderingContext2D}
+     * @param aPalette {array}
      */
     static colorize(aNoise, aPalette) {
         aPalette = aPalette || Rainbow.gradient({
