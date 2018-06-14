@@ -8,7 +8,10 @@ function loadList() {
     let aList = fs
         .readFileSync('cities-fr.txt', {encoding: 'utf-8'}) // chargement
         .split('\n') // split en tableau
-        .filter(word => !word.startsWith('saint')); // trop de noms commencent par "saint"
+        .filter(word =>
+            !word.startsWith('saint') &&
+            !word.includes('eee')
+        ); // trop de noms commencent par "saint"
     univList.indexList(aList, 3);
     let aGM = fs
        .readFileSync('exclusion-fr.txt', {encoding: 'utf-8'})

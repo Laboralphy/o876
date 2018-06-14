@@ -1,10 +1,13 @@
 const WorldGenerator = require('./WorldGenerator');
 const o876 = require('../../src');
+const Perlin = o876.algorithms.Perlin;
 
 class PirateWorld {
 	constructor(wgd) {
-		let wg = new WorldGenerator(wgd);
-		wg.gradient({
+        let cellSize = wgd.cellSize;
+        this._cellSize = cellSize;
+ 		let wg = new WorldGenerator(wgd);
+		this._gradient = o876.Rainbow.gradient({
 			0: '#dec673',
 			40: '#efd69c',
 			48: '#d6a563',
@@ -13,14 +16,35 @@ class PirateWorld {
 			75: '#b97735',
 			99: '#efce8c'
 		});
-		wg.on('cell-rendered', ({x, y, tile, map}) => this.renderCell(x, y, tile, map));
-		this._generator = wg;
 
+		wg.on('cell-rendered', (data) => this.cellRendered(data));
+		this._generator = wg;
+		this._cache = new o876.structures.Cache2D({size: 256});
 		this._cliparts = {};
 		this._buildCliparts();
 	}
 
-	_buildCliparts() {
+
+    /**
+	 * fabrique et renvoie un canvas
+     * @param w {number} taille
+     * @param h {number} taille
+     * @return {HTMLCanvasElement}
+     * @private
+     */
+    static _canvas(w, h) {
+        let c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        c.imageSmoothingEnabled = false;
+        return c;
+    }
+
+    /**
+	 * Construction des clipart utilisé pour égayer la map
+     * @private
+     */
+    _buildCliparts() {
 		const MESH_SIZE = 16;
 		const WAVE_SIZE = 3;
 		const HERB_SIZE = 3;
@@ -32,7 +56,7 @@ class PirateWorld {
 		let c, ctx;
 
 		// vague
-		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
 		ctx = c.getContext('2d');
 		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
 		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
@@ -45,7 +69,7 @@ class PirateWorld {
 		this._cliparts.wave = c;
 
 		// forest
-		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
 		ctx = c.getContext('2d');
 		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
 		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
@@ -58,7 +82,7 @@ class PirateWorld {
 		this._cliparts.forest = c;
 
 		// herbe
-		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
 		ctx = c.getContext('2d');
 		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
 		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
@@ -71,7 +95,7 @@ class PirateWorld {
 		this._cliparts.grass = c;
 
 		// Montagne
-		c = WorldGenerator._canvas(MESH_SIZE, MESH_SIZE);
+		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
 		ctx = c.getContext('2d');
 		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
 		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
@@ -99,61 +123,15 @@ class PirateWorld {
 		this._cliparts.mount = c;
 	}
 
-	generator() {
-		return this._generator;
-	}
 
-	/**
-	 * Permet d'indexer des zone physique de terrain (déduite à partir de l'altitude min et l'altitude max
-	 * @param data
-	 * @param meshSize
-	 * @returns {Array}
-	 */
-	indexCell(data, meshSize) {
-		let aInd = [];
-		function disc(n) {
-			if (n < 0.5) {
-				return 1;
-			}
-			if (n < 0.65) {
-				return 2;
-			}
-			if (n < 0.75) {
-				return 3;
-			}
-			if (n < 0.85) {
-				return 4;
-			}
-			return 5;
-		}
-		data.forEach((row, y) => {
-			let yMesh = Math.floor(y / meshSize);
-			if (!aInd[yMesh]) {
-				aInd[yMesh] = [];
-			}
-			row.forEach((cell, x) => {
-				let xMesh = Math.floor(x / meshSize);
-				if (!aInd[yMesh][xMesh]) {
-					aInd[yMesh][xMesh] = {
-						min: 5,
-						max: 0,
-						type: 0
-					};
-				}
-				let m = aInd[yMesh][xMesh];
-				m.min = Math.min(m.min, cell);
-				m.max = Math.max(m.max, cell);
-				m.type = disc(m.min) * 10 + disc(m.max);
-			});
-		});
-		return aInd;
-	}
-
-	render(cvs, xCurs, yCurs, xScreen, yScreen, wScreen, hScreen) {
-		this._generator.renderClusterCells(cvs, xCurs, yCurs, xScreen, yScreen, wScreen, hScreen);
-	}
-
-	renderTerrainType(xCurs, yCurs, tile, aHeightIndex) {
+    /**
+	 * dessine des element de terrain (arbre, montagnes)
+     * @param xCurs {number} coordonnées cellule concernée
+     * @param yCurs {number} coordonnées cellule concernée
+     * @param tile {HTMLCanvasElement} canvas de sortie
+     * @param aHeightIndex {array} height map fourie par WorldGenerator
+     */
+	paintTerrainType(xCurs, yCurs, tile, aHeightIndex) {
 		let ctx = tile.getContext('2d');
 		ctx.font = '12px italic serif';
 		ctx.textBaseline = 'top';
@@ -181,7 +159,7 @@ class PirateWorld {
 		}));
 	}
 
-	renderLinesCoordinates(xCurs, yCurs, tile, aHeightIndex) {
+	paintLinesCoordinates(xCurs, yCurs, tile, aHeightIndex) {
 		let ctx = tile.getContext('2d');
 		ctx.font = '12px italic serif';
 		ctx.textBaseline = 'top';
@@ -198,17 +176,73 @@ class PirateWorld {
 		ctx.fillText(sText, 10, 10);
 	}
 
-	renderGoodSectorsForPort(xCurs, yCurs, tile, aHeightIndex) {
-		// rechercher du [[11, 11, 11][12, 12, 12][22, 22, 22]];
+
+    /**
+     * lorssque la cellule à été générée par le WorldGenerator
+     * on peut la transformer en canvas par cette methode
+     * @param xCurs {number} longitude de la cellule
+     * @param yCurs {number} lattitude de la cellule
+     * @param heightmap {array} hauteur de chaque point (pixel) de la map
+     * @param physicmap {array} propriété physique de chaque secteur 16x16 de la map
+     */
+    paintCell(xCurs, yCurs, heightmap, physicmap) {
+        let tile = PirateWorld._canvas(this._cellSize, this._cellSize);
+        let ctx = tile.getContext('2d');
+        let oImageData = ctx.createImageData(tile.width, tile.height);
+        let data = Perlin.colorize(heightmap, this._gradient);
+        data.forEach((x, i) => oImageData.data[i] = x);
+        ctx.putImageData(oImageData, 0, 0);
+		this.paintTerrainType(xCurs, yCurs, tile, physicmap);
+		this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
+		return tile;
 	}
 
+    /**
+     * Lance le dessin de l'ensemble des cellules désignées
+     * @param oDestCanvas {HTMLCanvasElement} canvas de destination
+     * @param xFrom {number} longitude au centre
+     * @param yFrom {number} latitude au centre
+     * @param xScreen {number} position de dessin sur le canvas (généralement 0)
+     * mais cela peut etre également un offset permettant de simuler un scrolling
+     * @param yScreen {number} position de dessin sur le canvas (généralement 0)
+     * @param wScreen {number} taille de la portion de dessin
+     * @param hScreen {number} taille de la portion de dessin
+     */
+    render(oDestCanvas, xFrom, yFrom, xScreen, yScreen, wScreen, hScreen) {
+        let cellSize = this._generator._perlinCell.size();
+        wScreen = Math.ceil(wScreen / cellSize);
+        hScreen = Math.ceil(hScreen / cellSize);
 
-	renderCell(xCurs, yCurs, tile, map) {
-		const MESH_SIZE = 16;
-		let aHeightIndex = this.indexCell(map, MESH_SIZE);
-		this.renderTerrainType(xCurs, yCurs, tile, aHeightIndex);
-		this.renderLinesCoordinates(xCurs, yCurs, tile, aHeightIndex);
-	}
+        let cellData = [];
+        console.time('compute cells');
+        for (let yCell = 0; yCell < hScreen; ++yCell) {
+            for (let xCell = 0; xCell < wScreen; ++xCell) {
+                let xCurs = xCell + xFrom;
+                let yCurs = yCell + yFrom;
+                cellData.push({
+					xCell, yCell,
+					...this._generator.computeCellCache(xCurs, yCurs)
+				});
+            }
+        }
+        console.timeEnd('compute cells');
+        console.time('paint cells');
+        cellData.forEach(cd => {
+        	let cvs;
+        	let td = this._cache.getPayload(cd.x, cd.y);
+        	if (!td) {
+                cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
+                this._cache.push(cd.x, cd.y, {
+                	tile: cvs,
+					physicmap: cd.physicmap
+				});
+        	} else {
+        		cvs = td.tile;
+			}
+            oDestCanvas.getContext('2d').drawImage(cvs, xScreen + cd.xCell * cellSize, yScreen + cd.yCell * cellSize);
+		});
+        console.timeEnd('paint cells');
+    }
 }
 
 module.exports = PirateWorld;

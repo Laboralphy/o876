@@ -21,6 +21,20 @@ module.exports = class Helper {
 	}
 
     /**
+	 * Renvoie true si le point est dans le rectangle
+     * @param x {number} coordonnée du point
+     * @param y {number} coordonnée du point
+     * @param xr {number} coordonnée du rect
+     * @param yr {number} coordonnée du rect
+     * @param wr {number} largeur du rect
+     * @param hr {number} hauteur du rect
+     * @return {boolean}
+     */
+	static pointInRect(x, y, xr, yr, wr, hr) {
+		return x >= xr && y >= yr && x < xr + wr && y < yr + hr;
+	}
+
+    /**
 	 * Renvoie l'ange que fait la doite x1, y1, x2, y2
 	 * avec l'axe des X+
      * @param x1 {number}

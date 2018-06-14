@@ -2,9 +2,13 @@
  * Permet de mettre en cache des information indéxées par une coordonnées 2D
  */
 class Cache2D {
-	constructor() {
+	constructor(d = null) {
+		let size = 64;
+		if (d) {
+			size = d.size || size;
+		}
 		this._cache = [];
-		this._cacheSize = 64;
+		this._cacheSize = size;
 	}
 
 	getMetaData(x, y) {

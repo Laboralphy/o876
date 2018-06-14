@@ -6,7 +6,7 @@ const PixelProcessor = require('./PixelProcessor');
 class PWRunner {
 	constructor() {
 		this.WORLD_DEF = {
-			cellSize: 256,
+			cellSize: 64,
 			clusterSize: 16,
 			seed: 0.111
 		};
@@ -51,13 +51,15 @@ class PWRunner {
  * @returns {boolean}
  */
 function isOnHexaMesh(x, y, nSize, nThickness) {
-	const lte = (n, a) => (n - nThickness) <= a * nSize;
-	const gte = (n, a) => (n + nThickness) >= a * nSize;
-	const bt = (n, a, b) => gte(n, a) && lte(n, b);
+    const lte = (n, a) => (n - nThickness) <= a * nSize;
+    const gte = (n, a) => (n + nThickness) >= a * nSize;
+    const lt = (n, a) => (n + nThickness) < a * nSize;
+    const gt = (n, a) => (n - nThickness) > a * nSize;
+    const bte = (n, a, b) => gte(n, a) && lte(n, b);
+    const bt = (n, a, b) => gt(n, a) && lt(n, b);
 	const ar = (a, b) => Math.abs(a - b) < nThickness;
-	const inCircle = (xp, yp, xc, yc, r) =>
-		o876.geometry.Helper.distance(xc, yc, xp, yp) <= r
-		;
+    const inCircle = (xc, yc, r) => o876.geometry.Helper.distance(x, y, xc, yc) <= r;
+    const inRect = (xr, yr, wr, hr) => o876.geometry.Helper.pointInRect(x, y, xr, yr, wr, hr);
 	const mod = o876.SpellBook.mod;
 
 	let s2 = 2 * nSize;
@@ -79,10 +81,17 @@ function isOnHexaMesh(x, y, nSize, nThickness) {
 	let xmod12 = mod(x, s12);
 
 
-	if ((lte(xmod4, 0) || gte(xmod4, 4)) && bt(ymod6, 2, 4)) {
+
+    if (bt(xmod8, 2, 5) && bte(ymod6 - nThickness, 2, 5)) {
+        return false;
+    }
+    if (bt(xmod8, 4, 6) && bte(ymod6 - nThickness, 2, 5)) {
+        return false;
+    }
+	if ((lte(xmod4, 0) || gte(xmod4, 4)) && bte(ymod6, 2, 4)) {
 		return true;
 	}
-	if (bt(xmod4, 2, 2) && (bt(ymod6, 0, 1) || bt(ymod6, 5, 6))) {
+	if (bte(xmod4, 2, 2) && (bte(ymod6, 0, 1) || bte(ymod6, 5, 6))) {
 		return true;
 	}
 
@@ -97,26 +106,17 @@ function isOnHexaMesh(x, y, nSize, nThickness) {
 	let q64 = mod(y + s4, s6);
 
 
-	if (bt(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+	if (bte(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
 		return true;
 	}
 
-	if (bt(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+	if (bte(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
 		return true;
 	}
 
-	if (bt(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+	if (bte(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
 		return true;
 	}
-
-
-
-	if (inCircle(xmod8 - nSize * 4, ymod8 - nSize * 4, 0, 0, nSize * 2)) {
-		return true;
-	}
-
-
-
 
 	return false;
 }
