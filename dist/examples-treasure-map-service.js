@@ -81,10 +81,358 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./examples/treasure-map/service.js");
 /******/ })
 /************************************************************************/
 /******/ ({
+
+/***/ "./examples/treasure-map/WorldGenerator.js":
+/*!*************************************************!*\
+  !*** ./examples/treasure-map/WorldGenerator.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
+const Perlin = o876.algorithms.Perlin;
+
+class WorldGenerator {
+	constructor({cellSize, clusterSize, seed}) {
+		let pcell = new Perlin();
+		pcell.size(cellSize);
+		pcell.seed(seed);
+
+
+		let pclust = new Perlin();
+		pclust.size(clusterSize);
+		pclust.seed(seed);
+
+		// les cellule, détail jusqu'au pixel
+		// défini l'élévaltion finale du terrain
+		this._perlinCell = pcell;
+
+		// les cluster, détail jusqu'au cellule
+		// défini l'élévation de base de la cellule correspondante
+		this._perlinCluster = pclust;
+
+		this._cache = new o876.structures.Cache2D({size: 256});
+	}
+
+	static _mod(n, d) {
+		return o876.SpellBook.mod(n, d);
+	}
+
+	/**
+	 * Génération d'un cluster
+	 * @param x {number} coordonnées
+	 * @param y {number} du cluster
+	 */
+	generateCluster(x, y) {
+		return this._perlinCluster.generate(x, y);
+	}
+
+
+	_cellFilter15(base, value) {
+		if (base < 0.5) {
+			return value * base;
+		} else {
+			return Math.min(0.99, value * base * 1.5) ;
+		}
+	}
+
+	_cellFilterBinary(base, value) {
+		if (base < 0.5) {
+			return value * 0.5;
+		} else {
+			return value * 0.5 + 0.5;
+		}
+	}
+
+	_cellFilterMed(base, value) {
+		return (base + value) / 2;
+	}
+
+	_cellFilterMinMax(base, value) {
+		if (base < 0.45) {
+			return base * value;
+		} else {
+			return Math.max(0, Math.min(0.99, 1.333333333 * (base - value / 4)));
+		}
+	}
+
+	_cellDepthModulator(x, y, xg, yg, meshSize) {
+		let c = 6;
+		let bInHexagon = this._isOnHexaMesh(xg, yg, meshSize, c);
+		if (!bInHexagon) {
+			return 1;
+		}
+		if (this._isOnHexaMesh(xg, yg, meshSize, c >> 2)) {
+			return 0.333;
+		} else if (this._isOnHexaMesh(xg, yg, meshSize, c >> 1)) {
+			return 0.333;
+		} else {
+			return 0.666;
+		}
+	}
+
+
+    /**
+     * Renvoie true si le point spécifié se trouve sur les lignes d'un maillage hexagonal
+     * @param x {number} coordonnées du point à tester
+     * @param y {number}
+     * @param nSize {number} taille du maillage
+     * @param nThickness {number} épaisseur des ligne du maillage
+     * @returns {boolean}
+     */
+    _isOnHexaMesh(x, y, nSize, nThickness) {
+        const lte = (n, a) => (n - nThickness) <= a * nSize;
+        const gte = (n, a) => (n + nThickness) >= a * nSize;
+        const lt = (n, a) => (n + nThickness) < a * nSize;
+        const gt = (n, a) => (n - nThickness) > a * nSize;
+        const bte = (n, a, b) => gte(n, a) && lte(n, b);
+        const bt = (n, a, b) => gt(n, a) && lt(n, b);
+        const ar = (a, b) => Math.abs(a - b) < nThickness;
+        const mod = o876.SpellBook.mod;
+
+        let s2 = 2 * nSize;
+        let s4 = 4 * nSize;
+        let s6 = 6 * nSize;
+        let s8 = 8 * nSize;
+
+        let ymod6 = mod(y, s6);
+
+        let xmod4 = mod(x, s4);
+        let xmod6 = mod(x, s6);
+        let xmod8 = mod(x, s8);
+
+		const TRIPLE_HEXA = true;
+
+        // permet de créer des zone triple-hexa pour faire varier la continentalité
+        if (TRIPLE_HEXA && bt(xmod8, 2, 5) && bte(ymod6 - nThickness, 2, 5)) {
+            return false;
+        }
+        // permet de créer des zone triple-hexa pour faire varier la continentalité
+        if (TRIPLE_HEXA && bt(xmod8, 4, 6) && bte(ymod6 - nThickness, 2, 5)) {
+            return false;
+        }
+
+        if ((lte(xmod4, 0) || gte(xmod4, 4)) && bte(ymod6, 2, 4)) {
+            return true;
+        }
+        if (bte(xmod4, 2, 2) && (bte(ymod6, 0, 1) || bte(ymod6, 5, 6))) {
+            return true;
+        }
+
+        let p6 = mod(Math.floor(0.5 * x), s6);
+        let p6i = mod(Math.floor(-0.5 * x), s6);
+
+        let q60 = ymod6;
+        let q62 = mod(y + s2, s6);
+        let q64 = mod(y + s4, s6);
+
+
+        if (bte(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
+            return true;
+        }
+
+        if (bte(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
+            return true;
+        }
+
+        if (bte(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    _cellProcess(xPix, yPix, xg, yg, base, cell) {
+        return this._cellFilterMinMax(base, cell) *
+            this._cellDepthModulator(xPix, yPix, xg, yg, 16);
+    }
+
+    /**
+     * Permet d'indexer des zone physique de terrain (déduite à partir de l'altitude min et l'altitude max
+     * @param data
+     * @param meshSize
+     * @returns {Array}
+     */
+    buildCellPhysicMap(data, meshSize) {
+        let aMap = [];
+        function disc(n) {
+            if (n < 0.5) {
+                return 1;
+            }
+            if (n < 0.65) {
+                return 2;
+            }
+            if (n < 0.75) {
+                return 3;
+            }
+            if (n < 0.85) {
+                return 4;
+            }
+            return 5;
+        }
+        data.forEach((row, y) => {
+            let yMesh = Math.floor(y / meshSize);
+            if (!aMap[yMesh]) {
+                aMap[yMesh] = [];
+            }
+            row.forEach((cell, x) => {
+                let xMesh = Math.floor(x / meshSize);
+                if (!aMap[yMesh][xMesh]) {
+                    aMap[yMesh][xMesh] = {
+                        min: 5,
+                        max: 0,
+                        type: 0
+                    };
+                }
+                let m = aMap[yMesh][xMesh];
+                m.min = Math.min(m.min, cell);
+                m.max = Math.max(m.max, cell);
+                m.type = disc(m.min) * 10 + disc(m.max);
+            });
+        });
+        return aMap;
+    }
+
+    computeCell(xCurs, yCurs) {
+        const MESH_SIZE = 16;
+        let clusterSize = this._perlinCluster.size();
+        let heightMap = this._perlinCell.generate(
+            xCurs,
+            yCurs, {
+                noise: (xg, yg, cellData) => {
+                    let xCluster = Math.floor((xg) / clusterSize);
+                    let yCluster = Math.floor((yg) / clusterSize);
+                    let xClusterMod = WorldGenerator._mod(xg, clusterSize);
+                    let yClusterMod = WorldGenerator._mod(yg, clusterSize);
+                    let data = this.generateCluster(xCluster, yCluster);
+                    return cellData.map((row, y) =>
+                        row.map((cell, x) =>
+                            this._cellProcess(x, y, xg, yg, data[yClusterMod][xClusterMod], cell)
+                        )
+                    );
+                }
+            }
+        );
+        let physicMap = this.buildCellPhysicMap(heightMap, MESH_SIZE);
+        return {
+            x: xCurs,
+            y: yCurs,
+            heightmap: heightMap,
+            physicmap: physicMap
+        };
+	}
+
+	computeCellCache(xCurs, yCurs) {
+		let payload = this._cache.getPayload(xCurs, yCurs);
+		if (!payload) {
+			payload = this.computeCell(xCurs, yCurs);
+            this._cache.push(xCurs, yCurs, payload);
+		}
+		return payload;
+	}
+}
+
+module.exports = WorldGenerator;
+
+/***/ }),
+
+/***/ "./examples/treasure-map/service.js":
+/*!******************************************!*\
+  !*** ./examples/treasure-map/service.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/treasure-map/WorldGenerator.js");
+
+class Service {
+    constructor() {
+        this._generator = null;
+    }
+
+    getGenerator() {
+        return this._generator;
+    }
+
+    setGenerator(g) {
+        this._generator = g;
+    }
+
+    /**
+     * Lance la génération des tuiles située dans une zone rectangulaire de width * height
+     * Dont le centre est x y
+     * @param x {number} coordoonée centre
+     * @param y {number} coordoonée centre
+     * @param width {number} largeur
+     * @param height {number} hauteur
+     */
+    compute(x, y, width, height) {
+        let g = this._generator;
+        let cellSize = g._cellSize;
+        let wScreen = Math.ceil(width / cellSize);
+        let hScreen = Math.ceil(height / cellSize);
+
+        let cellData = [];
+        for (let yCell = 0; yCell < hScreen; ++yCell) {
+            for (let xCell = 0; xCell < wScreen; ++xCell) {
+                let xCurs = xCell + x;
+                let yCurs = yCell + y;
+                cellData.push({
+                    xCell, yCell,
+                    ...this._generator.computeCellCache(xCurs, yCurs)
+                });
+            }
+        }
+        return cellData;
+    }
+
+    sendMessage(sAction, data) {
+        data.action = sAction;
+        postMessage(JSON.stringify(data));
+    }
+
+    processMessage(e) {
+        let data = JSON.parse(e.data);
+        switch (data.action) {
+
+            case 'about':
+                this.sendMessage('about', {version: 1, name: 'world generator'});
+                break;
+
+            // initialisation du world generator
+            case 'init':
+                service.setGenerator(new WorldGenerator(data));
+                break;
+
+            // lance la génération des tuiles
+            // centrée sur x, y
+            // toutes les tuiles située dans la zone sont dessinées
+            case 'compute':
+                service.compute(data.x, data.y, data.width, data.height);
+                break;
+        }
+    }
+}
+
+
+const service = new Service();
+
+
+
+
+
+
+
+
+
+
+addEventListener('message', e => service.processMessage(e));
+
+/***/ }),
 
 /***/ "./src/Emitter.js":
 /*!************************!*\
@@ -3196,4 +3544,4 @@ module.exports = {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=libo876.js.map
+//# sourceMappingURL=examples-treasure-map-service.js.map

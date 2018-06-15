@@ -3,6 +3,35 @@ const PirateWorld = require('./PirateWorld');
 const WorldGenerator = require('./WorldGenerator');
 const PixelProcessor = require('./PixelProcessor');
 
+
+class ServiceClient {
+	constructor() {
+		this._idCallback = 0;
+		this._oCallbacks = {};
+		this._service = null;
+        this._service.addEventListener('message', event => this.received(event));
+	}
+
+	emit(sAction, data, cb) {
+		data.__action = sAction;
+		if (cb) {
+			data.__callback = ++this._idCallback;
+			this._oCallbacks[this._idCallback] = cb;
+		}
+		this.service.postMessage(sData);
+	}
+
+	received(event) {
+		let data = JSON.parse(event.data);
+		if (data.__callback && (data.__callback in this._oCallbacks)) {
+			idCallback = data.__callback;
+			let cb = this._oCallbacks[idCallback];
+            delete this._oCallbacks[idCallback]
+			cb(data);
+		}
+	}
+}
+
 class PWRunner {
 	constructor() {
 		this.WORLD_DEF = {
@@ -14,6 +43,28 @@ class PWRunner {
 		this.xView = 0;
 		this.yView = 0;
 		this.oRenderCanvas = null;
+
+        this.service = new Worker('../../dist/examples-treasure-map-service.js');
+        this.service.addEventListener('message', event => this.serviceMessageReceived(event));
+	}
+
+	servicePostMessage(sAction, data, cb) {
+		data.action = sAction;
+		if (cb) {
+			data.callback =
+		}
+		let sData = JSON.stringify(data);
+        this.service.postMessage(sData);
+	}
+
+	serviceMessageReceived(event) {
+		let data = JSON.parse(event.data);
+		switch (data.action) {
+			case 'about':
+				console.log(data);
+				break;
+
+		}
 	}
 
 	render(cvs, x, y) {
@@ -36,93 +87,7 @@ class PWRunner {
 			cvs.width + this.WORLD_DEF.cellSize, cvs.height + this.WORLD_DEF.cellSize
 		);
 	}
-
-	move(dx, dy) {console.log('moving', this.xView + dx, this.yView + dy);
-		this.render(this.oRenderCanvas, this.xView + dx, this.yView + dy);
-	}
 }
-
-/**
- * Renvoie true si le point spécifié se trouve sur les lignes d'un maillage hexagonal
- * @param x {number} coordonnées du point à tester
- * @param y {number}
- * @param nSize {number} taille du maillage
- * @param nThickness {number} épaisseur des ligne du maillage
- * @returns {boolean}
- */
-function isOnHexaMesh(x, y, nSize, nThickness) {
-    const lte = (n, a) => (n - nThickness) <= a * nSize;
-    const gte = (n, a) => (n + nThickness) >= a * nSize;
-    const lt = (n, a) => (n + nThickness) < a * nSize;
-    const gt = (n, a) => (n - nThickness) > a * nSize;
-    const bte = (n, a, b) => gte(n, a) && lte(n, b);
-    const bt = (n, a, b) => gt(n, a) && lt(n, b);
-	const ar = (a, b) => Math.abs(a - b) < nThickness;
-    const inCircle = (xc, yc, r) => o876.geometry.Helper.distance(x, y, xc, yc) <= r;
-    const inRect = (xr, yr, wr, hr) => o876.geometry.Helper.pointInRect(x, y, xr, yr, wr, hr);
-	const mod = o876.SpellBook.mod;
-
-	let s2 = 2 * nSize;
-	let s4 = 4 * nSize;
-	let s6 = 6 * nSize;
-	let s8 = 8 * nSize;
-	let s10 = 10 * nSize;
-	let s12 = 12 * nSize;
-
-	let ymod6 = mod(y, s6);
-	let ymod8 = mod(y, s8);
-	let ymod10 = mod(y, s10);
-	let ymod12 = mod(y, s12);
-
-	let xmod4 = mod(x, s4);
-	let xmod6 = mod(x, s6);
-	let xmod8 = mod(x, s8);
-	let xmod10 = mod(x, s10);
-	let xmod12 = mod(x, s12);
-
-
-
-    if (bt(xmod8, 2, 5) && bte(ymod6 - nThickness, 2, 5)) {
-        return false;
-    }
-    if (bt(xmod8, 4, 6) && bte(ymod6 - nThickness, 2, 5)) {
-        return false;
-    }
-	if ((lte(xmod4, 0) || gte(xmod4, 4)) && bte(ymod6, 2, 4)) {
-		return true;
-	}
-	if (bte(xmod4, 2, 2) && (bte(ymod6, 0, 1) || bte(ymod6, 5, 6))) {
-		return true;
-	}
-
-	let p6 = mod(Math.floor(0.5 * x), s6);
-	let p6i = mod(Math.floor(-0.5 * x), s6);
-
-	let p12 = mod(Math.floor(0.5 * x), s12);
-	let p12i = mod(Math.floor(-0.5 * x), s12);
-
-	let q60 = ymod6;
-	let q62 = mod(y + s2, s6);
-	let q64 = mod(y + s4, s6);
-
-
-	if (bte(xmod6, 0, 2) && (ar(p6, q62) || ar(p6i, q64))) {
-		return true;
-	}
-
-	if (bte(xmod6, 2, 4) && (ar(p6, q60) || ar(p6i, q60))) {
-		return true;
-	}
-
-	if (bte(xmod6, 4, 6) && (ar(p6, q64) || ar(p6i, q62))) {
-		return true;
-	}
-
-	return false;
-}
-
-
-
 
 
 function kbHandler(event) {
@@ -147,19 +112,21 @@ function kbHandler(event) {
 
 let pwrunner, X, Y;
 
-function main2() {
-	let pp = new PixelProcessor();
-	pp.process(document.querySelector('.world'), ctx => {
-		ctx.color = isOnHexaMesh(ctx.x, ctx.y, 32, 1) ? {r:255, g:255, b:255, a:255} : {r:0, g:0, b:0, a:255};
-	});
-}
-
 function main() {
     pwrunner = new PWRunner();
-	X = 34 * pwrunner.WORLD_DEF.cellSize;
-	Y = 8 * pwrunner.WORLD_DEF.cellSize;
+    X = 34 * pwrunner.WORLD_DEF.cellSize;
+    Y = 8 * pwrunner.WORLD_DEF.cellSize;
     pwrunner.render(document.querySelector('.world'), X, Y);
     window.addEventListener('keydown', kbHandler);
 }
 
-window.addEventListener('load', main);
+function main3() {
+    pwrunner = new PWRunner();
+//    X = 34 * pwrunner.WORLD_DEF.cellSize;
+//    Y = 8 * pwrunner.WORLD_DEF.cellSize;
+//    pwrunner.render(document.querySelector('.world'), X, Y);
+//    window.addEventListener('keydown', kbHandler);
+	window.pwrunner = pwrunner;
+}
+
+window.addEventListener('load', main3);

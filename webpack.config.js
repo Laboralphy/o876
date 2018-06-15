@@ -7,7 +7,8 @@ module.exports = {
     entry: {
         libo876: path.resolve(__dirname, 'src/index.js'),
         libo876web: path.resolve(__dirname, 'src/indexWeb.js'),
-		'examples-treasure-map': path.resolve(__dirname, 'examples/treasure-map/main.js'),
+        'examples-treasure-map': path.resolve(__dirname, 'examples/treasure-map/main.js'),
+        'examples-treasure-map-service': path.resolve(__dirname, 'examples/treasure-map/service.js'),
 	},
     output: {
         path: path.resolve(__dirname, 'dist'),

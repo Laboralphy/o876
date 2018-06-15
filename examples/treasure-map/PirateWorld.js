@@ -194,6 +194,24 @@ class PirateWorld {
 		return tile;
 	}
 
+	paint(oDestCanvas, cellData, xScreen, yScreen) {
+        let cellSize = this._cellSize;
+        cellData.forEach(cd => {
+            let cvs;
+            let td = this._cache.getPayload(cd.x, cd.y);
+            if (!td) {
+                cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
+                this._cache.push(cd.x, cd.y, {
+                    tile: cvs,
+                    physicmap: cd.physicmap
+                });
+            } else {
+                cvs = td.tile;
+            }
+            oDestCanvas.getContext('2d').drawImage(cvs, xScreen + cd.xCell * cellSize, yScreen + cd.yCell * cellSize);
+        });
+	}
+
     /**
      * Lance le dessin de l'ensemble des cellules désignées
      * @param oDestCanvas {HTMLCanvasElement} canvas de destination
@@ -211,7 +229,6 @@ class PirateWorld {
         hScreen = Math.ceil(hScreen / cellSize);
 
         let cellData = [];
-        console.time('compute cells');
         for (let yCell = 0; yCell < hScreen; ++yCell) {
             for (let xCell = 0; xCell < wScreen; ++xCell) {
                 let xCurs = xCell + xFrom;
@@ -222,24 +239,10 @@ class PirateWorld {
 				});
             }
         }
-        console.timeEnd('compute cells');
-        console.time('paint cells');
-        cellData.forEach(cd => {
-        	let cvs;
-        	let td = this._cache.getPayload(cd.x, cd.y);
-        	if (!td) {
-                cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
-                this._cache.push(cd.x, cd.y, {
-                	tile: cvs,
-					physicmap: cd.physicmap
-				});
-        	} else {
-        		cvs = td.tile;
-			}
-            oDestCanvas.getContext('2d').drawImage(cvs, xScreen + cd.xCell * cellSize, yScreen + cd.yCell * cellSize);
-		});
-        console.timeEnd('paint cells');
+        this.paint(oDestCanvas, cellData, xScreen, yScreen);
     }
+
+
 }
 
 module.exports = PirateWorld;
