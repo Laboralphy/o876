@@ -2,35 +2,8 @@ const o876 = require('../../src');
 const PirateWorld = require('./PirateWorld');
 const WorldGenerator = require('./WorldGenerator');
 const PixelProcessor = require('./PixelProcessor');
+const ServiceWorkerIO = require('./ServiceWorkerIO');
 
-
-class ServiceClient {
-	constructor() {
-		this._idCallback = 0;
-		this._oCallbacks = {};
-		this._service = null;
-        this._service.addEventListener('message', event => this.received(event));
-	}
-
-	emit(sAction, data, cb) {
-		data.__action = sAction;
-		if (cb) {
-			data.__callback = ++this._idCallback;
-			this._oCallbacks[this._idCallback] = cb;
-		}
-		this.service.postMessage(sData);
-	}
-
-	received(event) {
-		let data = JSON.parse(event.data);
-		if (data.__callback && (data.__callback in this._oCallbacks)) {
-			idCallback = data.__callback;
-			let cb = this._oCallbacks[idCallback];
-            delete this._oCallbacks[idCallback]
-			cb(data);
-		}
-	}
-}
 
 class PWRunner {
 	constructor() {
@@ -44,27 +17,13 @@ class PWRunner {
 		this.yView = 0;
 		this.oRenderCanvas = null;
 
-        this.service = new Worker('../../dist/examples-treasure-map-service.js');
-        this.service.addEventListener('message', event => this.serviceMessageReceived(event));
+		this._service = new ServiceWorkerIO();
+		this._service.service('../../dist/examples-treasure-map-service.js');
+
 	}
 
-	servicePostMessage(sAction, data, cb) {
-		data.action = sAction;
-		if (cb) {
-			data.callback =
-		}
-		let sData = JSON.stringify(data);
-        this.service.postMessage(sData);
-	}
-
-	serviceMessageReceived(event) {
-		let data = JSON.parse(event.data);
-		switch (data.action) {
-			case 'about':
-				console.log(data);
-				break;
-
-		}
+	testService() {
+		this._service.emit('about', {}, result => console.log('XXXXXXX result = ', result));
 	}
 
 	render(cvs, x, y) {
@@ -121,7 +80,7 @@ function main() {
 }
 
 function main3() {
-    pwrunner = new PWRunner();
+    let pwrunner = new PWRunner();
 //    X = 34 * pwrunner.WORLD_DEF.cellSize;
 //    Y = 8 * pwrunner.WORLD_DEF.cellSize;
 //    pwrunner.render(document.querySelector('.world'), X, Y);
