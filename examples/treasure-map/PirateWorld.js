@@ -194,22 +194,62 @@ class PirateWorld {
 		return tile;
 	}
 
-	paint(oDestCanvas, cellData, xScreen, yScreen) {
+
+	paint(oDestCanvas, cellData, xOfs, yOfs) {
         let cellSize = this._cellSize;
         cellData.forEach(cd => {
-            let cvs;
-            let td = this._cache.getPayload(cd.x, cd.y);
-            if (!td) {
-                cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
-                this._cache.push(cd.x, cd.y, {
-                    tile: cvs,
-                    physicmap: cd.physicmap
-                });
-            } else {
-                cvs = td.tile;
-            }
-            oDestCanvas.getContext('2d').drawImage(cvs, xScreen + cd.xCell * cellSize, yScreen + cd.yCell * cellSize);
+            if (cd.tile) {
+				oDestCanvas.getContext('2d').drawImage(cd.tile, xOfs + cd.x * cellSize, yOfs + cd.y * cellSize);
+			} else {
+				let cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
+				this._cache.push(cd.x, cd.y, {
+					x: cd.x,
+					y: cd.y,
+					tile: cvs,
+					physicmap: cd.physicmap
+				});
+				oDestCanvas.getContext('2d').drawImage(cvs, xOfs + cd.x * cellSize, yOfs + cd.y * cellSize);
+			}
         });
+	}
+
+	/**
+	 * Renvoie une collection de tiles, certaines sont déja peintes d'autre non
+	 * @param xFrom {number} longitude au centre
+	 * @param yFrom {number} latitude au centre
+	 * @param wScreen {number} taille de la portion de dessin
+	 * @param hScreen {number} taille de la portion de dessin
+	 */
+	getPreloadedTiles(xFrom, yFrom, wScreen, hScreen) {
+		let cellSize = this._cellSize;
+		wScreen = Math.ceil(wScreen / cellSize);
+		hScreen = Math.ceil(hScreen / cellSize);
+
+		let tiles = [];
+		for (let yCell = 0; yCell < hScreen; ++yCell) {
+			for (let xCell = 0; xCell < wScreen; ++xCell) {
+				let xCurs = xCell + xFrom;
+				let yCurs = yCell + yFrom;
+				let td = this._cache.getPayload(xCurs, yCurs);
+				if (td) {
+					// la tile est en cache
+					tiles.push(td);
+					//{
+					// 	loaded: true
+					//  	xCell, yCell,
+					//  	...this._generator.computeCellCache(xCurs, yCurs)
+					// });
+				} else {
+					// la tile n'est pas en cache
+					// il faut la construire
+					tiles.push({
+						x: xCurs,
+						y: yCurs
+					});
+				}
+			}
+		}
+		return tiles;
 	}
 
     /**
@@ -224,11 +264,13 @@ class PirateWorld {
      * @param hScreen {number} taille de la portion de dessin
      */
     render(oDestCanvas, xFrom, yFrom, xScreen, yScreen, wScreen, hScreen) {
-        let cellSize = this._cellSize;
-        wScreen = Math.ceil(wScreen / cellSize);
-        hScreen = Math.ceil(hScreen / cellSize);
+        //let cellSize = this._cellSize;
+        //wScreen = Math.ceil(wScreen / cellSize);
+        //hScreen = Math.ceil(hScreen / cellSize);
 
-        let cellData = [];
+        //let cellData = this.getPreloadedTiles(xFrom, yFrom, xScreen, yScreen, wScreen, hScreen);
+
+        /*
         for (let yCell = 0; yCell < hScreen; ++yCell) {
             for (let xCell = 0; xCell < wScreen; ++xCell) {
                 let xCurs = xCell + xFrom;
@@ -239,7 +281,8 @@ class PirateWorld {
 				});
             }
         }
-        this.paint(oDestCanvas, cellData, xScreen, yScreen);
+        */
+       // this.paint(oDestCanvas, cellData, xScreen, yScreen);
     }
 
 

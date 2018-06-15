@@ -11,6 +11,14 @@ class ServiceWorkerIO {
 		this._eventManager = new EventManager();
 	}
 
+	static _encode(x) {
+		return x;
+	}
+
+	static _decode(x) {
+		return x;
+	}
+
 	/**
 	 * si un paramètre (w est spécifié : Déclare cette instance en tant que qu'utilisatrice de service
 	 * sinon : déclare cette instance en tant que service
@@ -20,9 +28,9 @@ class ServiceWorkerIO {
 	service(w) {
 		if (w) {
 			this._worker = new Worker(w);
-			this._worker.addEventListener('message', event => this.messageReceived(JSON.parse(event.data)));
+			this._worker.addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
 		} else {
-			addEventListener('message', event => this.messageReceived(JSON.parse(event.data)));
+			addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
 		}
 	}
 
@@ -61,14 +69,14 @@ class ServiceWorkerIO {
 		}
 		this.log('emitting message', sEvent, packet);
 		if (this._worker) {
-			this._worker.postMessage(JSON.stringify(packet));
+			this._worker.postMessage(ServiceWorkerIO._encode(packet));
 		} else {
-			postMessage(JSON.stringify(packet));
+			postMessage(ServiceWorkerIO._encode(packet));
 		}
 	}
 
 	log(...args) {
-		//console.log(!!this._worker ? '[window]' : '[service]', ...args);
+		console.log(!!this._worker ? '[window]' : '[service]', ...args);
 	}
 
 	messageReceived(data) {

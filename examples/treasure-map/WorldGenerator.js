@@ -19,7 +19,6 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-
 		this._cache = new o876.structures.Cache2D({size: 256});
 	}
 

@@ -19,32 +19,62 @@ class PWRunner {
 
 		this._service = new ServiceWorkerIO();
 		this._service.service('../../dist/examples-treasure-map-service.js');
+		this.sendInit();
 
 	}
 
-	testService() {
-		this._service.emit('about', {}, result => console.log('XXXXXXX result = ', result));
+	requestAbout(x) {
+		this._service.emit('about', x, result => console.log(result));
+	}
+
+	requestStatus() {
+		this._service.emit('status', {}, result => console.log(result));
+	}
+
+	sendInit() {
+		let wd = this.WORLD_DEF;
+		this._service.emit('init', {seed: wd.seed, cell: wd.cellSize, cluster: wd.clusterSize});
 	}
 
 	render(cvs, x, y) {
-		this.oRenderCanvas = cvs;
-		this.xView = x;
-		this.yView = y;
-
 		let w = cvs.width;
 		let h = cvs.height;
-		let x0 = x - (w >> 1);
-		let y0 = y - (h >> 1);
-		let xTile = Math.floor(x0 / this.WORLD_DEF.cellSize);
-		let yTile = Math.floor(y0 / this.WORLD_DEF.cellSize);
-		let xMod = WorldGenerator._mod(x0, this.WORLD_DEF.cellSize);
-		let yMod = WorldGenerator._mod(y0, this.WORLD_DEF.cellSize);
+		// quelle tile se trouve sur le point super-gauche ?
+		let xTile = Math.floor(x / this.WORLD_DEF.cellSize);
+		let yTile = Math.floor(y / this.WORLD_DEF.cellSize);
+		// quel est le décalage pixel ?
+		let xMod = WorldGenerator._mod(x, this.WORLD_DEF.cellSize);
+		let yMod = WorldGenerator._mod(y, this.WORLD_DEF.cellSize);
+
+		console.log('upper left tile:', xTile, yTile);
+		console.log('upper left offset:', xMod, yMod);
+
+		// récupération des tiles déja chargée en cache
+		let tiles = this.world.getPreloadedTiles(
+			xTile,
+			yTile,
+			cvs.width + this.WORLD_DEF.cellSize,
+			cvs.height + this.WORLD_DEF.cellSize
+		);
+		// certaines tiles sont préchargées, d'autres non
+		// réclamer le chargement des tiles manquante
+		let aNotComputed = tiles.filter(cd => !cd.tile);
+		let aComputed = tiles.filter(cd => !!cd.tile);
+		this._service.emit('tiles', {tiles: aNotComputed}, result => {
+			// intégrer les celldata
+			let cells = [...aComputed, ...result.tiles];
+			console.log('painting at', -x, -y);
+			cvs.getContext('2d').clearRect(0, 0, w, h);
+			this.world.paint(cvs, cells, -x, -y);
+		});
+
+/*
 		this.world.render(
 			cvs,
 			xTile, yTile,
 			-xMod, -yMod,
 			cvs.width + this.WORLD_DEF.cellSize, cvs.height + this.WORLD_DEF.cellSize
-		);
+		);*/
 	}
 }
 

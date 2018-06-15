@@ -289,22 +289,62 @@ class PirateWorld {
 		return tile;
 	}
 
-	paint(oDestCanvas, cellData, xScreen, yScreen) {
+
+	paint(oDestCanvas, cellData, xOfs, yOfs) {
         let cellSize = this._cellSize;
         cellData.forEach(cd => {
-            let cvs;
-            let td = this._cache.getPayload(cd.x, cd.y);
-            if (!td) {
-                cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
-                this._cache.push(cd.x, cd.y, {
-                    tile: cvs,
-                    physicmap: cd.physicmap
-                });
-            } else {
-                cvs = td.tile;
-            }
-            oDestCanvas.getContext('2d').drawImage(cvs, xScreen + cd.xCell * cellSize, yScreen + cd.yCell * cellSize);
+            if (cd.tile) {
+				oDestCanvas.getContext('2d').drawImage(cd.tile, xOfs + cd.x * cellSize, yOfs + cd.y * cellSize);
+			} else {
+				let cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
+				this._cache.push(cd.x, cd.y, {
+					x: cd.x,
+					y: cd.y,
+					tile: cvs,
+					physicmap: cd.physicmap
+				});
+				oDestCanvas.getContext('2d').drawImage(cvs, xOfs + cd.x * cellSize, yOfs + cd.y * cellSize);
+			}
         });
+	}
+
+	/**
+	 * Renvoie une collection de tiles, certaines sont déja peintes d'autre non
+	 * @param xFrom {number} longitude au centre
+	 * @param yFrom {number} latitude au centre
+	 * @param wScreen {number} taille de la portion de dessin
+	 * @param hScreen {number} taille de la portion de dessin
+	 */
+	getPreloadedTiles(xFrom, yFrom, wScreen, hScreen) {
+		let cellSize = this._cellSize;
+		wScreen = Math.ceil(wScreen / cellSize);
+		hScreen = Math.ceil(hScreen / cellSize);
+
+		let tiles = [];
+		for (let yCell = 0; yCell < hScreen; ++yCell) {
+			for (let xCell = 0; xCell < wScreen; ++xCell) {
+				let xCurs = xCell + xFrom;
+				let yCurs = yCell + yFrom;
+				let td = this._cache.getPayload(xCurs, yCurs);
+				if (td) {
+					// la tile est en cache
+					tiles.push(td);
+					//{
+					// 	loaded: true
+					//  	xCell, yCell,
+					//  	...this._generator.computeCellCache(xCurs, yCurs)
+					// });
+				} else {
+					// la tile n'est pas en cache
+					// il faut la construire
+					tiles.push({
+						x: xCurs,
+						y: yCurs
+					});
+				}
+			}
+		}
+		return tiles;
 	}
 
     /**
@@ -319,11 +359,13 @@ class PirateWorld {
      * @param hScreen {number} taille de la portion de dessin
      */
     render(oDestCanvas, xFrom, yFrom, xScreen, yScreen, wScreen, hScreen) {
-        let cellSize = this._cellSize;
-        wScreen = Math.ceil(wScreen / cellSize);
-        hScreen = Math.ceil(hScreen / cellSize);
+        //let cellSize = this._cellSize;
+        //wScreen = Math.ceil(wScreen / cellSize);
+        //hScreen = Math.ceil(hScreen / cellSize);
 
-        let cellData = [];
+        //let cellData = this.getPreloadedTiles(xFrom, yFrom, xScreen, yScreen, wScreen, hScreen);
+
+        /*
         for (let yCell = 0; yCell < hScreen; ++yCell) {
             for (let xCell = 0; xCell < wScreen; ++xCell) {
                 let xCurs = xCell + xFrom;
@@ -334,7 +376,8 @@ class PirateWorld {
 				});
             }
         }
-        this.paint(oDestCanvas, cellData, xScreen, yScreen);
+        */
+       // this.paint(oDestCanvas, cellData, xScreen, yScreen);
     }
 
 
@@ -428,6 +471,14 @@ class ServiceWorkerIO {
 		this._eventManager = new EventManager();
 	}
 
+	static _encode(x) {
+		return x;
+	}
+
+	static _decode(x) {
+		return x;
+	}
+
 	/**
 	 * si un paramètre (w est spécifié : Déclare cette instance en tant que qu'utilisatrice de service
 	 * sinon : déclare cette instance en tant que service
@@ -437,9 +488,9 @@ class ServiceWorkerIO {
 	service(w) {
 		if (w) {
 			this._worker = new Worker(w);
-			this._worker.addEventListener('message', event => this.messageReceived(JSON.parse(event.data)));
+			this._worker.addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
 		} else {
-			addEventListener('message', event => this.messageReceived(JSON.parse(event.data)));
+			addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
 		}
 	}
 
@@ -478,14 +529,14 @@ class ServiceWorkerIO {
 		}
 		this.log('emitting message', sEvent, packet);
 		if (this._worker) {
-			this._worker.postMessage(JSON.stringify(packet));
+			this._worker.postMessage(ServiceWorkerIO._encode(packet));
 		} else {
-			postMessage(JSON.stringify(packet));
+			postMessage(ServiceWorkerIO._encode(packet));
 		}
 	}
 
 	log(...args) {
-		//console.log(!!this._worker ? '[window]' : '[service]', ...args);
+		console.log(!!this._worker ? '[window]' : '[service]', ...args);
 	}
 
 	messageReceived(data) {
@@ -542,7 +593,6 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-
 		this._cache = new o876.structures.Cache2D({size: 256});
 	}
 
@@ -796,32 +846,62 @@ class PWRunner {
 
 		this._service = new ServiceWorkerIO();
 		this._service.service('../../dist/examples-treasure-map-service.js');
+		this.sendInit();
 
 	}
 
-	testService() {
-		this._service.emit('about', {}, result => console.log('XXXXXXX result = ', result));
+	requestAbout(x) {
+		this._service.emit('about', x, result => console.log(result));
+	}
+
+	requestStatus() {
+		this._service.emit('status', {}, result => console.log(result));
+	}
+
+	sendInit() {
+		let wd = this.WORLD_DEF;
+		this._service.emit('init', {seed: wd.seed, cell: wd.cellSize, cluster: wd.clusterSize});
 	}
 
 	render(cvs, x, y) {
-		this.oRenderCanvas = cvs;
-		this.xView = x;
-		this.yView = y;
-
 		let w = cvs.width;
 		let h = cvs.height;
-		let x0 = x - (w >> 1);
-		let y0 = y - (h >> 1);
-		let xTile = Math.floor(x0 / this.WORLD_DEF.cellSize);
-		let yTile = Math.floor(y0 / this.WORLD_DEF.cellSize);
-		let xMod = WorldGenerator._mod(x0, this.WORLD_DEF.cellSize);
-		let yMod = WorldGenerator._mod(y0, this.WORLD_DEF.cellSize);
+		// quelle tile se trouve sur le point super-gauche ?
+		let xTile = Math.floor(x / this.WORLD_DEF.cellSize);
+		let yTile = Math.floor(y / this.WORLD_DEF.cellSize);
+		// quel est le décalage pixel ?
+		let xMod = WorldGenerator._mod(x, this.WORLD_DEF.cellSize);
+		let yMod = WorldGenerator._mod(y, this.WORLD_DEF.cellSize);
+
+		console.log('upper left tile:', xTile, yTile);
+		console.log('upper left offset:', xMod, yMod);
+
+		// récupération des tiles déja chargée en cache
+		let tiles = this.world.getPreloadedTiles(
+			xTile,
+			yTile,
+			cvs.width + this.WORLD_DEF.cellSize,
+			cvs.height + this.WORLD_DEF.cellSize
+		);
+		// certaines tiles sont préchargées, d'autres non
+		// réclamer le chargement des tiles manquante
+		let aNotComputed = tiles.filter(cd => !cd.tile);
+		let aComputed = tiles.filter(cd => !!cd.tile);
+		this._service.emit('tiles', {tiles: aNotComputed}, result => {
+			// intégrer les celldata
+			let cells = [...aComputed, ...result.tiles];
+			console.log('painting at', -x, -y);
+			cvs.getContext('2d').clearRect(0, 0, w, h);
+			this.world.paint(cvs, cells, -x, -y);
+		});
+
+/*
 		this.world.render(
 			cvs,
 			xTile, yTile,
 			-xMod, -yMod,
 			cvs.width + this.WORLD_DEF.cellSize, cvs.height + this.WORLD_DEF.cellSize
-		);
+		);*/
 	}
 }
 
@@ -3004,7 +3084,7 @@ class Perlin {
             90: '#AAA',
             99: '#FFF'
         });
-        let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
+        let w = aNoise[0].length, pl = aPalette.length;
         let data = [];
         aNoise.forEach(function(r, y) {
             r.forEach(function(p, x) {

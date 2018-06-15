@@ -106,6 +106,14 @@ class ServiceWorkerIO {
 		this._eventManager = new EventManager();
 	}
 
+	static _encode(x) {
+		return x;
+	}
+
+	static _decode(x) {
+		return x;
+	}
+
 	/**
 	 * si un paramètre (w est spécifié : Déclare cette instance en tant que qu'utilisatrice de service
 	 * sinon : déclare cette instance en tant que service
@@ -115,9 +123,9 @@ class ServiceWorkerIO {
 	service(w) {
 		if (w) {
 			this._worker = new Worker(w);
-			this._worker.addEventListener('message', event => this.messageReceived(JSON.parse(event.data)));
+			this._worker.addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
 		} else {
-			addEventListener('message', event => this.messageReceived(JSON.parse(event.data)));
+			addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
 		}
 	}
 
@@ -156,14 +164,14 @@ class ServiceWorkerIO {
 		}
 		this.log('emitting message', sEvent, packet);
 		if (this._worker) {
-			this._worker.postMessage(JSON.stringify(packet));
+			this._worker.postMessage(ServiceWorkerIO._encode(packet));
 		} else {
-			postMessage(JSON.stringify(packet));
+			postMessage(ServiceWorkerIO._encode(packet));
 		}
 	}
 
 	log(...args) {
-		//console.log(!!this._worker ? '[window]' : '[service]', ...args);
+		console.log(!!this._worker ? '[window]' : '[service]', ...args);
 	}
 
 	messageReceived(data) {
@@ -220,7 +228,6 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-
 		this._cache = new o876.structures.Cache2D({size: 256});
 	}
 
@@ -464,20 +471,37 @@ class Service {
     constructor() {
         this._generator = null;
         let io = new ServiceWorkerIO();
-        io.on('about', (data, cb) => {
-            setTimeout(() => cb({version: 2, name: 'world generator'}), 2000);
+		io.service();
+
+		io.on('about', (data, cb) => {
+			cb({version: 2, name: 'world generator', ...data});
 		});
-        io.service();
+
+		io.on('init', ({seed, cell, cluster}) => {
+		    this._generator = new WorldGenerator({
+                seed,
+                clusterSize: cluster,
+                cellSize: cell
+            });
+        });
+
+		io.on('tiles', ({tiles}, cb) => {
+            cb({tiles: tiles.map(tile => this._generator.computeCellCache(tile.x, tile.y))});
+		});
+
+		io.on('status', (data, cb) => {
+		    let g = this._generator;
+		    let oInfo = {
+		        'cache-size': g._cache._cacheSize,
+                seed: g._perlinCell.seed(),
+				'cell-size': g._perlinCell.size(),
+				'cluster-size': g._perlinCluster.size(),
+            };
+            cb(oInfo);
+        });
+
 		this._io = io;
 	}
-
-    getGenerator() {
-        return this._generator;
-    }
-
-    setGenerator(g) {
-        this._generator = g;
-    }
 
 
 
@@ -489,25 +513,26 @@ class Service {
      * @param width {number} largeur
      * @param height {number} hauteur
      */
-    // compute(x, y, width, height) {
-    //     let g = this._generator;
-    //     let cellSize = g._cellSize;
-    //     let wScreen = Math.ceil(width / cellSize);
-    //     let hScreen = Math.ceil(height / cellSize);
-	//
-    //     let cellData = [];
-    //     for (let yCell = 0; yCell < hScreen; ++yCell) {
-    //         for (let xCell = 0; xCell < wScreen; ++xCell) {
-    //             let xCurs = xCell + x;
-    //             let yCurs = yCell + y;
-    //             cellData.push({
-    //                 xCell, yCell,
-    //                 ...this._generator.computeCellCache(xCurs, yCurs)
-    //             });
-    //         }
-    //     }
-    //     return cellData;
-    // }
+    compute(x, y, width, height) {
+        let g = this._generator;
+        let cellSize = g._cellSize;
+        let wScreen = Math.ceil(width / cellSize);
+        let hScreen = Math.ceil(height / cellSize);
+
+        let cellData = [];
+        for (let yCell = 0; yCell < hScreen; ++yCell) {
+            for (let xCell = 0; xCell < wScreen; ++xCell) {
+                let xCurs = xCell + x;
+                let yCurs = yCell + y;
+                cellData.push({
+                    xCell, yCell,
+                    ...this._generator.computeCellCache(xCurs, yCurs)
+                });
+            }
+        }
+        return cellData;
+    }
+
 
 }
 
@@ -2661,7 +2686,7 @@ class Perlin {
             90: '#AAA',
             99: '#FFF'
         });
-        let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
+        let w = aNoise[0].length, pl = aPalette.length;
         let data = [];
         aNoise.forEach(function(r, y) {
             r.forEach(function(p, x) {

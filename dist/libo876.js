@@ -1907,7 +1907,7 @@ class Perlin {
             90: '#AAA',
             99: '#FFF'
         });
-        let h = aNoise.length, w = aNoise[0].length, pl = aPalette.length;
+        let w = aNoise[0].length, pl = aPalette.length;
         let data = [];
         aNoise.forEach(function(r, y) {
             r.forEach(function(p, x) {
