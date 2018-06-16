@@ -5,11 +5,15 @@ class ServiceWorkerIO {
 
 	constructor() {
 		this._callbacks = {};
-		this._responses = {};
+		this._bLog = false;
 		this._callbackLastId = 0;
 		this._worker = null;
 		this._eventManager = new EventManager();
 	}
+
+	verbose() {
+	    this._bLog = true;
+    }
 
 	static _encode(x) {
 		return x;
@@ -41,7 +45,7 @@ class ServiceWorkerIO {
 	}
 
 	invokeCallback(id, data) {
-		this.log('invoking', id);
+		this.log('invoking callback id', id);
 		if (id in this._callbacks) {
 			let cb = this._callbacks[id];
 			delete this._callbacks[id];
@@ -76,7 +80,9 @@ class ServiceWorkerIO {
 	}
 
 	log(...args) {
-		console.log(!!this._worker ? '[window]' : '[service]', ...args);
+		if (this._bLog) {
+		    console.log(!!this._worker ? '[window]' : '[service]', ...args);
+        }
 	}
 
 	messageReceived(data) {

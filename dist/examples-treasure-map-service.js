@@ -100,11 +100,15 @@ class ServiceWorkerIO {
 
 	constructor() {
 		this._callbacks = {};
-		this._responses = {};
+		this._bLog = false;
 		this._callbackLastId = 0;
 		this._worker = null;
 		this._eventManager = new EventManager();
 	}
+
+	verbose() {
+	    this._bLog = true;
+    }
 
 	static _encode(x) {
 		return x;
@@ -136,7 +140,7 @@ class ServiceWorkerIO {
 	}
 
 	invokeCallback(id, data) {
-		this.log('invoking', id);
+		this.log('invoking callback id', id);
 		if (id in this._callbacks) {
 			let cb = this._callbacks[id];
 			delete this._callbacks[id];
@@ -171,7 +175,9 @@ class ServiceWorkerIO {
 	}
 
 	log(...args) {
-		console.log(!!this._worker ? '[window]' : '[service]', ...args);
+		if (this._bLog) {
+		    console.log(!!this._worker ? '[window]' : '[service]', ...args);
+        }
 	}
 
 	messageReceived(data) {
@@ -464,9 +470,6 @@ const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/t
 const ServiceWorkerIO = __webpack_require__(/*! ./ServiceWorkerIO */ "./examples/treasure-map/ServiceWorkerIO.js");
 
 
-
-
-
 class Service {
     constructor() {
         this._generator = null;
@@ -485,11 +488,15 @@ class Service {
             });
         });
 
-		io.on('tiles', ({tiles}, cb) => {
+        io.on('tiles', ({tiles}, cb) => {
             cb({tiles: tiles.map(tile => this._generator.computeCellCache(tile.x, tile.y))});
-		});
+        });
 
-		io.on('status', (data, cb) => {
+        io.on('tile', ({x, y}, cb) => {
+            cb({tile: this._generator.computeCellCache(x, y)});
+        });
+
+        io.on('status', (data, cb) => {
 		    let g = this._generator;
 		    let oInfo = {
 		        'cache-size': g._cache._cacheSize,
@@ -502,53 +509,10 @@ class Service {
 
 		this._io = io;
 	}
-
-
-
-    /**
-     * Lance la génération des tuiles située dans une zone rectangulaire de width * height
-     * Dont le centre est x y
-     * @param x {number} coordoonée centre
-     * @param y {number} coordoonée centre
-     * @param width {number} largeur
-     * @param height {number} hauteur
-     */
-    compute(x, y, width, height) {
-        let g = this._generator;
-        let cellSize = g._cellSize;
-        let wScreen = Math.ceil(width / cellSize);
-        let hScreen = Math.ceil(height / cellSize);
-
-        let cellData = [];
-        for (let yCell = 0; yCell < hScreen; ++yCell) {
-            for (let xCell = 0; xCell < wScreen; ++xCell) {
-                let xCurs = xCell + x;
-                let yCurs = yCell + y;
-                cellData.push({
-                    xCell, yCell,
-                    ...this._generator.computeCellCache(xCurs, yCurs)
-                });
-            }
-        }
-        return cellData;
-    }
-
-
 }
-
 
 const service = new Service();
 
-
-
-
-
-
-
-
-
-
-//addEventListener('message', e => service.processMessage(e));
 
 /***/ }),
 

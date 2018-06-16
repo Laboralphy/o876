@@ -1,291 +1,120 @@
 const WorldGenerator = require('./WorldGenerator');
 const o876 = require('../../src');
-const Perlin = o876.algorithms.Perlin;
+const ServiceWorkerIO = require('./ServiceWorkerIO');
+const CanvasHelper = require('./CanvasHelper');
+const WorldTile = require('./WorldTile');
+
+const CLUSTER_SIZE = 16;
 
 class PirateWorld {
 	constructor(wgd) {
-        this._cellSize = wgd.cellSize;
-		this._gradient = o876.Rainbow.gradient({
-			0: '#dec673',
-			40: '#efd69c',
-			48: '#d6a563',
-			50: '#572507',
-			55: '#d2a638',
-			75: '#b97735',
-			99: '#efce8c'
-		});
-
-		this._generator = new WorldGenerator(wgd);
-		this._cache = new o876.structures.Cache2D({size: 256});
-		this._cliparts = {};
-		this._buildCliparts();
+		this.oWorldDef = wgd;
+		this._cache = new o876.structures.Cache2D({size: 1024});
+        this._service = new ServiceWorkerIO();
+        this._service.service(wgd.service);
+        this._service.emit('init', {
+        	seed: wgd.seed,
+			cell: wgd.cellSize,
+			cluster: CLUSTER_SIZE
+        });
+        this._xView = null;
+        this._yView = null;
+        this._invalid = false;
+        this._rendering = false;
+        this._remainingTileCount = 0;
 	}
 
-
-    /**
-	 * fabrique et renvoie un canvas
-     * @param w {number} taille
-     * @param h {number} taille
-     * @return {HTMLCanvasElement}
-     * @private
-     */
-    static _canvas(w, h) {
-        let c = document.createElement('canvas');
-        c.width = w;
-        c.height = h;
-        c.imageSmoothingEnabled = false;
-        return c;
-    }
-
-    /**
-	 * Construction des clipart utilisé pour égayer la map
-     * @private
-     */
-    _buildCliparts() {
-		const MESH_SIZE = 16;
-		const WAVE_SIZE = 3;
-		const HERB_SIZE = 3;
-		const MNT_LENGTH = 7;
-		const MNT_HEIGHT = MNT_LENGTH | 0.75 | 0;
-		const FOREST_SIZE = 4;
-		let xMesh = MESH_SIZE >> 1;
-		let yMesh = MESH_SIZE >> 1;
-		let c, ctx;
-
-		// vague
-		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
-		ctx = c.getContext('2d');
-		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
-		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
-		ctx.lineWidth = 1.2;
-		ctx.beginPath();
-		ctx.moveTo(xMesh - WAVE_SIZE, yMesh + WAVE_SIZE);
-		ctx.lineTo(xMesh, yMesh);
-		ctx.lineTo(xMesh + WAVE_SIZE, yMesh + WAVE_SIZE);
-		ctx.stroke();
-		this._cliparts.wave = c;
-
-		// forest
-		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
-		ctx = c.getContext('2d');
-		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
-		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
-		ctx.lineWidth = 1.2;
-		ctx.beginPath();
-		ctx.arc(xMesh, yMesh,FOREST_SIZE, 0, Math.PI * 2);
-		ctx.rect(xMesh - 1, yMesh + FOREST_SIZE, 2, FOREST_SIZE);
-		ctx.fill();
-		ctx.stroke();
-		this._cliparts.forest = c;
-
-		// herbe
-		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
-		ctx = c.getContext('2d');
-		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
-		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
-		ctx.lineWidth = 1.2;
-		ctx.beginPath();
-		ctx.moveTo(xMesh - HERB_SIZE, yMesh - HERB_SIZE);
-		ctx.lineTo(xMesh, yMesh);
-		ctx.lineTo(xMesh + HERB_SIZE, yMesh - HERB_SIZE);
-		ctx.stroke();
-		this._cliparts.grass = c;
-
-		// Montagne
-		c = PirateWorld._canvas(MESH_SIZE, MESH_SIZE);
-		ctx = c.getContext('2d');
-		ctx.fillStyle = 'rgba(57, 25, 7, 0.2)';
-		ctx.strokeStyle = 'rgba(154, 117, 61, 0.75)';
-		ctx.lineWidth = 1.2;
-		let g = ctx.createLinearGradient(xMesh, 0, MESH_SIZE, MESH_SIZE);
-		g.addColorStop(0, 'rgba(154, 117, 61, 1)');
-		g.addColorStop(1, 'rgba(154, 117, 61, 0.5)');
-		ctx.fillStyle = g;
-		ctx.moveTo(xMesh, yMesh);
-		ctx.beginPath();
-		ctx.lineTo(xMesh + MNT_LENGTH, yMesh + MNT_HEIGHT);
-		ctx.lineTo(xMesh, yMesh + (MNT_HEIGHT * 0.75 | 0));
-		ctx.lineTo(xMesh + (MNT_LENGTH * 0.25 | 0), yMesh + (MNT_HEIGHT * 0.4 | 0));
-		ctx.lineTo(xMesh, yMesh);
-		ctx.closePath();
-		ctx.fill();
-		ctx.beginPath();
-		ctx.moveTo(xMesh, yMesh);
-		ctx.lineTo(xMesh + MNT_LENGTH, yMesh + MNT_HEIGHT);
-		ctx.moveTo(xMesh, yMesh);
-		ctx.lineTo(xMesh, yMesh + (MNT_HEIGHT >> 1));
-		ctx.moveTo(xMesh, yMesh);
-		ctx.lineTo(xMesh - MNT_LENGTH, yMesh + MNT_HEIGHT);
-		ctx.stroke();
-		this._cliparts.mount = c;
-	}
-
-
-    /**
-	 * dessine des element de terrain (arbre, montagnes)
-     * @param xCurs {number} coordonnées cellule concernée
-     * @param yCurs {number} coordonnées cellule concernée
-     * @param tile {HTMLCanvasElement} canvas de sortie
-     * @param aHeightIndex {array} height map fourie par WorldGenerator
-     */
-	paintTerrainType(xCurs, yCurs, tile, aHeightIndex) {
-		let ctx = tile.getContext('2d');
-		ctx.font = '12px italic serif';
-		ctx.textBaseline = 'top';
-		const MESH_SIZE = 16;
-		aHeightIndex.forEach((row, y) => row.forEach((cell, x) => {
-			if ((x & 1) ^ (y & 1)) {
-				switch (cell.type) {
-					case 11: // vague
-						ctx.drawImage(this._cliparts.wave, x * MESH_SIZE, y * MESH_SIZE);
-						break;
-
-					case 23: // herbe
-						ctx.drawImage(this._cliparts.grass, x * MESH_SIZE, y * MESH_SIZE);
-						break;
-
-					case 33: // foret
-						ctx.drawImage(this._cliparts.forest, x * MESH_SIZE, y * MESH_SIZE);
-						break;
-
-					case 55: // montagne
-						ctx.drawImage(this._cliparts.mount, x * MESH_SIZE, y * MESH_SIZE);
-						break;
-				}
+	async view(oCanvas, x, y) {
+		if (x !== this._xView || y !== this._yView) {
+            this._xView = x;
+            this._yView = y;
+            if (!this._rendering) {
+                await this._renderTiles(oCanvas, x, y);
 			}
-		}));
+		}
 	}
 
-	paintLinesCoordinates(xCurs, yCurs, tile, aHeightIndex) {
-		let ctx = tile.getContext('2d');
-		ctx.font = '12px italic serif';
-		ctx.textBaseline = 'top';
-		ctx.strokeStyle = 'rgba(57, 25, 7, 0.5)';
-		ctx.beginPath();
-		ctx.moveTo(0, tile.height - 1);
-		ctx.lineTo(0, 0);
-		ctx.lineTo(tile.width - 1, 0);
-		ctx.stroke();
-		ctx.strokeStyle = '#efce8c';
-		ctx.fillStyle = 'rgba(57, 25, 7)';
-		let sText = yCurs.toString() + '" ' + xCurs.toString();
-		ctx.strokeText(sText, 10, 10);
-		ctx.fillText(sText, 10, 10);
+	cellSize() {
+		return this.oWorldDef.cellSize;
 	}
 
-
-    /**
-     * lorssque la cellule à été générée par le WorldGenerator
-     * on peut la transformer en canvas par cette methode
-     * @param xCurs {number} longitude de la cellule
-     * @param yCurs {number} lattitude de la cellule
-     * @param heightmap {array} hauteur de chaque point (pixel) de la map
-     * @param physicmap {array} propriété physique de chaque secteur 16x16 de la map
-     */
-    paintCell(xCurs, yCurs, heightmap, physicmap) {
-        let tile = PirateWorld._canvas(this._cellSize, this._cellSize);
-        let ctx = tile.getContext('2d');
-        let oImageData = ctx.createImageData(tile.width, tile.height);
-        let data = Perlin.colorize(heightmap, this._gradient);
-        data.forEach((x, i) => oImageData.data[i] = x);
-        ctx.putImageData(oImageData, 0, 0);
-		this.paintTerrainType(xCurs, yCurs, tile, physicmap);
-		this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
-		return tile;
-	}
-
-
-	paint(oDestCanvas, cellData, xOfs, yOfs) {
-        let cellSize = this._cellSize;
-        cellData.forEach(cd => {
-            if (cd.tile) {
-				oDestCanvas.getContext('2d').drawImage(cd.tile, xOfs + cd.x * cellSize, yOfs + cd.y * cellSize);
-			} else {
-				let cvs = this.paintCell(cd.x, cd.y, cd.heightmap, cd.physicmap);
-				this._cache.push(cd.x, cd.y, {
-					x: cd.x,
-					y: cd.y,
-					tile: cvs,
-					physicmap: cd.physicmap
-				});
-				oDestCanvas.getContext('2d').drawImage(cvs, xOfs + cd.x * cellSize, yOfs + cd.y * cellSize);
-			}
+	async fetchTile(x, y) {
+        return new Promise(resolve => {
+        	// verification en cache
+			let oWorldTile = new WorldTile(x, y, this.cellSize());
+            oWorldTile.lock();
+            this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
+                oWorldTile.heightmap = result.tile.heightmap;
+                oWorldTile.physicmap = result.tile.physicmap;
+                oWorldTile.paint();
+                oWorldTile.unlock();
+                resolve(oWorldTile);
+            });
         });
 	}
 
-	/**
-	 * Renvoie une collection de tiles, certaines sont déja peintes d'autre non
-	 * @param xFrom {number} longitude au centre
-	 * @param yFrom {number} latitude au centre
-	 * @param wScreen {number} taille de la portion de dessin
-	 * @param hScreen {number} taille de la portion de dessin
-	 */
-	getPreloadedTiles(xFrom, yFrom, wScreen, hScreen) {
-		let cellSize = this._cellSize;
-		wScreen = Math.ceil(wScreen / cellSize);
-		hScreen = Math.ceil(hScreen / cellSize);
-
-		let tiles = [];
-		for (let yCell = 0; yCell < hScreen; ++yCell) {
-			for (let xCell = 0; xCell < wScreen; ++xCell) {
-				let xCurs = xCell + xFrom;
-				let yCurs = yCell + yFrom;
-				let td = this._cache.getPayload(xCurs, yCurs);
-				if (td) {
-					// la tile est en cache
-					tiles.push(td);
-					//{
-					// 	loaded: true
-					//  	xCell, yCell,
-					//  	...this._generator.computeCellCache(xCurs, yCurs)
-					// });
-				} else {
-					// la tile n'est pas en cache
-					// il faut la construire
-					tiles.push({
-						x: xCurs,
-						y: yCurs
-					});
+	async _renderTiles(oCanvas, x, y) {
+        this._rendering = true;
+		let w = oCanvas.width;
+		let h = oCanvas.height;
+		let cellSize = this.cellSize();
+		let m = PirateWorld.getViewPointMetrics(x, y, w, h, cellSize, this.oWorldDef.preload);
+		let yTilePix = 0;
+		this._remainingTileCount = (m.yTo - m.yFrom + 1) * (m.xTo - m.yFrom + 1);
+		for (let yTile = m.yFrom; yTile <= m.yTo; ++yTile) {
+			let xTilePix = 0;
+			for (let xTile = m.xFrom; xTile <= m.xTo; ++xTile) {
+				let wt = this._cache.getPayload(xTile, yTile);
+				if (!wt) {
+					// pas encore créée
+					wt = await this.fetchTile(xTile, yTile);
+					this._cache.push(wt.x, wt.y, wt);
 				}
+				if (wt.isPainted() || wt.isLocked()) {
+					CanvasHelper.draw(oCanvas, wt.canvas, m.xOfs + xTilePix, m.yOfs + yTilePix);
+				}
+				xTilePix += cellSize;
+				if (this._invalid) {
+					break;
+				}
+                --this._remainingTileCount;
 			}
-		}
-		return tiles;
-	}
-
-    /**
-     * Lance le dessin de l'ensemble des cellules désignées
-     * @param oDestCanvas {HTMLCanvasElement} canvas de destination
-     * @param xFrom {number} longitude au centre
-     * @param yFrom {number} latitude au centre
-     * @param xScreen {number} position de dessin sur le canvas (généralement 0)
-     * mais cela peut etre également un offset permettant de simuler un scrolling
-     * @param yScreen {number} position de dessin sur le canvas (généralement 0)
-     * @param wScreen {number} taille de la portion de dessin
-     * @param hScreen {number} taille de la portion de dessin
-     */
-    render(oDestCanvas, xFrom, yFrom, xScreen, yScreen, wScreen, hScreen) {
-        //let cellSize = this._cellSize;
-        //wScreen = Math.ceil(wScreen / cellSize);
-        //hScreen = Math.ceil(hScreen / cellSize);
-
-        //let cellData = this.getPreloadedTiles(xFrom, yFrom, xScreen, yScreen, wScreen, hScreen);
-
-        /*
-        for (let yCell = 0; yCell < hScreen; ++yCell) {
-            for (let xCell = 0; xCell < wScreen; ++xCell) {
-                let xCurs = xCell + xFrom;
-                let yCurs = yCell + yFrom;
-                cellData.push({
-					xCell, yCell,
-					...this._generator.computeCellCache(xCurs, yCurs)
-				});
+            if (this._invalid) {
+                break;
             }
-        }
-        */
-       // this.paint(oDestCanvas, cellData, xScreen, yScreen);
+			yTilePix += cellSize;
+		}
+        this._rendering = false;
     }
 
-
+    /**
+	 * A partire d'une coordonée centrée sur un rectangle de longueur et largeur spécifiées
+	 * determiner les différente coordonnée de tuiles à calculer
+     * @param x {number} coordonnée du centre du view point
+     * @param y {number}
+     * @param width {number} taille du viewpoint
+     * @param height {number}
+     * @param nBorder {number} taille de la bordure de securité
+     * @return {{xFrom: number, yFrom: number, xTo: *, yTo: *, xOfs: number, yOfs: number}}
+     */
+	static getViewPointMetrics(x, y, width, height, cellSize, nBorder) {
+        let x0 = x - (width >> 1);
+        let y0 = y - (height >> 1);
+        let xFrom = Math.floor(x0 / cellSize) - nBorder;
+        let yFrom = Math.floor(y0 / cellSize) - nBorder;
+        let xTo = Math.floor((x0 + width - 1) / cellSize) + (nBorder);
+        let yTo = Math.floor((y0 + height - 1) / cellSize) + (nBorder);
+        let xOfs = WorldGenerator._mod(x0, cellSize);
+        let yOfs = WorldGenerator._mod(y0, cellSize);
+		return {
+			xFrom,
+			yFrom,
+			xTo,
+			yTo,
+			xOfs: -xOfs - nBorder * cellSize,
+			yOfs: -yOfs - nBorder * cellSize
+		};
+	}
 }
 
 module.exports = PirateWorld;
