@@ -34,6 +34,15 @@ module.exports = class Helper {
 		return x >= xr && y >= yr && x < xr + wr && y < yr + hr;
 	}
 
+	static rectInRect(ax, ay, aw, ah, bx, by, bw, bh) {
+        let ax2 = ax + aw - 1;
+        let ay2 = ay + ah - 1;
+        let bx2 = bx + bw - 1;
+        let by2 = by + bh - 1;
+        return ax < bx2 && ax2 > bx &&
+            ay > by2 && ay2 < by;
+    }
+
     /**
 	 * Renvoie l'ange que fait la doite x1, y1, x2, y2
 	 * avec l'axe des X+

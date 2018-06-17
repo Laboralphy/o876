@@ -1,5 +1,6 @@
 const o876 = require('../../src');
 const Perlin = o876.algorithms.Perlin;
+const GRADIENT = require('./palette');
 
 class WorldGenerator {
 	constructor({cellSize, clusterSize, seed}) {
@@ -201,6 +202,21 @@ class WorldGenerator {
         return aMap;
     }
 
+    /**
+     * Applique une palette au bruit généré
+     * @param aNoise {Array} an array produced by generate()
+     * @param aPalette {array}
+     */
+    static colorize(aNoise, aPalette) {
+        let pl = aPalette.length;
+        let data = [];
+        aNoise.forEach(r => r.forEach(x => {
+            let nColor = Math.min(pl - 1, x * pl | 0);
+            data.push(aPalette[nColor])
+        }));
+        return data;
+    }
+
     computeCell(xCurs, yCurs) {
         const MESH_SIZE = 16;
         let clusterSize = this._perlinCluster.size();
@@ -221,11 +237,12 @@ class WorldGenerator {
                 }
             }
         );
+        let colorMap = WorldGenerator.colorize(heightMap, GRADIENT);
         let physicMap = this.buildCellPhysicMap(heightMap, MESH_SIZE);
         return {
             x: xCurs,
             y: yCurs,
-            heightmap: heightMap,
+            colormap: colorMap,
             physicmap: physicMap
         };
 	}

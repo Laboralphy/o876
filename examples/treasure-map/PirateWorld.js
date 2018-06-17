@@ -44,14 +44,15 @@ class PirateWorld {
 			let oWorldTile = new WorldTile(x, y, this.cellSize());
             oWorldTile.lock();
             this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
-                oWorldTile.heightmap = result.tile.heightmap;
+                oWorldTile.colormap = result.tile.colormap;
                 oWorldTile.physicmap = result.tile.physicmap;
-                oWorldTile.paint();
                 oWorldTile.unlock();
                 resolve(oWorldTile);
             });
         });
 	}
+
+
 
 	async _renderTiles(oCanvas, x, y) {
         this._rendering = true;
@@ -70,6 +71,7 @@ class PirateWorld {
 					wt = await this.fetchTile(xTile, yTile);
 					this._cache.push(wt.x, wt.y, wt);
 				}
+				// si la tile est partiellement visible il faut la dessiner
 				if (wt.isPainted() || wt.isLocked()) {
 					CanvasHelper.draw(oCanvas, wt.canvas, m.xOfs + xTilePix, m.yOfs + yTilePix);
 				}

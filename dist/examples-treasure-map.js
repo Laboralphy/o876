@@ -175,14 +175,15 @@ class PirateWorld {
 			let oWorldTile = new WorldTile(x, y, this.cellSize());
             oWorldTile.lock();
             this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
-                oWorldTile.heightmap = result.tile.heightmap;
+                oWorldTile.colormap = result.tile.colormap;
                 oWorldTile.physicmap = result.tile.physicmap;
-                oWorldTile.paint();
                 oWorldTile.unlock();
                 resolve(oWorldTile);
             });
         });
 	}
+
+
 
 	async _renderTiles(oCanvas, x, y) {
         this._rendering = true;
@@ -201,6 +202,7 @@ class PirateWorld {
 					wt = await this.fetchTile(xTile, yTile);
 					this._cache.push(wt.x, wt.y, wt);
 				}
+				// si la tile est partiellement visible il faut la dessiner
 				if (wt.isPainted() || wt.isLocked()) {
 					CanvasHelper.draw(oCanvas, wt.canvas, m.xOfs + xTilePix, m.yOfs + yTilePix);
 				}
@@ -445,6 +447,7 @@ module.exports = ServiceWorkerIO;
 
 const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
 const Perlin = o876.algorithms.Perlin;
+const GRADIENT = __webpack_require__(/*! ./palette */ "./examples/treasure-map/palette.js");
 
 class WorldGenerator {
 	constructor({cellSize, clusterSize, seed}) {
@@ -646,6 +649,21 @@ class WorldGenerator {
         return aMap;
     }
 
+    /**
+     * Applique une palette au bruit généré
+     * @param aNoise {Array} an array produced by generate()
+     * @param aPalette {array}
+     */
+    static colorize(aNoise, aPalette) {
+        let pl = aPalette.length;
+        let data = [];
+        aNoise.forEach(r => r.forEach(x => {
+            let nColor = Math.min(pl - 1, x * pl | 0);
+            data.push(aPalette[nColor])
+        }));
+        return data;
+    }
+
     computeCell(xCurs, yCurs) {
         const MESH_SIZE = 16;
         let clusterSize = this._perlinCluster.size();
@@ -666,11 +684,12 @@ class WorldGenerator {
                 }
             }
         );
+        let colorMap = WorldGenerator.colorize(heightMap, GRADIENT);
         let physicMap = this.buildCellPhysicMap(heightMap, MESH_SIZE);
         return {
             x: xCurs,
             y: yCurs,
-            heightmap: heightMap,
+            colormap: colorMap,
             physicmap: physicMap
         };
 	}
@@ -699,17 +718,7 @@ module.exports = WorldGenerator;
 const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
 const CanvasHelper = __webpack_require__(/*! ./CanvasHelper */ "./examples/treasure-map/CanvasHelper.js");
 const Perlin = o876.algorithms.Perlin;
-
-const GRADIENT = o876.Rainbow.gradient({
-    0: '#dec673',
-    40: '#efd69c',
-    48: '#d6a563',
-    50: '#572507',
-    55: '#d2a638',
-    75: '#b97735',
-    99: '#efce8c'
-});
-
+const Rainbow = o876.Rainbow;
 
 /**
  * Construction des clipart utilisé pour égayer la map
@@ -813,7 +822,7 @@ class WorldTile {
         this.x = x;
         this.y = y;
         this.size = size;
-        this.heigthmap = null;
+        this.colormap = null;
         this.physicmap = null;
         this.canvas = null;
         this._lock = false;
@@ -904,6 +913,20 @@ class WorldTile {
         ctx.fillText(sText, 10, 10);
     }
 
+    /**
+     * Applique une palette au bruit généré
+     * @param aNoise {Array} an array produced by generate()
+     * @param aPalette {array}
+     */
+    static colorize(aNoise, aPalette) {
+        let pl = aPalette.length;
+        let data = [];
+        aNoise.forEach(r => r.forEach(x => {
+            let nColor = Math.min(pl - 1, x * pl | 0);
+            data.push(aPalette[nColor])
+        }));
+        return data;
+    }
 
     /**
      * lorsque la cellule à été générée par le WorldGenerator
@@ -912,15 +935,16 @@ class WorldTile {
     paint() {
         let xCurs = this.x;
         let yCurs = this.y;
-        let heightmap = this.heightmap;
+        let colormap = this.colormap;
         let physicmap = this.physicmap;
         let cellSize = this.size;
         let tile = CanvasHelper.create(cellSize, cellSize);
         this.canvas = tile;
         let ctx = tile.getContext('2d');
         let oImageData = ctx.createImageData(tile.width, tile.height);
-        let data = Perlin.colorize(heightmap, GRADIENT);
-        data.forEach((x, i) => oImageData.data[i] = x);
+        let buffer32 = new Uint32Array(oImageData.data.buffer);
+        //let data = WorldTile.colorize(heightmap, GRADIENT);
+        colormap.forEach((x, i) => buffer32[i] = x);
         ctx.putImageData(oImageData, 0, 0);
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
         this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
@@ -997,6 +1021,34 @@ function main3() {
 
 window.addEventListener('load', main3);
 
+
+/***/ }),
+
+/***/ "./examples/treasure-map/palette.js":
+/*!******************************************!*\
+  !*** ./examples/treasure-map/palette.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
+const Rainbow = o876.Rainbow;
+
+function _buildGradient() {
+    return Rainbow.gradient({
+        0: '#dec673',
+        40: '#efd69c',
+        48: '#d6a563',
+        50: '#572507',
+        55: '#d2a638',
+        75: '#b97735',
+        99: '#efce8c'
+    })
+        .map(x => Rainbow.parse(x))
+        .map(x => x.r | x.g << 8 | x.b << 16 | 0xFF000000);
+}
+
+module.exports = _buildGradient();
 
 /***/ }),
 
@@ -3730,6 +3782,15 @@ module.exports = class Helper {
 	static pointInRect(x, y, xr, yr, wr, hr) {
 		return x >= xr && y >= yr && x < xr + wr && y < yr + hr;
 	}
+
+	static rectInRect(ax, ay, aw, ah, bx, by, bw, bh) {
+        let ax2 = ax + aw - 1;
+        let ay2 = ay + ah - 1;
+        let bx2 = bx + bw - 1;
+        let by2 = by + bh - 1;
+        return ax < bx2 && ax2 > bx &&
+            ay > by2 && ay2 < by;
+    }
 
     /**
 	 * Renvoie l'ange que fait la doite x1, y1, x2, y2

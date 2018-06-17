@@ -1,17 +1,7 @@
 const o876 = require('../../src');
 const CanvasHelper = require('./CanvasHelper');
 const Perlin = o876.algorithms.Perlin;
-
-const GRADIENT = o876.Rainbow.gradient({
-    0: '#dec673',
-    40: '#efd69c',
-    48: '#d6a563',
-    50: '#572507',
-    55: '#d2a638',
-    75: '#b97735',
-    99: '#efce8c'
-});
-
+const Rainbow = o876.Rainbow;
 
 /**
  * Construction des clipart utilisé pour égayer la map
@@ -115,7 +105,7 @@ class WorldTile {
         this.x = x;
         this.y = y;
         this.size = size;
-        this.heigthmap = null;
+        this.colormap = null;
         this.physicmap = null;
         this.canvas = null;
         this._lock = false;
@@ -206,6 +196,20 @@ class WorldTile {
         ctx.fillText(sText, 10, 10);
     }
 
+    /**
+     * Applique une palette au bruit généré
+     * @param aNoise {Array} an array produced by generate()
+     * @param aPalette {array}
+     */
+    static colorize(aNoise, aPalette) {
+        let pl = aPalette.length;
+        let data = [];
+        aNoise.forEach(r => r.forEach(x => {
+            let nColor = Math.min(pl - 1, x * pl | 0);
+            data.push(aPalette[nColor])
+        }));
+        return data;
+    }
 
     /**
      * lorsque la cellule à été générée par le WorldGenerator
@@ -214,15 +218,16 @@ class WorldTile {
     paint() {
         let xCurs = this.x;
         let yCurs = this.y;
-        let heightmap = this.heightmap;
+        let colormap = this.colormap;
         let physicmap = this.physicmap;
         let cellSize = this.size;
         let tile = CanvasHelper.create(cellSize, cellSize);
         this.canvas = tile;
         let ctx = tile.getContext('2d');
         let oImageData = ctx.createImageData(tile.width, tile.height);
-        let data = Perlin.colorize(heightmap, GRADIENT);
-        data.forEach((x, i) => oImageData.data[i] = x);
+        let buffer32 = new Uint32Array(oImageData.data.buffer);
+        //let data = WorldTile.colorize(heightmap, GRADIENT);
+        colormap.forEach((x, i) => buffer32[i] = x);
         ctx.putImageData(oImageData, 0, 0);
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
         this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
