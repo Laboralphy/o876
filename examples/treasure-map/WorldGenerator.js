@@ -20,7 +20,7 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-		this._cache = new o876.structures.Cache2D({size: 256});
+		this._cache = new o876.structures.Cache2D({size: 64});
 		this._hexSize = hexSize;
 	}
 
@@ -75,9 +75,9 @@ class WorldGenerator {
 		if (this._isOnHexaMesh(xg, yg, meshSize, c >> 2)) {
 			return 0.333;
 		} else if (this._isOnHexaMesh(xg, yg, meshSize, c >> 1)) {
-			return 0.333;
+			return 0.555;
 		} else {
-			return 0.666;
+			return 0.777;
 		}
 	}
 

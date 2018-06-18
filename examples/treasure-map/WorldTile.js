@@ -190,13 +190,24 @@ class WorldTile {
 			ctx.stroke();
 		}
 		if (this.options.drawCoords) {
-			ctx.font = '12px italic serif';
+		    let sText;
+			ctx.font = 'italic 12px serif';
 			ctx.textBaseline = 'top';
 			ctx.strokeStyle = '#efce8c';
 			ctx.fillStyle = 'rgba(57, 25, 7)';
-			let sText = yCurs.toString() + '" ' + xCurs.toString();
-			ctx.strokeText(sText, 10, 10);
-			ctx.fillText(sText, 10, 10);
+			if (xCurs & 1) {
+				sText = 'lat:  ' + yCurs.toString();
+				ctx.strokeText(sText, 25, 4);
+				ctx.fillText(sText, 25, 4);
+			}
+			if (yCurs & 1) {
+				sText = 'long:  ' + xCurs.toString();
+				ctx.save();
+				ctx.rotate(-Math.PI / 2);
+				ctx.strokeText(sText, -tile.width + 25, 4);
+				ctx.fillText(sText, -tile.width + 25, 4);
+				ctx.restore();
+			}
         }
     }
 

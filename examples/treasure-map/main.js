@@ -37,8 +37,9 @@ function main4() {
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
 		seed: 0.111,
-		preload: 2,
-		octaves: 8,
+		preload: 1,
+		drawGrid: true,
+		drawCoords: true,
 		service: '../../dist/examples-treasure-map-service.js'
 	});
 	window.addEventListener('keydown', kbHandler);
@@ -61,16 +62,17 @@ function main4() {
 
 function main3() {
 	pwrunner = this.world = new PirateWorld({
-		cellSize: 256,
+		cellSize: 16,
 		hexSize: 16,
 		seed: 0.111,
 		preload: 2,
-		drawGrid: true,
+		drawGrid: false,
+		drawCoords: false,
 		service: '../../dist/examples-treasure-map-service.js'
 	});
 
-	X = 3;
-	Y = 5;
+	X = 960;
+	Y = -40;
 	async function fetchAndRenderTiles(oCanvas, xTile, yTile) {
 		for (let y = 0; y < (oCanvas.height / pwrunner.cellSize()); ++y) {
 			for (let x = 0; x < (oCanvas.width / pwrunner.cellSize()); ++x) {

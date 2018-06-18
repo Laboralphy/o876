@@ -142,7 +142,7 @@ const CLUSTER_SIZE = 16;
 class PirateWorld {
 	constructor(wgd) {
 		this.oWorldDef = wgd;
-		this._cache = new o876.structures.Cache2D({size: 256});
+		this._cache = new o876.structures.Cache2D({size: 64});
         this._service = new ServiceWorkerIO();
         this._service.service(wgd.service);
         this._service.emit('init', {
@@ -151,6 +151,7 @@ class PirateWorld {
 			cluster: CLUSTER_SIZE,
 			hexCluster: wgd.hexSize
         });
+
         this._xView = null;
         this._yView = null;
 		this._fetching = false;
@@ -175,24 +176,24 @@ class PirateWorld {
 		return this.oWorldDef.cellSize;
 	}
 
+
 	async fetchTile(x, y) {
-        return new Promise(resolve => {
-        	// verification en cache
+		return new Promise(resolve => {
+			// verification en cache
 			let oWorldTile = new WorldTile(x, y, this.cellSize(), {
-				drawGrid: this.oWorldDef.drawGrid
+				drawGrid: this.oWorldDef.drawGrid,
+				drawCoords: this.oWorldDef.drawCoords
 			});
 			this._cache.push(x, y, oWorldTile).forEach(wt => !!wt && (typeof wt.free === 'function') && wt.free());
-            oWorldTile.lock();
-            this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
-                oWorldTile.colormap = result.tile.colormap;
-                oWorldTile.physicmap = result.tile.physicmap;
-                oWorldTile.unlock();
-                resolve(oWorldTile);
-            });
-        });
+			oWorldTile.lock();
+			this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
+				oWorldTile.colormap = result.tile.colormap;
+				oWorldTile.physicmap = result.tile.physicmap;
+				oWorldTile.unlock();
+				resolve(oWorldTile);
+			});
+		});
 	}
-
-
 
 	async preloadTiles(x, y, w, h) {
 		let tStart = performance.now();
@@ -202,7 +203,11 @@ class PirateWorld {
 		let nTileCount = (m.yTo - m.yFrom + 1) * (m.xTo - m.xFrom + 1);
 		let iTile = 0;
 		let nTileFetched = 0;
+		let promises = [];
 		for (let yTile = m.yFrom; yTile <= m.yTo; ++yTile) {
+			if (y & 1 === 0) {
+				continue;
+			}
 			let xTilePix = 0;
 			for (let xTile = m.xFrom; xTile <= m.xTo; ++xTile) {
 				let wt = this._cache.getPayload(xTile, yTile);
@@ -210,7 +215,7 @@ class PirateWorld {
 					// pas encore créée
 					console.log('fetching tiles', (100 * iTile / nTileCount | 0).toString() + '%');
 					++nTileFetched;
-					wt = await this.fetchTile(xTile, yTile);
+					promises.push(this.fetchTile(xTile, yTile));
 				}
 				// si la tile est partiellement visible il faut la dessiner
 				xTilePix += cellSize;
@@ -218,12 +223,12 @@ class PirateWorld {
 			}
 			yTilePix += cellSize;
 		}
+		await Promise.all(promises);
 		return {
 			tileFetched: nTileFetched,
 			timeElapsed: (performance.now() - tStart | 0) / 1000
 		};
 	}
-
 
 	renderTiles(oCanvas, x, y) {
 		let w = oCanvas.width;
@@ -437,7 +442,7 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-		this._cache = new o876.structures.Cache2D({size: 256});
+		this._cache = new o876.structures.Cache2D({size: 64});
 		this._hexSize = hexSize;
 	}
 
@@ -492,9 +497,9 @@ class WorldGenerator {
 		if (this._isOnHexaMesh(xg, yg, meshSize, c >> 2)) {
 			return 0.333;
 		} else if (this._isOnHexaMesh(xg, yg, meshSize, c >> 1)) {
-			return 0.333;
+			return 0.555;
 		} else {
-			return 0.666;
+			return 0.777;
 		}
 	}
 
@@ -863,13 +868,24 @@ class WorldTile {
 			ctx.stroke();
 		}
 		if (this.options.drawCoords) {
-			ctx.font = '12px italic serif';
+		    let sText;
+			ctx.font = 'italic 12px serif';
 			ctx.textBaseline = 'top';
 			ctx.strokeStyle = '#efce8c';
 			ctx.fillStyle = 'rgba(57, 25, 7)';
-			let sText = yCurs.toString() + '" ' + xCurs.toString();
-			ctx.strokeText(sText, 10, 10);
-			ctx.fillText(sText, 10, 10);
+			if (xCurs & 1) {
+				sText = 'lat:  ' + yCurs.toString();
+				ctx.strokeText(sText, 25, 4);
+				ctx.fillText(sText, 25, 4);
+			}
+			if (yCurs & 1) {
+				sText = 'long:  ' + xCurs.toString();
+				ctx.save();
+				ctx.rotate(-Math.PI / 2);
+				ctx.strokeText(sText, -tile.width + 25, 4);
+				ctx.fillText(sText, -tile.width + 25, 4);
+				ctx.restore();
+			}
         }
     }
 
@@ -951,8 +967,9 @@ function main4() {
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
 		seed: 0.111,
-		preload: 2,
-		octaves: 8,
+		preload: 1,
+		drawGrid: true,
+		drawCoords: true,
 		service: '../../dist/examples-treasure-map-service.js'
 	});
 	window.addEventListener('keydown', kbHandler);
@@ -975,16 +992,17 @@ function main4() {
 
 function main3() {
 	pwrunner = this.world = new PirateWorld({
-		cellSize: 256,
+		cellSize: 16,
 		hexSize: 16,
 		seed: 0.111,
 		preload: 2,
-		drawGrid: true,
+		drawGrid: false,
+		drawCoords: false,
 		service: '../../dist/examples-treasure-map-service.js'
 	});
 
-	X = 3;
-	Y = 5;
+	X = 960;
+	Y = -40;
 	async function fetchAndRenderTiles(oCanvas, xTile, yTile) {
 		for (let y = 0; y < (oCanvas.height / pwrunner.cellSize()); ++y) {
 			for (let x = 0; x < (oCanvas.width / pwrunner.cellSize()); ++x) {
