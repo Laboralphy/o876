@@ -103,7 +103,6 @@ class PirateWorld {
 
 
 	renderTiles(oCanvas, x, y) {
-		let zoom = this.oWorldDef.zoom || 1;
 		let w = oCanvas.width;
 		let h = oCanvas.height;
 		let cellSize = this.cellSize();
@@ -119,7 +118,7 @@ class PirateWorld {
 					// si la tile est partiellement visible il faut la dessiner
 					if (!wt.isPainted() && wt.isMapped()) {
 						console.log('painting tile', xTile, yTile);
-						wt.paint(zoom);
+						wt.paint();
 						wt.colormap = null;
 					}
 					CanvasHelper.draw(oCanvas, wt.canvas, xScreen, yScreen);
