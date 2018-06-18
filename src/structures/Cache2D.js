@@ -31,9 +31,11 @@ class Cache2D {
 				x, y, payload
 			});
 		}
+		let aDelete = [];
 		while (c.length > this._cacheSize) {
-			c.shift();
+			aDelete.push(c.shift());
 		}
+		return aDelete;
 	}
 }
 

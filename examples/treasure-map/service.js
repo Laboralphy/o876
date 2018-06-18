@@ -12,11 +12,12 @@ class Service {
 			cb({version: 2, name: 'world generator', ...data});
 		});
 
-		io.on('init', ({seed, cell, cluster}) => {
+		io.on('init', ({seed, cell, cluster, hexCluster}) => {
 		    this._generator = new WorldGenerator({
                 seed,
                 clusterSize: cluster,
-                cellSize: cell
+                cellSize: cell,
+				hexSize: hexCluster
             });
         });
 

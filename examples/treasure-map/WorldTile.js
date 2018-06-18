@@ -98,7 +98,7 @@ const MESH_SIZE = 16;
  */
 
 class WorldTile {
-    constructor(x, y, size) {
+    constructor(x, y, size, options) {
         if (size === undefined || y === undefined || x === undefined) {
             throw new Error('world tile construction requires coords x y and size. !')
         }
@@ -109,6 +109,13 @@ class WorldTile {
         this.physicmap = null;
         this.canvas = null;
         this._lock = false;
+        this.options = options;
+    }
+
+    free() {
+        this.canvas = null;
+        this.physicmap = null;
+        this.colormap = null;
     }
 
     lock() {
@@ -174,35 +181,25 @@ class WorldTile {
         let yCurs = this.y;
         let tile = this.canvas;
         let ctx = tile.getContext('2d');
-        ctx.font = '12px italic serif';
-        ctx.textBaseline = 'top';
-        ctx.strokeStyle = 'rgba(57, 25, 7, 0.5)';
-        ctx.beginPath();
-        ctx.moveTo(0, tile.height - 1);
-        ctx.lineTo(0, 0);
-        ctx.lineTo(tile.width - 1, 0);
-        ctx.stroke();
-        ctx.strokeStyle = '#efce8c';
-        ctx.fillStyle = 'rgba(57, 25, 7)';
-        let sText = yCurs.toString() + '" ' + xCurs.toString();
-        ctx.strokeText(sText, 10, 10);
-        ctx.fillText(sText, 10, 10);
+		if (this.options.drawGrid) {
+			ctx.strokeStyle = 'rgba(57, 25, 7, 0.5)';
+			ctx.beginPath();
+			ctx.moveTo(0, tile.height - 1);
+			ctx.lineTo(0, 0);
+			ctx.lineTo(tile.width - 1, 0);
+			ctx.stroke();
+		}
+		if (this.options.drawCoords) {
+			ctx.font = '12px italic serif';
+			ctx.textBaseline = 'top';
+			ctx.strokeStyle = '#efce8c';
+			ctx.fillStyle = 'rgba(57, 25, 7)';
+			let sText = yCurs.toString() + '" ' + xCurs.toString();
+			ctx.strokeText(sText, 10, 10);
+			ctx.fillText(sText, 10, 10);
+        }
     }
 
-    /**
-     * Applique une palette au bruit généré
-     * @param aNoise {Array} an array produced by generate()
-     * @param aPalette {array}
-     */
-    static colorize(aNoise, aPalette) {
-        let pl = aPalette.length;
-        let data = [];
-        aNoise.forEach(r => r.forEach(x => {
-            let nColor = Math.min(pl - 1, x * pl | 0);
-            data.push(aPalette[nColor])
-        }));
-        return data;
-    }
 
     /**
      * lorsque la cellule à été générée par le WorldGenerator
@@ -219,7 +216,6 @@ class WorldTile {
         let ctx = tile.getContext('2d');
         let oImageData = ctx.createImageData(tile.width, tile.height);
         let buffer32 = new Uint32Array(oImageData.data.buffer);
-        //let data = WorldTile.colorize(heightmap, GRADIENT);
         colormap.forEach((x, i) => buffer32[i] = x);
         ctx.putImageData(oImageData, 0, 0);
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);

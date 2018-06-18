@@ -114,7 +114,9 @@ class CanvasHelper {
     }
 
     static draw(oDest, oSource, x, y) {
-        oDest.getContext('2d').drawImage(oSource, x, y);
+        if (oSource) {
+			oDest.getContext('2d').drawImage(oSource, x, y);
+        }
     }
 }
 
@@ -140,13 +142,14 @@ const CLUSTER_SIZE = 16;
 class PirateWorld {
 	constructor(wgd) {
 		this.oWorldDef = wgd;
-		this._cache = new o876.structures.Cache2D({size: 1024});
+		this._cache = new o876.structures.Cache2D({size: 256});
         this._service = new ServiceWorkerIO();
         this._service.service(wgd.service);
         this._service.emit('init', {
         	seed: wgd.seed,
 			cell: wgd.cellSize,
-			cluster: CLUSTER_SIZE
+			cluster: CLUSTER_SIZE,
+			hexCluster: wgd.hexSize
         });
         this._xView = null;
         this._yView = null;
@@ -163,6 +166,8 @@ class PirateWorld {
 				}
 			});
 		}
+		this._xView = x;
+		this._yView = y;
 		this.renderTiles(oCanvas, x, y);
 	}
 
@@ -173,8 +178,10 @@ class PirateWorld {
 	async fetchTile(x, y) {
         return new Promise(resolve => {
         	// verification en cache
-			let oWorldTile = new WorldTile(x, y, this.cellSize());
-			this._cache.push(x, y, oWorldTile);
+			let oWorldTile = new WorldTile(x, y, this.cellSize(), {
+				drawGrid: this.oWorldDef.drawGrid
+			});
+			this._cache.push(x, y, oWorldTile).forEach(wt => !!wt && (typeof wt.free === 'function') && wt.free());
             oWorldTile.lock();
             this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
                 oWorldTile.colormap = result.tile.colormap;
@@ -185,21 +192,6 @@ class PirateWorld {
         });
 	}
 
-
-	/**
-	 * Renvoie true si le point x, y est dans le canvas
-	 * @param oCanvas {HTMLCanvasElement}
-	 * @param x {number}
-	 * @param y {number}
-	 * @return {boolean}
-	 * @private
-	 */
-	_isInsideCanvas(oCanvas, x, y, w, h) {
-		function inside(x0, y0) {
-			return x0 >= 0 && y0 >= 0 && x0 < oCanvas.width && y0 < oCanvas.height;
-		}
-		return inside(x, y) || inside(x + w, y) || inside(x, y + h) || inside(x + w, y + h);
-	}
 
 
 	async preloadTiles(x, y, w, h) {
@@ -216,7 +208,7 @@ class PirateWorld {
 				let wt = this._cache.getPayload(xTile, yTile);
 				if (!wt) {
 					// pas encore créée
-					console.log('fetching tile', (100 * iTile / nTileCount | 0).toString() + '%');
+					console.log('fetching tiles', (100 * iTile / nTileCount | 0).toString() + '%');
 					++nTileFetched;
 					wt = await this.fetchTile(xTile, yTile);
 				}
@@ -252,9 +244,11 @@ class PirateWorld {
 						wt.paint();
 						wt.colormap = null;
 					}
-					CanvasHelper.draw(oCanvas, wt.canvas, xScreen, yScreen);
-					xTilePix += cellSize;
+					if (wt.isPainted() && wt.isMapped()) {
+						CanvasHelper.draw(oCanvas, wt.canvas, xScreen, yScreen);
+					}
 				}
+				xTilePix += cellSize;
 			}
 			yTilePix += cellSize;
 		}
@@ -291,70 +285,6 @@ class PirateWorld {
 }
 
 module.exports = PirateWorld;
-
-/***/ }),
-
-/***/ "./examples/treasure-map/PixelProcessor.js":
-/*!*************************************************!*\
-  !*** ./examples/treasure-map/PixelProcessor.js ***!
-  \*************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-class PixelProcessor {
-    process(oCanvas, cb) {
-        let ctx = oCanvas.getContext('2d');
-        let oImageData = ctx.createImageData(oCanvas.width, oCanvas.height);
-        let pixels = oImageData.data;
-        let h = oCanvas.height;
-        let w = oCanvas.width;
-        let oPixelCtx = {
-            pixel: (x, y) => {
-                let nOffset = (y * w + x) << 2;
-                return {
-                    r: pixels[nOffset],
-                    g: pixels[nOffset + 1],
-                    b: pixels[nOffset + 2],
-                    a: pixels[nOffset + 3]
-                }
-            },
-            width: w,
-            height: h,
-            x: 0,
-            y: 0,
-            color: {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 255
-            }
-        };
-        let aColors = [];
-        for (let y = 0; y < h; ++y) {
-            for (let x = 0; x < w; ++x) {
-                let nOffset = (y * w + x) << 2;
-                oPixelCtx.x = x;
-                oPixelCtx.y = y;
-                oPixelCtx.color.r = pixels[nOffset];
-                oPixelCtx.color.g = pixels[nOffset + 1];
-                oPixelCtx.color.b = pixels[nOffset + 2];
-                oPixelCtx.color.a = pixels[nOffset + 3];
-                cb(oPixelCtx);
-				aColors.push({...oPixelCtx.color});
-            }
-        }
-        aColors.forEach((c, i) => {
-            let nOffset = i << 2;
-			pixels[nOffset] = c.r;
-			pixels[nOffset + 1] = c.g;
-			pixels[nOffset + 2] = c.b;
-			pixels[nOffset + 3] = c.a;
-		});
-        ctx.putImageData(oImageData, 0, 0);
-    }
-}
-
-module.exports = PixelProcessor;
 
 /***/ }),
 
@@ -490,7 +420,7 @@ const Perlin = o876.algorithms.Perlin;
 const GRADIENT = __webpack_require__(/*! ./palette */ "./examples/treasure-map/palette.js");
 
 class WorldGenerator {
-	constructor({cellSize, clusterSize, seed}) {
+	constructor({cellSize, clusterSize, seed, hexSize}) {
 		let pcell = new Perlin();
 		pcell.size(cellSize);
 		pcell.seed(seed);
@@ -508,6 +438,7 @@ class WorldGenerator {
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
 		this._cache = new o876.structures.Cache2D({size: 256});
+		this._hexSize = hexSize;
 	}
 
 	static _mod(n, d) {
@@ -640,7 +571,7 @@ class WorldGenerator {
 
     _cellProcess(xPix, yPix, xg, yg, base, cell) {
         return this._cellFilterMinMax(base, cell) *
-            this._cellDepthModulator(xPix, yPix, xg, yg, 16);
+            this._cellDepthModulator(xPix, yPix, xg, yg, this._hexSize);
     }
 
     /**
@@ -689,21 +620,6 @@ class WorldGenerator {
         return aMap;
     }
 
-    /**
-     * Applique une palette au bruit généré
-     * @param aNoise {Array} an array produced by generate()
-     * @param aPalette {array}
-     */
-    static colorize(aNoise, aPalette) {
-        let pl = aPalette.length;
-        let data = [];
-        aNoise.forEach(r => r.forEach(x => {
-            let nColor = Math.min(pl - 1, x * pl | 0);
-            data.push(aPalette[nColor])
-        }));
-        return data;
-    }
-
     computeCell(xCurs, yCurs) {
         const MESH_SIZE = 16;
         let clusterSize = this._perlinCluster.size();
@@ -711,8 +627,8 @@ class WorldGenerator {
             xCurs,
             yCurs, {
                 noise: (xg, yg, cellData) => {
-                    let xCluster = Math.floor((xg) / clusterSize);
-                    let yCluster = Math.floor((yg) / clusterSize);
+                    let xCluster = Math.floor(xg / clusterSize);
+                    let yCluster = Math.floor(yg / clusterSize);
                     let xClusterMod = WorldGenerator._mod(xg, clusterSize);
                     let yClusterMod = WorldGenerator._mod(yg, clusterSize);
                     let data = this.generateCluster(xCluster, yCluster);
@@ -724,7 +640,7 @@ class WorldGenerator {
                 }
             }
         );
-        let colorMap = WorldGenerator.colorize(heightMap, GRADIENT);
+        let colorMap = Perlin.colorize(heightMap, GRADIENT);
         let physicMap = this.buildCellPhysicMap(heightMap, MESH_SIZE);
         return {
             x: xCurs,
@@ -738,7 +654,7 @@ class WorldGenerator {
 		let payload = this._cache.getPayload(xCurs, yCurs);
 		if (!payload) {
 			payload = this.computeCell(xCurs, yCurs);
-            this._cache.push(xCurs, yCurs, payload);
+            this._cache.push(xCurs, yCurs, payload).forEach(wt => !!wt && (typeof wt.free === 'function') && wt.free());
 		}
 		return payload;
 	}
@@ -855,7 +771,7 @@ const MESH_SIZE = 16;
  */
 
 class WorldTile {
-    constructor(x, y, size) {
+    constructor(x, y, size, options) {
         if (size === undefined || y === undefined || x === undefined) {
             throw new Error('world tile construction requires coords x y and size. !')
         }
@@ -866,6 +782,13 @@ class WorldTile {
         this.physicmap = null;
         this.canvas = null;
         this._lock = false;
+        this.options = options;
+    }
+
+    free() {
+        this.canvas = null;
+        this.physicmap = null;
+        this.colormap = null;
     }
 
     lock() {
@@ -931,35 +854,25 @@ class WorldTile {
         let yCurs = this.y;
         let tile = this.canvas;
         let ctx = tile.getContext('2d');
-        ctx.font = '12px italic serif';
-        ctx.textBaseline = 'top';
-        ctx.strokeStyle = 'rgba(57, 25, 7, 0.5)';
-        ctx.beginPath();
-        ctx.moveTo(0, tile.height - 1);
-        ctx.lineTo(0, 0);
-        ctx.lineTo(tile.width - 1, 0);
-        ctx.stroke();
-        ctx.strokeStyle = '#efce8c';
-        ctx.fillStyle = 'rgba(57, 25, 7)';
-        let sText = yCurs.toString() + '" ' + xCurs.toString();
-        ctx.strokeText(sText, 10, 10);
-        ctx.fillText(sText, 10, 10);
+		if (this.options.drawGrid) {
+			ctx.strokeStyle = 'rgba(57, 25, 7, 0.5)';
+			ctx.beginPath();
+			ctx.moveTo(0, tile.height - 1);
+			ctx.lineTo(0, 0);
+			ctx.lineTo(tile.width - 1, 0);
+			ctx.stroke();
+		}
+		if (this.options.drawCoords) {
+			ctx.font = '12px italic serif';
+			ctx.textBaseline = 'top';
+			ctx.strokeStyle = '#efce8c';
+			ctx.fillStyle = 'rgba(57, 25, 7)';
+			let sText = yCurs.toString() + '" ' + xCurs.toString();
+			ctx.strokeText(sText, 10, 10);
+			ctx.fillText(sText, 10, 10);
+        }
     }
 
-    /**
-     * Applique une palette au bruit généré
-     * @param aNoise {Array} an array produced by generate()
-     * @param aPalette {array}
-     */
-    static colorize(aNoise, aPalette) {
-        let pl = aPalette.length;
-        let data = [];
-        aNoise.forEach(r => r.forEach(x => {
-            let nColor = Math.min(pl - 1, x * pl | 0);
-            data.push(aPalette[nColor])
-        }));
-        return data;
-    }
 
     /**
      * lorsque la cellule à été générée par le WorldGenerator
@@ -976,7 +889,6 @@ class WorldTile {
         let ctx = tile.getContext('2d');
         let oImageData = ctx.createImageData(tile.width, tile.height);
         let buffer32 = new Uint32Array(oImageData.data.buffer);
-        //let data = WorldTile.colorize(heightmap, GRADIENT);
         colormap.forEach((x, i) => buffer32[i] = x);
         ctx.putImageData(oImageData, 0, 0);
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
@@ -1002,8 +914,7 @@ module.exports = WorldTile;
 
 const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
 const PirateWorld = __webpack_require__(/*! ./PirateWorld */ "./examples/treasure-map/PirateWorld.js");
-const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/treasure-map/WorldGenerator.js");
-const PixelProcessor = __webpack_require__(/*! ./PixelProcessor */ "./examples/treasure-map/PixelProcessor.js");
+const CanvasHelper = __webpack_require__(/*! ./CanvasHelper */ "./examples/treasure-map/CanvasHelper.js");
 
 
 function kbHandler(event) {
@@ -1023,42 +934,28 @@ function kbHandler(event) {
 		case 'ArrowRight':
 			pwrunner.view(document.querySelector('.world'), X += 16, Y);
 			break;
+
+		case ' ':
+			bFreeze = !bFreeze;
+			break;
+
+		default:
+			console.log('key', event.key);
+			break;
 	}
 }
 
-let pwrunner, X, Y;
-
-function main() {
-    pwrunner = new PWRunner();
-    X = 34 * pwrunner.oWorldDef.cellSize;
-    Y = 8 * pwrunner.oWorldDef.cellSize;
-    pwrunner.render(document.querySelector('.world'), X, Y);
-    window.addEventListener('keydown', kbHandler);
-}
-
-function main3() {
-    pwrunner = this.world = new PirateWorld({
-		cellSize: 256,
-        seed: 0.111,
-        preload: 0,
-        service: '../../dist/examples-treasure-map-service.js'
-    });
-    window.addEventListener('keydown', kbHandler);
-	window.pwrunner = pwrunner;
-    X = 0;
-    Y = 0;
-    let cvs = document.querySelector('.world');
-    pwrunner.view(cvs, X, Y);
-}
+let pwrunner, X, Y, bFreeze = false;
 
 function main4() {
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
 		seed: 0.111,
 		preload: 2,
+		octaves: 8,
 		service: '../../dist/examples-treasure-map-service.js'
 	});
-	//window.addEventListener('keydown', kbHandler);
+	window.addEventListener('keydown', kbHandler);
 	window.pwrunner = pwrunner;
 	X = 1000 * 256;
 	Y = 0;
@@ -1066,14 +963,45 @@ function main4() {
 	pwrunner.preloadTiles(X, Y, cvs.width, cvs.height).then(() => {
 		console.log('starting scrolling');
 		setInterval(() => {
-			X += 1;
+			if (!bFreeze) {
+				X += 2;
+				Y++;
+			}
 			pwrunner.view(cvs, X, Y);
 		}, 32);
 	});
 }
 
 
-window.addEventListener('load', main4);
+function main3() {
+	pwrunner = this.world = new PirateWorld({
+		cellSize: 256,
+		hexSize: 16,
+		seed: 0.111,
+		preload: 2,
+		drawGrid: true,
+		service: '../../dist/examples-treasure-map-service.js'
+	});
+
+	X = 3;
+	Y = 5;
+	async function fetchAndRenderTiles(oCanvas, xTile, yTile) {
+		for (let y = 0; y < (oCanvas.height / pwrunner.cellSize()); ++y) {
+			for (let x = 0; x < (oCanvas.width / pwrunner.cellSize()); ++x) {
+				let wt = await pwrunner.fetchTile(X + x + xTile, Y + y + yTile);
+				wt.paint();
+				CanvasHelper.draw(oCanvas, wt.canvas, (x + xTile) * pwrunner.cellSize(), (y + yTile) * pwrunner.cellSize());
+			}
+		}
+	}
+
+	let cvs = document.querySelector('.world');
+	fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
+}
+
+
+
+window.addEventListener('load', main3);
 
 
 /***/ }),
@@ -2999,11 +2927,11 @@ class Perlin {
 	 * @return {array}
 	 */
 	generateWhiteNoise(w, h) {
-		let r, a = [];
+		let r, a = [], rand = this._rand;
 		for (let x, y = 0; y < h; ++y) {
 			r = []; 
 			for (x = 0; x < w; ++x) {
-				r.push(this._rand.rand());
+				r.push(rand.rand());
 			}
 			a.push(r);
 		}
@@ -3012,19 +2940,23 @@ class Perlin {
 
 	/**
 	 * Linear interpolation
-	 * @param x0 minimum
-	 * @param x1 maximum
-	 * @param alpha value between 0 and 1
-	 * @return float, interpolation result
+	 * @param x0 {number} minimum
+	 * @param x1 {number} maximum
+	 * @param alpha {number} value between 0 and 1
+	 * @return {number} float, interpolation result
 	 */
-	linearInterpolate(x0, x1, alpha) {
+	static linearInterpolate(x0, x1, alpha) {
 		return x0 * (1 - alpha) + alpha * x1;
 	}
 
 	/**
 	 * Cosine Interpolation
+	 * @param x0 {number} minimum
+	 * @param x1 {number} maximum
+	 * @param alpha {number} value between 0 and 1
+	 * @return {number} float, interpolation result
 	 */
-	cosineInterpolate(x0, x1, mu) {
+	static cosineInterpolate(x0, x1, mu) {
 		let mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
    		return x0 * (1 - mu2) + x1 * mu2;
 	}
@@ -3037,8 +2969,8 @@ class Perlin {
 	interpolation(f) {
 		switch (typeof f) {
 			case 'string':
-				if ((f + 'Interpolate') in this) {
-					this._interpolate = this[f + 'Interpolate'];
+				if ((f + 'Interpolate') in Perlin) {
+					this._interpolate = Perlin[f + 'Interpolate'];
 				} else {
 					throw new Error('only "linear" or "cosine" interpolation');
 				}
@@ -3054,7 +2986,7 @@ class Perlin {
 		return this;
 	}
 
-	generateSmoothNoise(aBaseNoise, nOctave) {
+	static generateSmoothNoise(aBaseNoise, nOctave) {
 		let w = aBaseNoise.length;
 		let h = aBaseNoise[0].length;
 		let aSmoothNoise = [];
@@ -3063,20 +2995,23 @@ class Perlin {
 		let fSampleFreq = 1 / nSamplePeriod;
 		let xs = [], ys = [];
 		let hBlend, vBlend, fTop, fBottom;
+		let interpolate = Perlin.cosineInterpolate;
 		for (let x, y = 0; y < h; ++y) {
       		ys[0] = (y / nSamplePeriod | 0) * nSamplePeriod;
       		ys[1] = (ys[0] + nSamplePeriod) % h;
       		hBlend = (y - ys[0]) * fSampleFreq;
       		r = [];
+			let bny0 = aBaseNoise[ys[0]];
+			let bny1 = aBaseNoise[ys[1]];
       		for (x = 0; x < w; ++ x) {
        			xs[0] = (x / nSamplePeriod | 0) * nSamplePeriod;
       			xs[1] = (xs[0] + nSamplePeriod) % w;
       			vBlend = (x - xs[0]) * fSampleFreq;
 
-      			fTop = this._interpolate(aBaseNoise[ys[0]][xs[0]], aBaseNoise[ys[1]][xs[0]], hBlend);
-      			fBottom = this._interpolate(aBaseNoise[ys[0]][xs[1]], aBaseNoise[ys[1]][xs[1]], hBlend);
+      			fTop = interpolate(bny0[xs[0]], bny1[xs[0]], hBlend);
+      			fBottom = interpolate(bny0[xs[1]], bny1[xs[1]], hBlend);
      			
-     			r.push(this._interpolate(fTop, fBottom, vBlend));
+     			r.push(interpolate(fTop, fBottom, vBlend));
       		}
 
       		aSmoothNoise.push(r);
@@ -3084,14 +3019,14 @@ class Perlin {
 		return aSmoothNoise;
 	}
 
-	generatePerlinNoise(aBaseNoise, nOctaveCount) {
+	static generatePerlinNoise(aBaseNoise, nOctaveCount) {
 		let w = aBaseNoise.length;
 		let h = aBaseNoise[0].length;
 		let aSmoothNoise = [];
 		let fPersist = 0.5;
 
 		for (let i = 0; i < nOctaveCount; ++i) {
-			aSmoothNoise.push(this.generateSmoothNoise(aBaseNoise, i));
+			aSmoothNoise.push(Perlin.generateSmoothNoise(aBaseNoise, i));
 		}
 
 		let aPerlinNoise = [];
@@ -3110,18 +3045,20 @@ class Perlin {
 		for (let iOctave = nOctaveCount - 1; iOctave >= 0; --iOctave) {
 			fAmplitude *= fPersist;
 			fTotalAmp += fAmplitude;
+			let sno = aSmoothNoise[iOctave];
 
 			for (y = 0; y < h; ++y) {
-				r = [];
+				let snoy = sno[y];
+				let pny = aPerlinNoise[y];
 				for (x = 0; x < w; ++x) {
-					aPerlinNoise[y][x] += aSmoothNoise[iOctave][y][x] * fAmplitude;
+					pny[x] += snoy[x] * fAmplitude;
 				}
 			} 
 		}
 		for (y = 0; y < h; ++y) {
-			r = [];
+			let pny = aPerlinNoise[y];
 			for (x = 0; x < w; ++x) {
-				aPerlinNoise[y][x] /= fTotalAmp;
+				pny[x] /= fTotalAmp;
 			}
 		}
 		return aPerlinNoise;
@@ -3154,9 +3091,6 @@ class Perlin {
 		let xh = Perlin.hash(x).toString().split('');
 		let yh = Perlin.hash(y).toString().split('');
 		let s = xh.shift() + yh.shift() + '.';
-		if (s === '--.') {
-		//	s = '0.';
-		}
 		while (xh.length || yh.length) {
 			if (xh.length) {
 				s += xh.shift();
@@ -3179,10 +3113,12 @@ class Perlin {
 		if (cached) {
 			return cached;
 		}
+
+		const RAND = this._rand;
 		
 		const gwn = (xg, yg) => {
 			let nSeed = Perlin.getPointHash(xg, yg);
-			this._rand.seed(nSeed + this._seed);
+			RAND.seed(nSeed + this._seed);
 			let aNoise = this.generateWhiteNoise(this.width(), this.height());
 			if (noise) {
 				aNoise = noise(xg, yg, aNoise);
@@ -3194,8 +3130,12 @@ class Perlin {
 			let h = this.height();
 			let a = [];
 			for (let y, ya = 0; ya < 3; ++ya) {
+				let a33ya = a33[ya];
+				let a33ya0 = a33ya[0];
+				let a33ya1 = a33ya[1];
+				let a33ya2 = a33ya[2];
 				for (y = 0; y < h; ++y) {
-					a.push(a33[ya][0][y].concat(a33[ya][1][y], a33[ya][2][y]));
+					a.push(a33ya0[y].concat(a33ya1[y], a33ya2[y]));
 				}
 			}
 			return a;
@@ -3204,7 +3144,7 @@ class Perlin {
 		const extract33 = a => {
 			let w = this.width();
 			let h = this.height();
-			return a.slice(h, h * 2).map(function(r) { return r.slice(w, w * 2); });
+			return a.slice(h, h << 1).map(function(r) { return r.slice(w, w << 1); });
 		};
 
 		let a0 = [
@@ -3214,7 +3154,7 @@ class Perlin {
 		];
 
 		let a1 = merge33(a0);
-		let a2 = this.generatePerlinNoise(a1, this._octaves);
+		let a2 = Perlin.generatePerlinNoise(a1, this._octaves);
 		let a3 = extract33(a2);
 		if (perlin) {
 			a3 = perlin(x, y, a3);
@@ -3223,40 +3163,22 @@ class Perlin {
 		return a3;
 	}
 
-    /**
-     * Applique une palette au bruit généré
-     * @param aNoise {Array} an array produced by generate()
-     * @param aPalette {array}
-     */
-    static colorize(aNoise, aPalette) {
-        aPalette = aPalette || Rainbow.gradient({
-            0: '#008',
-            44: '#00F',
-            49: '#44F',
-            50: '#864',
-            74: '#080',
-            75: '#555',
-            89: '#777',
-            90: '#AAA',
-            99: '#FFF'
-        });
-        let w = aNoise[0].length, pl = aPalette.length;
-        let data = [];
-        aNoise.forEach(function(r, y) {
-            r.forEach(function(p, x) {
-                let nOfs = (y * w + x) << 2;
-                let rgb = Rainbow.parse(aPalette[Math.min(aPalette.length - 1, p * pl | 0)]);
-                if (rgb === undefined) {
-                    throw new Error('entry "' + (p * pl | 0) + '" is not in palette');
-                }
-                data[nOfs] = rgb.r;
-                data[nOfs + 1] = rgb.g;
-                data[nOfs + 2] = rgb.b;
-                data[nOfs + 3] = 255;
-            });
-        });
-        return data;
-    }
+	/**
+	 * Applique une palette au bruit généré
+	 * @param aNoise {Array} an array produced by generate()
+	 * @param aPalette {array}
+	 */
+	static colorize(aNoise, aPalette) {
+		let pl = aPalette.length;
+		let data = [];
+		aNoise.forEach(r => r.forEach(x => {
+			let nColor = Math.min(pl - 1, x * pl | 0);
+			data.push(aPalette[nColor])
+		}));
+		return data;
+	}
+
+
 }
 
 module.exports = Perlin;
@@ -4205,9 +4127,11 @@ class Cache2D {
 				x, y, payload
 			});
 		}
+		let aDelete = [];
 		while (c.length > this._cacheSize) {
-			c.shift();
+			aDelete.push(c.shift());
 		}
+		return aDelete;
 	}
 }
 

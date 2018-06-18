@@ -19,7 +19,9 @@ class CanvasHelper {
     }
 
     static draw(oDest, oSource, x, y) {
-        oDest.getContext('2d').drawImage(oSource, x, y);
+        if (oSource) {
+			oDest.getContext('2d').drawImage(oSource, x, y);
+        }
     }
 }
 

@@ -9,13 +9,14 @@ const CLUSTER_SIZE = 16;
 class PirateWorld {
 	constructor(wgd) {
 		this.oWorldDef = wgd;
-		this._cache = new o876.structures.Cache2D({size: 1024});
+		this._cache = new o876.structures.Cache2D({size: 256});
         this._service = new ServiceWorkerIO();
         this._service.service(wgd.service);
         this._service.emit('init', {
         	seed: wgd.seed,
 			cell: wgd.cellSize,
-			cluster: CLUSTER_SIZE
+			cluster: CLUSTER_SIZE,
+			hexCluster: wgd.hexSize
         });
         this._xView = null;
         this._yView = null;
@@ -32,6 +33,8 @@ class PirateWorld {
 				}
 			});
 		}
+		this._xView = x;
+		this._yView = y;
 		this.renderTiles(oCanvas, x, y);
 	}
 
@@ -42,8 +45,10 @@ class PirateWorld {
 	async fetchTile(x, y) {
         return new Promise(resolve => {
         	// verification en cache
-			let oWorldTile = new WorldTile(x, y, this.cellSize());
-			this._cache.push(x, y, oWorldTile);
+			let oWorldTile = new WorldTile(x, y, this.cellSize(), {
+				drawGrid: this.oWorldDef.drawGrid
+			});
+			this._cache.push(x, y, oWorldTile).forEach(wt => !!wt && (typeof wt.free === 'function') && wt.free());
             oWorldTile.lock();
             this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
                 oWorldTile.colormap = result.tile.colormap;
@@ -54,21 +59,6 @@ class PirateWorld {
         });
 	}
 
-
-	/**
-	 * Renvoie true si le point x, y est dans le canvas
-	 * @param oCanvas {HTMLCanvasElement}
-	 * @param x {number}
-	 * @param y {number}
-	 * @return {boolean}
-	 * @private
-	 */
-	_isInsideCanvas(oCanvas, x, y, w, h) {
-		function inside(x0, y0) {
-			return x0 >= 0 && y0 >= 0 && x0 < oCanvas.width && y0 < oCanvas.height;
-		}
-		return inside(x, y) || inside(x + w, y) || inside(x, y + h) || inside(x + w, y + h);
-	}
 
 
 	async preloadTiles(x, y, w, h) {
@@ -85,7 +75,7 @@ class PirateWorld {
 				let wt = this._cache.getPayload(xTile, yTile);
 				if (!wt) {
 					// pas encore créée
-					console.log('fetching tile', (100 * iTile / nTileCount | 0).toString() + '%');
+					console.log('fetching tiles', (100 * iTile / nTileCount | 0).toString() + '%');
 					++nTileFetched;
 					wt = await this.fetchTile(xTile, yTile);
 				}
@@ -121,9 +111,11 @@ class PirateWorld {
 						wt.paint();
 						wt.colormap = null;
 					}
-					CanvasHelper.draw(oCanvas, wt.canvas, xScreen, yScreen);
-					xTilePix += cellSize;
+					if (wt.isPainted() && wt.isMapped()) {
+						CanvasHelper.draw(oCanvas, wt.canvas, xScreen, yScreen);
+					}
 				}
+				xTilePix += cellSize;
 			}
 			yTilePix += cellSize;
 		}

@@ -3,7 +3,7 @@ const Perlin = o876.algorithms.Perlin;
 const GRADIENT = require('./palette');
 
 class WorldGenerator {
-	constructor({cellSize, clusterSize, seed}) {
+	constructor({cellSize, clusterSize, seed, hexSize}) {
 		let pcell = new Perlin();
 		pcell.size(cellSize);
 		pcell.seed(seed);
@@ -21,6 +21,7 @@ class WorldGenerator {
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
 		this._cache = new o876.structures.Cache2D({size: 256});
+		this._hexSize = hexSize;
 	}
 
 	static _mod(n, d) {
@@ -153,7 +154,7 @@ class WorldGenerator {
 
     _cellProcess(xPix, yPix, xg, yg, base, cell) {
         return this._cellFilterMinMax(base, cell) *
-            this._cellDepthModulator(xPix, yPix, xg, yg, 16);
+            this._cellDepthModulator(xPix, yPix, xg, yg, this._hexSize);
     }
 
     /**
@@ -202,21 +203,6 @@ class WorldGenerator {
         return aMap;
     }
 
-    /**
-     * Applique une palette au bruit généré
-     * @param aNoise {Array} an array produced by generate()
-     * @param aPalette {array}
-     */
-    static colorize(aNoise, aPalette) {
-        let pl = aPalette.length;
-        let data = [];
-        aNoise.forEach(r => r.forEach(x => {
-            let nColor = Math.min(pl - 1, x * pl | 0);
-            data.push(aPalette[nColor])
-        }));
-        return data;
-    }
-
     computeCell(xCurs, yCurs) {
         const MESH_SIZE = 16;
         let clusterSize = this._perlinCluster.size();
@@ -224,8 +210,8 @@ class WorldGenerator {
             xCurs,
             yCurs, {
                 noise: (xg, yg, cellData) => {
-                    let xCluster = Math.floor((xg) / clusterSize);
-                    let yCluster = Math.floor((yg) / clusterSize);
+                    let xCluster = Math.floor(xg / clusterSize);
+                    let yCluster = Math.floor(yg / clusterSize);
                     let xClusterMod = WorldGenerator._mod(xg, clusterSize);
                     let yClusterMod = WorldGenerator._mod(yg, clusterSize);
                     let data = this.generateCluster(xCluster, yCluster);
@@ -237,7 +223,7 @@ class WorldGenerator {
                 }
             }
         );
-        let colorMap = WorldGenerator.colorize(heightMap, GRADIENT);
+        let colorMap = Perlin.colorize(heightMap, GRADIENT);
         let physicMap = this.buildCellPhysicMap(heightMap, MESH_SIZE);
         return {
             x: xCurs,
@@ -251,7 +237,7 @@ class WorldGenerator {
 		let payload = this._cache.getPayload(xCurs, yCurs);
 		if (!payload) {
 			payload = this.computeCell(xCurs, yCurs);
-            this._cache.push(xCurs, yCurs, payload);
+            this._cache.push(xCurs, yCurs, payload).forEach(wt => !!wt && (typeof wt.free === 'function') && wt.free());
 		}
 		return payload;
 	}

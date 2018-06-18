@@ -1666,11 +1666,11 @@ class Perlin {
 	 * @return {array}
 	 */
 	generateWhiteNoise(w, h) {
-		let r, a = [];
+		let r, a = [], rand = this._rand;
 		for (let x, y = 0; y < h; ++y) {
 			r = []; 
 			for (x = 0; x < w; ++x) {
-				r.push(this._rand.rand());
+				r.push(rand.rand());
 			}
 			a.push(r);
 		}
@@ -1679,19 +1679,23 @@ class Perlin {
 
 	/**
 	 * Linear interpolation
-	 * @param x0 minimum
-	 * @param x1 maximum
-	 * @param alpha value between 0 and 1
-	 * @return float, interpolation result
+	 * @param x0 {number} minimum
+	 * @param x1 {number} maximum
+	 * @param alpha {number} value between 0 and 1
+	 * @return {number} float, interpolation result
 	 */
-	linearInterpolate(x0, x1, alpha) {
+	static linearInterpolate(x0, x1, alpha) {
 		return x0 * (1 - alpha) + alpha * x1;
 	}
 
 	/**
 	 * Cosine Interpolation
+	 * @param x0 {number} minimum
+	 * @param x1 {number} maximum
+	 * @param alpha {number} value between 0 and 1
+	 * @return {number} float, interpolation result
 	 */
-	cosineInterpolate(x0, x1, mu) {
+	static cosineInterpolate(x0, x1, mu) {
 		let mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
    		return x0 * (1 - mu2) + x1 * mu2;
 	}
@@ -1704,8 +1708,8 @@ class Perlin {
 	interpolation(f) {
 		switch (typeof f) {
 			case 'string':
-				if ((f + 'Interpolate') in this) {
-					this._interpolate = this[f + 'Interpolate'];
+				if ((f + 'Interpolate') in Perlin) {
+					this._interpolate = Perlin[f + 'Interpolate'];
 				} else {
 					throw new Error('only "linear" or "cosine" interpolation');
 				}
@@ -1721,7 +1725,7 @@ class Perlin {
 		return this;
 	}
 
-	generateSmoothNoise(aBaseNoise, nOctave) {
+	static generateSmoothNoise(aBaseNoise, nOctave) {
 		let w = aBaseNoise.length;
 		let h = aBaseNoise[0].length;
 		let aSmoothNoise = [];
@@ -1730,20 +1734,23 @@ class Perlin {
 		let fSampleFreq = 1 / nSamplePeriod;
 		let xs = [], ys = [];
 		let hBlend, vBlend, fTop, fBottom;
+		let interpolate = Perlin.cosineInterpolate;
 		for (let x, y = 0; y < h; ++y) {
       		ys[0] = (y / nSamplePeriod | 0) * nSamplePeriod;
       		ys[1] = (ys[0] + nSamplePeriod) % h;
       		hBlend = (y - ys[0]) * fSampleFreq;
       		r = [];
+			let bny0 = aBaseNoise[ys[0]];
+			let bny1 = aBaseNoise[ys[1]];
       		for (x = 0; x < w; ++ x) {
        			xs[0] = (x / nSamplePeriod | 0) * nSamplePeriod;
       			xs[1] = (xs[0] + nSamplePeriod) % w;
       			vBlend = (x - xs[0]) * fSampleFreq;
 
-      			fTop = this._interpolate(aBaseNoise[ys[0]][xs[0]], aBaseNoise[ys[1]][xs[0]], hBlend);
-      			fBottom = this._interpolate(aBaseNoise[ys[0]][xs[1]], aBaseNoise[ys[1]][xs[1]], hBlend);
+      			fTop = interpolate(bny0[xs[0]], bny1[xs[0]], hBlend);
+      			fBottom = interpolate(bny0[xs[1]], bny1[xs[1]], hBlend);
      			
-     			r.push(this._interpolate(fTop, fBottom, vBlend));
+     			r.push(interpolate(fTop, fBottom, vBlend));
       		}
 
       		aSmoothNoise.push(r);
@@ -1751,14 +1758,14 @@ class Perlin {
 		return aSmoothNoise;
 	}
 
-	generatePerlinNoise(aBaseNoise, nOctaveCount) {
+	static generatePerlinNoise(aBaseNoise, nOctaveCount) {
 		let w = aBaseNoise.length;
 		let h = aBaseNoise[0].length;
 		let aSmoothNoise = [];
 		let fPersist = 0.5;
 
 		for (let i = 0; i < nOctaveCount; ++i) {
-			aSmoothNoise.push(this.generateSmoothNoise(aBaseNoise, i));
+			aSmoothNoise.push(Perlin.generateSmoothNoise(aBaseNoise, i));
 		}
 
 		let aPerlinNoise = [];
@@ -1777,18 +1784,20 @@ class Perlin {
 		for (let iOctave = nOctaveCount - 1; iOctave >= 0; --iOctave) {
 			fAmplitude *= fPersist;
 			fTotalAmp += fAmplitude;
+			let sno = aSmoothNoise[iOctave];
 
 			for (y = 0; y < h; ++y) {
-				r = [];
+				let snoy = sno[y];
+				let pny = aPerlinNoise[y];
 				for (x = 0; x < w; ++x) {
-					aPerlinNoise[y][x] += aSmoothNoise[iOctave][y][x] * fAmplitude;
+					pny[x] += snoy[x] * fAmplitude;
 				}
 			} 
 		}
 		for (y = 0; y < h; ++y) {
-			r = [];
+			let pny = aPerlinNoise[y];
 			for (x = 0; x < w; ++x) {
-				aPerlinNoise[y][x] /= fTotalAmp;
+				pny[x] /= fTotalAmp;
 			}
 		}
 		return aPerlinNoise;
@@ -1821,9 +1830,6 @@ class Perlin {
 		let xh = Perlin.hash(x).toString().split('');
 		let yh = Perlin.hash(y).toString().split('');
 		let s = xh.shift() + yh.shift() + '.';
-		if (s === '--.') {
-		//	s = '0.';
-		}
 		while (xh.length || yh.length) {
 			if (xh.length) {
 				s += xh.shift();
@@ -1846,10 +1852,12 @@ class Perlin {
 		if (cached) {
 			return cached;
 		}
+
+		const RAND = this._rand;
 		
 		const gwn = (xg, yg) => {
 			let nSeed = Perlin.getPointHash(xg, yg);
-			this._rand.seed(nSeed + this._seed);
+			RAND.seed(nSeed + this._seed);
 			let aNoise = this.generateWhiteNoise(this.width(), this.height());
 			if (noise) {
 				aNoise = noise(xg, yg, aNoise);
@@ -1861,8 +1869,12 @@ class Perlin {
 			let h = this.height();
 			let a = [];
 			for (let y, ya = 0; ya < 3; ++ya) {
+				let a33ya = a33[ya];
+				let a33ya0 = a33ya[0];
+				let a33ya1 = a33ya[1];
+				let a33ya2 = a33ya[2];
 				for (y = 0; y < h; ++y) {
-					a.push(a33[ya][0][y].concat(a33[ya][1][y], a33[ya][2][y]));
+					a.push(a33ya0[y].concat(a33ya1[y], a33ya2[y]));
 				}
 			}
 			return a;
@@ -1871,7 +1883,7 @@ class Perlin {
 		const extract33 = a => {
 			let w = this.width();
 			let h = this.height();
-			return a.slice(h, h * 2).map(function(r) { return r.slice(w, w * 2); });
+			return a.slice(h, h << 1).map(function(r) { return r.slice(w, w << 1); });
 		};
 
 		let a0 = [
@@ -1881,7 +1893,7 @@ class Perlin {
 		];
 
 		let a1 = merge33(a0);
-		let a2 = this.generatePerlinNoise(a1, this._octaves);
+		let a2 = Perlin.generatePerlinNoise(a1, this._octaves);
 		let a3 = extract33(a2);
 		if (perlin) {
 			a3 = perlin(x, y, a3);
@@ -1890,40 +1902,22 @@ class Perlin {
 		return a3;
 	}
 
-    /**
-     * Applique une palette au bruit généré
-     * @param aNoise {Array} an array produced by generate()
-     * @param aPalette {array}
-     */
-    static colorize(aNoise, aPalette) {
-        aPalette = aPalette || Rainbow.gradient({
-            0: '#008',
-            44: '#00F',
-            49: '#44F',
-            50: '#864',
-            74: '#080',
-            75: '#555',
-            89: '#777',
-            90: '#AAA',
-            99: '#FFF'
-        });
-        let w = aNoise[0].length, pl = aPalette.length;
-        let data = [];
-        aNoise.forEach(function(r, y) {
-            r.forEach(function(p, x) {
-                let nOfs = (y * w + x) << 2;
-                let rgb = Rainbow.parse(aPalette[Math.min(aPalette.length - 1, p * pl | 0)]);
-                if (rgb === undefined) {
-                    throw new Error('entry "' + (p * pl | 0) + '" is not in palette');
-                }
-                data[nOfs] = rgb.r;
-                data[nOfs + 1] = rgb.g;
-                data[nOfs + 2] = rgb.b;
-                data[nOfs + 3] = 255;
-            });
-        });
-        return data;
-    }
+	/**
+	 * Applique une palette au bruit généré
+	 * @param aNoise {Array} an array produced by generate()
+	 * @param aPalette {array}
+	 */
+	static colorize(aNoise, aPalette) {
+		let pl = aPalette.length;
+		let data = [];
+		aNoise.forEach(r => r.forEach(x => {
+			let nColor = Math.min(pl - 1, x * pl | 0);
+			data.push(aPalette[nColor])
+		}));
+		return data;
+	}
+
+
 }
 
 module.exports = Perlin;
@@ -2872,9 +2866,11 @@ class Cache2D {
 				x, y, payload
 			});
 		}
+		let aDelete = [];
 		while (c.length > this._cacheSize) {
-			c.shift();
+			aDelete.push(c.shift());
 		}
+		return aDelete;
 	}
 }
 
