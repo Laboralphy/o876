@@ -131,13 +131,6 @@ class WorldTile {
         return this.canvas != null;
     }
 
-    /**
-     * décharge les données de hauteurs pour économiser la mémoire une fois
-     * la tile dessinée.
-     */
-    discardHeightmap() {
-        this.heightmap = null;
-    }
 
 
     /**
@@ -231,7 +224,6 @@ class WorldTile {
         ctx.putImageData(oImageData, 0, 0);
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
         this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
-        this.discardHeightmap();
         return tile;
     }
 

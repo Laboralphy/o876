@@ -49,4 +49,26 @@ function main3() {
     pwrunner.view(cvs, X, Y);
 }
 
-window.addEventListener('load', main3);
+function main4() {
+	pwrunner = this.world = new PirateWorld({
+		cellSize: 256,
+		seed: 0.111,
+		preload: 2,
+		service: '../../dist/examples-treasure-map-service.js'
+	});
+	//window.addEventListener('keydown', kbHandler);
+	window.pwrunner = pwrunner;
+	X = 1000 * 256;
+	Y = 0;
+	let cvs = document.querySelector('.world');
+	pwrunner.preloadTiles(X, Y, cvs.width, cvs.height).then(() => {
+		console.log('starting scrolling');
+		setInterval(() => {
+			X += 1;
+			pwrunner.view(cvs, X, Y);
+		}, 32);
+	});
+}
+
+
+window.addEventListener('load', main4);

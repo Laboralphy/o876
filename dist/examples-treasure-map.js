@@ -150,19 +150,20 @@ class PirateWorld {
         });
         this._xView = null;
         this._yView = null;
-        this._invalid = false;
-        this._rendering = false;
-        this._remainingTileCount = 0;
+		this._fetching = false;
 	}
 
-	async view(oCanvas, x, y) {
-		if (x !== this._xView || y !== this._yView) {
-            this._xView = x;
-            this._yView = y;
-            if (!this._rendering) {
-                await this._renderTiles(oCanvas, x, y);
-			}
+	view(oCanvas, x, y) {
+		if (!this._fetching) {
+			this._fetching = true;
+			this.preloadTiles(x, y, oCanvas.width, oCanvas.height).then(({tileFetched, timeElapsed}) => {
+				this._fetching = false;
+				if (tileFetched) {
+					console.log('fetched', tileFetched, 'tiles in', timeElapsed, 's.', (tileFetched * 10 / timeElapsed | 0) / 10, 'tiles/s');
+				}
+			});
 		}
+		this.renderTiles(oCanvas, x, y);
 	}
 
 	cellSize() {
@@ -173,6 +174,7 @@ class PirateWorld {
         return new Promise(resolve => {
         	// verification en cache
 			let oWorldTile = new WorldTile(x, y, this.cellSize());
+			this._cache.push(x, y, oWorldTile);
             oWorldTile.lock();
             this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
                 oWorldTile.colormap = result.tile.colormap;
@@ -184,40 +186,79 @@ class PirateWorld {
 	}
 
 
+	/**
+	 * Renvoie true si le point x, y est dans le canvas
+	 * @param oCanvas {HTMLCanvasElement}
+	 * @param x {number}
+	 * @param y {number}
+	 * @return {boolean}
+	 * @private
+	 */
+	_isInsideCanvas(oCanvas, x, y, w, h) {
+		function inside(x0, y0) {
+			return x0 >= 0 && y0 >= 0 && x0 < oCanvas.width && y0 < oCanvas.height;
+		}
+		return inside(x, y) || inside(x + w, y) || inside(x, y + h) || inside(x + w, y + h);
+	}
 
-	async _renderTiles(oCanvas, x, y) {
-        this._rendering = true;
-		let w = oCanvas.width;
-		let h = oCanvas.height;
+
+	async preloadTiles(x, y, w, h) {
+		let tStart = performance.now();
 		let cellSize = this.cellSize();
 		let m = PirateWorld.getViewPointMetrics(x, y, w, h, cellSize, this.oWorldDef.preload);
 		let yTilePix = 0;
-		this._remainingTileCount = (m.yTo - m.yFrom + 1) * (m.xTo - m.yFrom + 1);
+		let nTileCount = (m.yTo - m.yFrom + 1) * (m.xTo - m.xFrom + 1);
+		let iTile = 0;
+		let nTileFetched = 0;
 		for (let yTile = m.yFrom; yTile <= m.yTo; ++yTile) {
 			let xTilePix = 0;
 			for (let xTile = m.xFrom; xTile <= m.xTo; ++xTile) {
 				let wt = this._cache.getPayload(xTile, yTile);
 				if (!wt) {
 					// pas encore créée
+					console.log('fetching tile', (100 * iTile / nTileCount | 0).toString() + '%');
+					++nTileFetched;
 					wt = await this.fetchTile(xTile, yTile);
-					this._cache.push(wt.x, wt.y, wt);
 				}
 				// si la tile est partiellement visible il faut la dessiner
-				if (wt.isPainted() || wt.isLocked()) {
-					CanvasHelper.draw(oCanvas, wt.canvas, m.xOfs + xTilePix, m.yOfs + yTilePix);
-				}
 				xTilePix += cellSize;
-				if (this._invalid) {
-					break;
-				}
-                --this._remainingTileCount;
+				++iTile;
 			}
-            if (this._invalid) {
-                break;
-            }
 			yTilePix += cellSize;
 		}
-        this._rendering = false;
+		return {
+			tileFetched: nTileFetched,
+			timeElapsed: (performance.now() - tStart | 0) / 1000
+		};
+	}
+
+
+	renderTiles(oCanvas, x, y) {
+		let zoom = this.oWorldDef.zoom || 1;
+		let w = oCanvas.width;
+		let h = oCanvas.height;
+		let cellSize = this.cellSize();
+		let m = PirateWorld.getViewPointMetrics(x, y, w, h, cellSize, 0);
+		let yTilePix = 0;
+		for (let yTile = m.yFrom; yTile <= m.yTo; ++yTile) {
+			let xTilePix = 0;
+			for (let xTile = m.xFrom; xTile <= m.xTo; ++xTile) {
+				let wt = this._cache.getPayload(xTile, yTile);
+				if (wt) {
+					let xScreen = m.xOfs + xTilePix;
+					let yScreen = m.yOfs + yTilePix;
+					// si la tile est partiellement visible il faut la dessiner
+					if (!wt.isPainted() && wt.isMapped()) {
+						console.log('painting tile', xTile, yTile);
+						wt.paint(zoom);
+						wt.colormap = null;
+					}
+					CanvasHelper.draw(oCanvas, wt.canvas, xScreen, yScreen);
+					xTilePix += cellSize;
+				}
+			}
+			yTilePix += cellSize;
+		}
     }
 
     /**
@@ -848,13 +889,6 @@ class WorldTile {
         return this.canvas != null;
     }
 
-    /**
-     * décharge les données de hauteurs pour économiser la mémoire une fois
-     * la tile dessinée.
-     */
-    discardHeightmap() {
-        this.heightmap = null;
-    }
 
 
     /**
@@ -948,7 +982,6 @@ class WorldTile {
         ctx.putImageData(oImageData, 0, 0);
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
         this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
-        this.discardHeightmap();
         return tile;
     }
 
@@ -1019,7 +1052,29 @@ function main3() {
     pwrunner.view(cvs, X, Y);
 }
 
-window.addEventListener('load', main3);
+function main4() {
+	pwrunner = this.world = new PirateWorld({
+		cellSize: 256,
+		seed: 0.111,
+		preload: 2,
+		service: '../../dist/examples-treasure-map-service.js'
+	});
+	//window.addEventListener('keydown', kbHandler);
+	window.pwrunner = pwrunner;
+	X = 1000 * 256;
+	Y = 0;
+	let cvs = document.querySelector('.world');
+	pwrunner.preloadTiles(X, Y, cvs.width, cvs.height).then(() => {
+		console.log('starting scrolling');
+		setInterval(() => {
+			X += 1;
+			pwrunner.view(cvs, X, Y);
+		}, 32);
+	});
+}
+
+
+window.addEventListener('load', main4);
 
 
 /***/ }),
