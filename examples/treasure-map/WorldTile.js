@@ -195,19 +195,15 @@ class WorldTile {
 			ctx.textBaseline = 'top';
 			ctx.strokeStyle = '#efce8c';
 			ctx.fillStyle = 'rgba(57, 25, 7)';
-			if (xCurs & 1) {
-				sText = 'lat:  ' + yCurs.toString();
-				ctx.strokeText(sText, 25, 4);
-				ctx.fillText(sText, 25, 4);
-			}
-			if (yCurs & 1) {
-				sText = 'long:  ' + xCurs.toString();
-				ctx.save();
-				ctx.rotate(-Math.PI / 2);
-				ctx.strokeText(sText, -tile.width + 25, 4);
-				ctx.fillText(sText, -tile.width + 25, 4);
-				ctx.restore();
-			}
+            sText = 'lat:  ' + yCurs.toString();
+            ctx.strokeText(sText, 25, 4);
+            ctx.fillText(sText, 25, 4);
+            sText = 'long:  ' + xCurs.toString();
+            ctx.save();
+            ctx.rotate(-Math.PI / 2);
+            ctx.strokeText(sText, -tile.width + 25, 4);
+            ctx.fillText(sText, -tile.width + 25, 4);
+            ctx.restore();
         }
     }
 
@@ -217,18 +213,22 @@ class WorldTile {
      * on peut la transformer en canvas par cette methode
      */
     paint() {
+        let scale = this.options.scale;
         let xCurs = this.x;
         let yCurs = this.y;
         let colormap = this.colormap;
         let physicmap = this.physicmap;
         let cellSize = this.size;
-        let tile = CanvasHelper.create(cellSize, cellSize);
+        let tile = CanvasHelper.create(cellSize / scale, cellSize / scale);
         this.canvas = tile;
         let ctx = tile.getContext('2d');
         let oImageData = ctx.createImageData(tile.width, tile.height);
         let buffer32 = new Uint32Array(oImageData.data.buffer);
         colormap.forEach((x, i) => buffer32[i] = x);
         ctx.putImageData(oImageData, 0, 0);
+        if (scale !== 1) {
+            this.canvas = tile = CanvasHelper.clone(tile, scale, scale);
+        }
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
         this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
         return tile;

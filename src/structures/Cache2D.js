@@ -1,3 +1,4 @@
+const sb = require('../SpellBook');
 /**
  * Permet de mettre en cache des information indéxées par une coordonnées 2D
  */
@@ -9,6 +10,14 @@ class Cache2D {
 		}
 		this._cache = [];
 		this._cacheSize = size;
+	}
+
+	size(s) {
+		return sb.prop(this, '_cacheSize', s);
+	}
+
+	clear() {
+		this._cache = [];
 	}
 
 	getMetaData(x, y) {

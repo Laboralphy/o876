@@ -108,9 +108,20 @@ class CanvasHelper {
         return c;
     }
 
-    static clone(c) {
-        let oCanvas = CanvasHelper.create(c.width, c.height);
-        oCanvas.getContext('2d').drawImage(c, 0, 0);
+    static clone(c, wZoom = 1, hZoom = 1) {
+        let oCanvas = CanvasHelper.create(c.width * wZoom | 0, c.height * hZoom | 0);
+        oCanvas.getContext('2d').drawImage(
+            c,
+            0,
+            0,
+            c.width,
+            c.height,
+            0,
+            0,
+            oCanvas.width,
+            oCanvas.height
+        );
+        return oCanvas;
     }
 
     static draw(oDest, oSource, x, y) {
@@ -147,14 +158,29 @@ class PirateWorld {
         this._service.service(wgd.service);
         this._service.emit('init', {
         	seed: wgd.seed,
-			cell: wgd.cellSize,
-			cluster: CLUSTER_SIZE,
-			hexCluster: wgd.hexSize
+			cellSize: wgd.cellSize,
+			clusterSize: CLUSTER_SIZE,
+			hexSize: wgd.hexSize,
+			hexSpacing: wgd.hexSpacing,
+            scale: wgd.scale
         });
 
         this._xView = null;
         this._yView = null;
 		this._fetching = false;
+	}
+
+	log(...args) {
+        if (this.oWorldDef.verbose) {
+            console.log('[world]', ...args);
+        }
+	}
+
+	progress(n100) {
+        this.log('fetching tiles', n100.toString() + '%');
+		if (typeof this.oWorldDef.progress === 'function') {
+            this.oWorldDef.progress(n100);
+		}
 	}
 
 	view(oCanvas, x, y) {
@@ -163,7 +189,7 @@ class PirateWorld {
 			this.preloadTiles(x, y, oCanvas.width, oCanvas.height).then(({tileFetched, timeElapsed}) => {
 				this._fetching = false;
 				if (tileFetched) {
-					console.log('fetched', tileFetched, 'tiles in', timeElapsed, 's.', (tileFetched * 10 / timeElapsed | 0) / 10, 'tiles/s');
+					this.log('fetched', tileFetched, 'tiles in', timeElapsed, 's.', (tileFetched * 10 / timeElapsed | 0) / 10, 'tiles/s');
 				}
 			});
 		}
@@ -181,6 +207,7 @@ class PirateWorld {
 		return new Promise(resolve => {
 			// verification en cache
 			let oWorldTile = new WorldTile(x, y, this.cellSize(), {
+				scale: this.oWorldDef.scale,
 				drawGrid: this.oWorldDef.drawGrid,
 				drawCoords: this.oWorldDef.drawCoords
 			});
@@ -203,19 +230,17 @@ class PirateWorld {
 		let nTileCount = (m.yTo - m.yFrom + 1) * (m.xTo - m.xFrom + 1);
 		let iTile = 0;
 		let nTileFetched = 0;
-		let promises = [];
+		let n100;
 		for (let yTile = m.yFrom; yTile <= m.yTo; ++yTile) {
-			if (y & 1 === 0) {
-				continue;
-			}
 			let xTilePix = 0;
 			for (let xTile = m.xFrom; xTile <= m.xTo; ++xTile) {
 				let wt = this._cache.getPayload(xTile, yTile);
 				if (!wt) {
 					// pas encore créée
-					console.log('fetching tiles', (100 * iTile / nTileCount | 0).toString() + '%');
+                    n100 = (100 * iTile / nTileCount | 0);
+					this.progress(n100);
 					++nTileFetched;
-					promises.push(this.fetchTile(xTile, yTile));
+					wt = await this.fetchTile(xTile, yTile);
 				}
 				// si la tile est partiellement visible il faut la dessiner
 				xTilePix += cellSize;
@@ -223,7 +248,8 @@ class PirateWorld {
 			}
 			yTilePix += cellSize;
 		}
-		await Promise.all(promises);
+		n100 = 100;
+        this.progress(n100);
 		return {
 			tileFetched: nTileFetched,
 			timeElapsed: (performance.now() - tStart | 0) / 1000
@@ -245,7 +271,6 @@ class PirateWorld {
 					let yScreen = m.yOfs + yTilePix;
 					// si la tile est partiellement visible il faut la dessiner
 					if (!wt.isPainted() && wt.isMapped()) {
-						console.log('painting tile', xTile, yTile);
 						wt.paint();
 						wt.colormap = null;
 					}
@@ -425,15 +450,17 @@ const Perlin = o876.algorithms.Perlin;
 const GRADIENT = __webpack_require__(/*! ./palette */ "./examples/treasure-map/palette.js");
 
 class WorldGenerator {
-	constructor({cellSize, clusterSize, seed, hexSize}) {
+	constructor(options) {
+	    this._options = options;
 		let pcell = new Perlin();
-		pcell.size(cellSize);
-		pcell.seed(seed);
+		pcell.size(options.cellSize / options.scale);
+		pcell.seed(options.seed);
 
+		// le scale ne va agir que sur la physique map
 
 		let pclust = new Perlin();
-		pclust.size(clusterSize);
-		pclust.seed(seed);
+		pclust.size(options.clusterSize);
+		pclust.seed(options.seed);
 
 		// les cellule, détail jusqu'au pixel
 		// défini l'élévaltion finale du terrain
@@ -443,7 +470,9 @@ class WorldGenerator {
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
 		this._cache = new o876.structures.Cache2D({size: 64});
-		this._hexSize = hexSize;
+		this._hexSize = options.hexSize || 16;
+		this._hexSpacing = options.hexSpacing || 6;
+		this._scale = options.scale || 1;
 	}
 
 	static _mod(n, d) {
@@ -489,7 +518,7 @@ class WorldGenerator {
 	}
 
 	_cellDepthModulator(x, y, xg, yg, meshSize) {
-		let c = 6;
+		let c = this._hexSpacing;
 		let bInHexagon = this._isOnHexaMesh(xg, yg, meshSize, c);
 		if (!bInHexagon) {
 			return 1;
@@ -626,7 +655,7 @@ class WorldGenerator {
     }
 
     computeCell(xCurs, yCurs) {
-        const MESH_SIZE = 16;
+        const MESH_SIZE = 16 / this._scale;
         let clusterSize = this._perlinCluster.size();
         let heightMap = this._perlinCell.generate(
             xCurs,
@@ -873,19 +902,15 @@ class WorldTile {
 			ctx.textBaseline = 'top';
 			ctx.strokeStyle = '#efce8c';
 			ctx.fillStyle = 'rgba(57, 25, 7)';
-			if (xCurs & 1) {
-				sText = 'lat:  ' + yCurs.toString();
-				ctx.strokeText(sText, 25, 4);
-				ctx.fillText(sText, 25, 4);
-			}
-			if (yCurs & 1) {
-				sText = 'long:  ' + xCurs.toString();
-				ctx.save();
-				ctx.rotate(-Math.PI / 2);
-				ctx.strokeText(sText, -tile.width + 25, 4);
-				ctx.fillText(sText, -tile.width + 25, 4);
-				ctx.restore();
-			}
+            sText = 'lat:  ' + yCurs.toString();
+            ctx.strokeText(sText, 25, 4);
+            ctx.fillText(sText, 25, 4);
+            sText = 'long:  ' + xCurs.toString();
+            ctx.save();
+            ctx.rotate(-Math.PI / 2);
+            ctx.strokeText(sText, -tile.width + 25, 4);
+            ctx.fillText(sText, -tile.width + 25, 4);
+            ctx.restore();
         }
     }
 
@@ -895,18 +920,22 @@ class WorldTile {
      * on peut la transformer en canvas par cette methode
      */
     paint() {
+        let scale = this.options.scale;
         let xCurs = this.x;
         let yCurs = this.y;
         let colormap = this.colormap;
         let physicmap = this.physicmap;
         let cellSize = this.size;
-        let tile = CanvasHelper.create(cellSize, cellSize);
+        let tile = CanvasHelper.create(cellSize / scale, cellSize / scale);
         this.canvas = tile;
         let ctx = tile.getContext('2d');
         let oImageData = ctx.createImageData(tile.width, tile.height);
         let buffer32 = new Uint32Array(oImageData.data.buffer);
         colormap.forEach((x, i) => buffer32[i] = x);
         ctx.putImageData(oImageData, 0, 0);
+        if (scale !== 1) {
+            this.canvas = tile = CanvasHelper.clone(tile, scale, scale);
+        }
         this.paintTerrainType(xCurs, yCurs, tile, physicmap);
         this.paintLinesCoordinates(xCurs, yCurs, tile, physicmap);
         return tile;
@@ -963,26 +992,41 @@ function kbHandler(event) {
 
 let pwrunner, X, Y, bFreeze = false;
 
+function progress(n100) {
+    let elemProgress = document.querySelector('#progress-tiles');
+    let elemProgressValue = elemProgress.querySelector('span.value');
+    if (elemProgress.classList.contains('hidden')) {
+        elemProgress.classList.remove('hidden');
+	}
+	elemProgressValue.innerText = n100.toString() + '%';
+    if (n100 === 100 && !elemProgress.classList.contains('hidden')) {
+        elemProgress.classList.add('hidden');
+    }
+}
+
 function main4() {
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
+		hexSize: 16,
+		scale: 2,
 		seed: 0.111,
 		preload: 1,
 		drawGrid: true,
 		drawCoords: true,
-		service: '../../dist/examples-treasure-map-service.js'
+		service: '../../dist/examples-treasure-map-service.js',
+		progress
 	});
 	window.addEventListener('keydown', kbHandler);
 	window.pwrunner = pwrunner;
-	X = 1000 * 256;
+	X = 27 * 256;
 	Y = 0;
 	let cvs = document.querySelector('.world');
 	pwrunner.preloadTiles(X, Y, cvs.width, cvs.height).then(() => {
 		console.log('starting scrolling');
 		setInterval(() => {
 			if (!bFreeze) {
-				X += 2;
-				Y++;
+				//X += 2;
+				//Y++;
 			}
 			pwrunner.view(cvs, X, Y);
 		}, 32);
@@ -992,8 +1036,10 @@ function main4() {
 
 function main3() {
 	pwrunner = this.world = new PirateWorld({
-		cellSize: 16,
+		cellSize: 8,
+        scale: 1,
 		hexSize: 16,
+		hexSpace: 4,
 		seed: 0.111,
 		preload: 2,
 		drawGrid: false,
@@ -1015,11 +1061,45 @@ function main3() {
 
 	let cvs = document.querySelector('.world');
 	fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
+	window.addEventListener('keydown', kbHandler);
+}
+
+
+function main2() {
+    pwrunner = this.world = new PirateWorld({
+        seed: 0.111,
+        preload: 2,
+        scale: 2,
+        cellSize: 64,
+        hexSize: 16,
+        drawGrid: true,
+        drawCoords: false,
+        service: '../../dist/examples-treasure-map-service.js'
+    });
+
+    X = 960;
+    Y = -40;
+    async function fetchAndRenderTiles(oCanvas, xTile, yTile) {
+        for (let y = 0; y < (oCanvas.height / pwrunner.cellSize()); ++y) {
+            for (let x = 0; x < (oCanvas.width / pwrunner.cellSize()); ++x) {
+                let wt = await pwrunner.fetchTile(X + x + xTile, Y + y + yTile);
+                wt.paint();
+                CanvasHelper.draw(oCanvas,
+					wt.canvas,
+					(x + xTile) * pwrunner.cellSize(),
+					(y + yTile) * pwrunner.cellSize()
+				);
+            }
+        }
+    }
+
+    let cvs = document.querySelector('.world');
+    fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
 }
 
 
 
-window.addEventListener('load', main3);
+window.addEventListener('load', main4);
 
 
 /***/ }),
@@ -2899,6 +2979,8 @@ class Perlin {
 		this._rand = new Random();
 		this.interpolation('cosine');
 		this._cache = new Cache2D();
+		this._wnCache = new Cache2D();
+		this._wnCache.size(9);
 		this._seed = 1;
 	}
 
@@ -2971,7 +3053,7 @@ class Perlin {
 	 * Cosine Interpolation
 	 * @param x0 {number} minimum
 	 * @param x1 {number} maximum
-	 * @param alpha {number} value between 0 and 1
+	 * @param mu {number} value between 0 and 1
 	 * @return {number} float, interpolation result
 	 */
 	static cosineInterpolate(x0, x1, mu) {
@@ -3011,27 +3093,24 @@ class Perlin {
 		let r;
 		let nSamplePeriod = 1 << nOctave;
 		let fSampleFreq = 1 / nSamplePeriod;
-		let xs = [], ys = [];
+		let xs0, xs1, ys0, ys1;
 		let hBlend, vBlend, fTop, fBottom;
 		let interpolate = Perlin.cosineInterpolate;
 		for (let x, y = 0; y < h; ++y) {
-      		ys[0] = (y / nSamplePeriod | 0) * nSamplePeriod;
-      		ys[1] = (ys[0] + nSamplePeriod) % h;
-      		hBlend = (y - ys[0]) * fSampleFreq;
+      		ys0 = y - (y % nSamplePeriod);
+      		ys1 = (ys0 + nSamplePeriod) % h;
+      		hBlend = (y - ys0) * fSampleFreq;
       		r = [];
-			let bny0 = aBaseNoise[ys[0]];
-			let bny1 = aBaseNoise[ys[1]];
+			let bny0 = aBaseNoise[ys0];
+			let bny1 = aBaseNoise[ys1];
       		for (x = 0; x < w; ++ x) {
-       			xs[0] = (x / nSamplePeriod | 0) * nSamplePeriod;
-      			xs[1] = (xs[0] + nSamplePeriod) % w;
-      			vBlend = (x - xs[0]) * fSampleFreq;
-
-      			fTop = interpolate(bny0[xs[0]], bny1[xs[0]], hBlend);
-      			fBottom = interpolate(bny0[xs[1]], bny1[xs[1]], hBlend);
-     			
+       			xs0 = x - (x % nSamplePeriod);
+      			xs1 = (xs0 + nSamplePeriod) % w;
+      			vBlend = (x - xs0) * fSampleFreq;
+      			fTop = interpolate(bny0[xs0], bny1[xs0], hBlend);
+      			fBottom = interpolate(bny0[xs1], bny1[xs1], hBlend);
      			r.push(interpolate(fTop, fBottom, vBlend));
       		}
-
       		aSmoothNoise.push(r);
 		}
 		return aSmoothNoise;
@@ -3064,7 +3143,6 @@ class Perlin {
 			fAmplitude *= fPersist;
 			fTotalAmp += fAmplitude;
 			let sno = aSmoothNoise[iOctave];
-
 			for (y = 0; y < h; ++y) {
 				let snoy = sno[y];
 				let pny = aPerlinNoise[y];
@@ -3119,7 +3197,8 @@ class Perlin {
 		}
 		return parseFloat(s);
 	}
-	
+
+
 	generate(x, y, callbacks) {
 		if (x >= Number.MAX_SAFE_INTEGER || x <= -Number.MAX_SAFE_INTEGER || y >= Number.MAX_SAFE_INTEGER || y <= -Number.MAX_SAFE_INTEGER) {
 			throw new Error('trying to generate x:' + x + ' - y:' + y + ' - maximum safe integer is ' + Number.MAX_SAFE_INTEGER + ' !');
@@ -3131,16 +3210,21 @@ class Perlin {
 		if (cached) {
 			return cached;
 		}
-
+		let wnCache = this._wnCache;
 		const RAND = this._rand;
 		
 		const gwn = (xg, yg) => {
+            let cachedNoise = wnCache.getPayload(xg, yg)
+			if (cachedNoise) {
+				return cachedNoise;
+			}
 			let nSeed = Perlin.getPointHash(xg, yg);
 			RAND.seed(nSeed + this._seed);
 			let aNoise = this.generateWhiteNoise(this.width(), this.height());
 			if (noise) {
 				aNoise = noise(xg, yg, aNoise);
 			}
+			wnCache.push(xg, yg, aNoise);
 			return aNoise;
 		};
 
@@ -3162,7 +3246,7 @@ class Perlin {
 		const extract33 = a => {
 			let w = this.width();
 			let h = this.height();
-			return a.slice(h, h << 1).map(function(r) { return r.slice(w, w << 1); });
+			return a.slice(h, h << 1).map(r => r.slice(w, w << 1));
 		};
 
 		let a0 = [
@@ -4110,8 +4194,9 @@ module.exports = {
   !*** ./src/structures/Cache2D.js ***!
   \***********************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
+const sb = __webpack_require__(/*! ../SpellBook */ "./src/SpellBook.js");
 /**
  * Permet de mettre en cache des information indéxées par une coordonnées 2D
  */
@@ -4123,6 +4208,14 @@ class Cache2D {
 		}
 		this._cache = [];
 		this._cacheSize = size;
+	}
+
+	size(s) {
+		return sb.prop(this, '_cacheSize', s);
+	}
+
+	clear() {
+		this._cache = [];
 	}
 
 	getMetaData(x, y) {

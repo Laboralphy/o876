@@ -1620,6 +1620,8 @@ class Perlin {
 		this._rand = new Random();
 		this.interpolation('cosine');
 		this._cache = new Cache2D();
+		this._wnCache = new Cache2D();
+		this._wnCache.size(9);
 		this._seed = 1;
 	}
 
@@ -1692,7 +1694,7 @@ class Perlin {
 	 * Cosine Interpolation
 	 * @param x0 {number} minimum
 	 * @param x1 {number} maximum
-	 * @param alpha {number} value between 0 and 1
+	 * @param mu {number} value between 0 and 1
 	 * @return {number} float, interpolation result
 	 */
 	static cosineInterpolate(x0, x1, mu) {
@@ -1732,27 +1734,24 @@ class Perlin {
 		let r;
 		let nSamplePeriod = 1 << nOctave;
 		let fSampleFreq = 1 / nSamplePeriod;
-		let xs = [], ys = [];
+		let xs0, xs1, ys0, ys1;
 		let hBlend, vBlend, fTop, fBottom;
 		let interpolate = Perlin.cosineInterpolate;
 		for (let x, y = 0; y < h; ++y) {
-      		ys[0] = (y / nSamplePeriod | 0) * nSamplePeriod;
-      		ys[1] = (ys[0] + nSamplePeriod) % h;
-      		hBlend = (y - ys[0]) * fSampleFreq;
+      		ys0 = y - (y % nSamplePeriod);
+      		ys1 = (ys0 + nSamplePeriod) % h;
+      		hBlend = (y - ys0) * fSampleFreq;
       		r = [];
-			let bny0 = aBaseNoise[ys[0]];
-			let bny1 = aBaseNoise[ys[1]];
+			let bny0 = aBaseNoise[ys0];
+			let bny1 = aBaseNoise[ys1];
       		for (x = 0; x < w; ++ x) {
-       			xs[0] = (x / nSamplePeriod | 0) * nSamplePeriod;
-      			xs[1] = (xs[0] + nSamplePeriod) % w;
-      			vBlend = (x - xs[0]) * fSampleFreq;
-
-      			fTop = interpolate(bny0[xs[0]], bny1[xs[0]], hBlend);
-      			fBottom = interpolate(bny0[xs[1]], bny1[xs[1]], hBlend);
-     			
+       			xs0 = x - (x % nSamplePeriod);
+      			xs1 = (xs0 + nSamplePeriod) % w;
+      			vBlend = (x - xs0) * fSampleFreq;
+      			fTop = interpolate(bny0[xs0], bny1[xs0], hBlend);
+      			fBottom = interpolate(bny0[xs1], bny1[xs1], hBlend);
      			r.push(interpolate(fTop, fBottom, vBlend));
       		}
-
       		aSmoothNoise.push(r);
 		}
 		return aSmoothNoise;
@@ -1785,7 +1784,6 @@ class Perlin {
 			fAmplitude *= fPersist;
 			fTotalAmp += fAmplitude;
 			let sno = aSmoothNoise[iOctave];
-
 			for (y = 0; y < h; ++y) {
 				let snoy = sno[y];
 				let pny = aPerlinNoise[y];
@@ -1840,7 +1838,8 @@ class Perlin {
 		}
 		return parseFloat(s);
 	}
-	
+
+
 	generate(x, y, callbacks) {
 		if (x >= Number.MAX_SAFE_INTEGER || x <= -Number.MAX_SAFE_INTEGER || y >= Number.MAX_SAFE_INTEGER || y <= -Number.MAX_SAFE_INTEGER) {
 			throw new Error('trying to generate x:' + x + ' - y:' + y + ' - maximum safe integer is ' + Number.MAX_SAFE_INTEGER + ' !');
@@ -1852,16 +1851,21 @@ class Perlin {
 		if (cached) {
 			return cached;
 		}
-
+		let wnCache = this._wnCache;
 		const RAND = this._rand;
 		
 		const gwn = (xg, yg) => {
+            let cachedNoise = wnCache.getPayload(xg, yg)
+			if (cachedNoise) {
+				return cachedNoise;
+			}
 			let nSeed = Perlin.getPointHash(xg, yg);
 			RAND.seed(nSeed + this._seed);
 			let aNoise = this.generateWhiteNoise(this.width(), this.height());
 			if (noise) {
 				aNoise = noise(xg, yg, aNoise);
 			}
+			wnCache.push(xg, yg, aNoise);
 			return aNoise;
 		};
 
@@ -1883,7 +1887,7 @@ class Perlin {
 		const extract33 = a => {
 			let w = this.width();
 			let h = this.height();
-			return a.slice(h, h << 1).map(function(r) { return r.slice(w, w << 1); });
+			return a.slice(h, h << 1).map(r => r.slice(w, w << 1));
 		};
 
 		let a0 = [
@@ -2831,8 +2835,9 @@ module.exports = {
   !*** ./src/structures/Cache2D.js ***!
   \***********************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
+const sb = __webpack_require__(/*! ../SpellBook */ "./src/SpellBook.js");
 /**
  * Permet de mettre en cache des information indéxées par une coordonnées 2D
  */
@@ -2844,6 +2849,14 @@ class Cache2D {
 		}
 		this._cache = [];
 		this._cacheSize = size;
+	}
+
+	size(s) {
+		return sb.prop(this, '_cacheSize', s);
+	}
+
+	clear() {
+		this._cache = [];
 	}
 
 	getMetaData(x, y) {

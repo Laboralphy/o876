@@ -13,9 +13,20 @@ class CanvasHelper {
         return c;
     }
 
-    static clone(c) {
-        let oCanvas = CanvasHelper.create(c.width, c.height);
-        oCanvas.getContext('2d').drawImage(c, 0, 0);
+    static clone(c, wZoom = 1, hZoom = 1) {
+        let oCanvas = CanvasHelper.create(c.width * wZoom | 0, c.height * hZoom | 0);
+        oCanvas.getContext('2d').drawImage(
+            c,
+            0,
+            0,
+            c.width,
+            c.height,
+            0,
+            0,
+            oCanvas.width,
+            oCanvas.height
+        );
+        return oCanvas;
     }
 
     static draw(oDest, oSource, x, y) {

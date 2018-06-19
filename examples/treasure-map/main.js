@@ -33,26 +33,41 @@ function kbHandler(event) {
 
 let pwrunner, X, Y, bFreeze = false;
 
+function progress(n100) {
+    let elemProgress = document.querySelector('#progress-tiles');
+    let elemProgressValue = elemProgress.querySelector('span.value');
+    if (elemProgress.classList.contains('hidden')) {
+        elemProgress.classList.remove('hidden');
+	}
+	elemProgressValue.innerText = n100.toString() + '%';
+    if (n100 === 100 && !elemProgress.classList.contains('hidden')) {
+        elemProgress.classList.add('hidden');
+    }
+}
+
 function main4() {
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
+		hexSize: 16,
+		scale: 2,
 		seed: 0.111,
 		preload: 1,
 		drawGrid: true,
 		drawCoords: true,
-		service: '../../dist/examples-treasure-map-service.js'
+		service: '../../dist/examples-treasure-map-service.js',
+		progress
 	});
 	window.addEventListener('keydown', kbHandler);
 	window.pwrunner = pwrunner;
-	X = 1000 * 256;
+	X = 27 * 256;
 	Y = 0;
 	let cvs = document.querySelector('.world');
 	pwrunner.preloadTiles(X, Y, cvs.width, cvs.height).then(() => {
 		console.log('starting scrolling');
 		setInterval(() => {
 			if (!bFreeze) {
-				X += 2;
-				Y++;
+				//X += 2;
+				//Y++;
 			}
 			pwrunner.view(cvs, X, Y);
 		}, 32);
@@ -62,8 +77,10 @@ function main4() {
 
 function main3() {
 	pwrunner = this.world = new PirateWorld({
-		cellSize: 16,
+		cellSize: 8,
+        scale: 1,
 		hexSize: 16,
+		hexSpace: 4,
 		seed: 0.111,
 		preload: 2,
 		drawGrid: false,
@@ -85,8 +102,42 @@ function main3() {
 
 	let cvs = document.querySelector('.world');
 	fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
+	window.addEventListener('keydown', kbHandler);
+}
+
+
+function main2() {
+    pwrunner = this.world = new PirateWorld({
+        seed: 0.111,
+        preload: 2,
+        scale: 2,
+        cellSize: 64,
+        hexSize: 16,
+        drawGrid: true,
+        drawCoords: false,
+        service: '../../dist/examples-treasure-map-service.js'
+    });
+
+    X = 960;
+    Y = -40;
+    async function fetchAndRenderTiles(oCanvas, xTile, yTile) {
+        for (let y = 0; y < (oCanvas.height / pwrunner.cellSize()); ++y) {
+            for (let x = 0; x < (oCanvas.width / pwrunner.cellSize()); ++x) {
+                let wt = await pwrunner.fetchTile(X + x + xTile, Y + y + yTile);
+                wt.paint();
+                CanvasHelper.draw(oCanvas,
+					wt.canvas,
+					(x + xTile) * pwrunner.cellSize(),
+					(y + yTile) * pwrunner.cellSize()
+				);
+            }
+        }
+    }
+
+    let cvs = document.querySelector('.world');
+    fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
 }
 
 
 
-window.addEventListener('load', main3);
+window.addEventListener('load', main4);

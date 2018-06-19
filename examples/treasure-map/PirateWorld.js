@@ -14,14 +14,29 @@ class PirateWorld {
         this._service.service(wgd.service);
         this._service.emit('init', {
         	seed: wgd.seed,
-			cell: wgd.cellSize,
-			cluster: CLUSTER_SIZE,
-			hexCluster: wgd.hexSize
+			cellSize: wgd.cellSize,
+			clusterSize: CLUSTER_SIZE,
+			hexSize: wgd.hexSize,
+			hexSpacing: wgd.hexSpacing,
+            scale: wgd.scale
         });
 
         this._xView = null;
         this._yView = null;
 		this._fetching = false;
+	}
+
+	log(...args) {
+        if (this.oWorldDef.verbose) {
+            console.log('[world]', ...args);
+        }
+	}
+
+	progress(n100) {
+        this.log('fetching tiles', n100.toString() + '%');
+		if (typeof this.oWorldDef.progress === 'function') {
+            this.oWorldDef.progress(n100);
+		}
 	}
 
 	view(oCanvas, x, y) {
@@ -30,7 +45,7 @@ class PirateWorld {
 			this.preloadTiles(x, y, oCanvas.width, oCanvas.height).then(({tileFetched, timeElapsed}) => {
 				this._fetching = false;
 				if (tileFetched) {
-					console.log('fetched', tileFetched, 'tiles in', timeElapsed, 's.', (tileFetched * 10 / timeElapsed | 0) / 10, 'tiles/s');
+					this.log('fetched', tileFetched, 'tiles in', timeElapsed, 's.', (tileFetched * 10 / timeElapsed | 0) / 10, 'tiles/s');
 				}
 			});
 		}
@@ -48,6 +63,7 @@ class PirateWorld {
 		return new Promise(resolve => {
 			// verification en cache
 			let oWorldTile = new WorldTile(x, y, this.cellSize(), {
+				scale: this.oWorldDef.scale,
 				drawGrid: this.oWorldDef.drawGrid,
 				drawCoords: this.oWorldDef.drawCoords
 			});
@@ -70,19 +86,17 @@ class PirateWorld {
 		let nTileCount = (m.yTo - m.yFrom + 1) * (m.xTo - m.xFrom + 1);
 		let iTile = 0;
 		let nTileFetched = 0;
-		let promises = [];
+		let n100;
 		for (let yTile = m.yFrom; yTile <= m.yTo; ++yTile) {
-			if (y & 1 === 0) {
-				continue;
-			}
 			let xTilePix = 0;
 			for (let xTile = m.xFrom; xTile <= m.xTo; ++xTile) {
 				let wt = this._cache.getPayload(xTile, yTile);
 				if (!wt) {
 					// pas encore créée
-					console.log('fetching tiles', (100 * iTile / nTileCount | 0).toString() + '%');
+                    n100 = (100 * iTile / nTileCount | 0);
+					this.progress(n100);
 					++nTileFetched;
-					promises.push(this.fetchTile(xTile, yTile));
+					wt = await this.fetchTile(xTile, yTile);
 				}
 				// si la tile est partiellement visible il faut la dessiner
 				xTilePix += cellSize;
@@ -90,7 +104,8 @@ class PirateWorld {
 			}
 			yTilePix += cellSize;
 		}
-		await Promise.all(promises);
+		n100 = 100;
+        this.progress(n100);
 		return {
 			tileFetched: nTileFetched,
 			timeElapsed: (performance.now() - tStart | 0) / 1000
@@ -112,7 +127,6 @@ class PirateWorld {
 					let yScreen = m.yOfs + yTilePix;
 					// si la tile est partiellement visible il faut la dessiner
 					if (!wt.isPainted() && wt.isMapped()) {
-						console.log('painting tile', xTile, yTile);
 						wt.paint();
 						wt.colormap = null;
 					}

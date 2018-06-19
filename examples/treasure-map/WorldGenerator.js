@@ -3,15 +3,17 @@ const Perlin = o876.algorithms.Perlin;
 const GRADIENT = require('./palette');
 
 class WorldGenerator {
-	constructor({cellSize, clusterSize, seed, hexSize}) {
+	constructor(options) {
+	    this._options = options;
 		let pcell = new Perlin();
-		pcell.size(cellSize);
-		pcell.seed(seed);
+		pcell.size(options.cellSize / options.scale);
+		pcell.seed(options.seed);
 
+		// le scale ne va agir que sur la physique map
 
 		let pclust = new Perlin();
-		pclust.size(clusterSize);
-		pclust.seed(seed);
+		pclust.size(options.clusterSize);
+		pclust.seed(options.seed);
 
 		// les cellule, détail jusqu'au pixel
 		// défini l'élévaltion finale du terrain
@@ -21,7 +23,9 @@ class WorldGenerator {
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
 		this._cache = new o876.structures.Cache2D({size: 64});
-		this._hexSize = hexSize;
+		this._hexSize = options.hexSize || 16;
+		this._hexSpacing = options.hexSpacing || 6;
+		this._scale = options.scale || 1;
 	}
 
 	static _mod(n, d) {
@@ -67,7 +71,7 @@ class WorldGenerator {
 	}
 
 	_cellDepthModulator(x, y, xg, yg, meshSize) {
-		let c = 6;
+		let c = this._hexSpacing;
 		let bInHexagon = this._isOnHexaMesh(xg, yg, meshSize, c);
 		if (!bInHexagon) {
 			return 1;
@@ -204,7 +208,7 @@ class WorldGenerator {
     }
 
     computeCell(xCurs, yCurs) {
-        const MESH_SIZE = 16;
+        const MESH_SIZE = 16 / this._scale;
         let clusterSize = this._perlinCluster.size();
         let heightMap = this._perlinCell.generate(
             xCurs,
