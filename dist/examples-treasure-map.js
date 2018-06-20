@@ -135,6 +135,31 @@ module.exports = CanvasHelper;
 
 /***/ }),
 
+/***/ "./examples/treasure-map/Indicators.js":
+/*!*********************************************!*\
+  !*** ./examples/treasure-map/Indicators.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+class Indicators {
+	static progress(n100) {
+		let elemProgress = document.querySelector('#progress-tiles');
+		let elemProgressValue = elemProgress.querySelector('span.value');
+		if (elemProgress.classList.contains('hidden')) {
+			elemProgress.classList.remove('hidden');
+		}
+		elemProgressValue.innerText = n100.toString() + '%';
+		if (n100 === 100 && !elemProgress.classList.contains('hidden')) {
+			elemProgress.classList.add('hidden');
+		}
+	}
+}
+
+module.exports = Indicators;
+
+/***/ }),
+
 /***/ "./examples/treasure-map/PirateWorld.js":
 /*!**********************************************!*\
   !*** ./examples/treasure-map/PirateWorld.js ***!
@@ -183,7 +208,23 @@ class PirateWorld {
 		}
 	}
 
+	adjustCacheSize(oCanvas) {
+		let w = oCanvas.width;
+		let h = oCanvas.height;
+		let wCell = Math.ceil(w / this.cellSize()) + (this.oWorldDef.preload << 1) + 1;
+		let hCell = Math.ceil(h / this.cellSize()) + (this.oWorldDef.preload << 1) + 1;
+		let nNewSize = wCell * hCell;
+		if (nNewSize !== this._cache.size()) {
+			this._cache.size(nNewSize);
+			this._service.emit('options', {
+				cacheSize: nNewSize
+			});
+			this.log('adjusting cache size :', nNewSize);
+		}
+	}
+
 	view(oCanvas, x, y) {
+		this.adjustCacheSize(oCanvas);
 		if (!this._fetching) {
 			this._fetching = true;
 			this.preloadTiles(x, y, oCanvas.width, oCanvas.height).then(({tileFetched, timeElapsed}) => {
@@ -248,8 +289,10 @@ class PirateWorld {
 			}
 			yTilePix += cellSize;
 		}
-		n100 = 100;
-        this.progress(n100);
+		if (nTileFetched) {
+			n100 = 100;
+			this.progress(n100);
+		}
 		return {
 			tileFetched: nTileFetched,
 			timeElapsed: (performance.now() - tStart | 0) / 1000
@@ -451,7 +494,6 @@ const GRADIENT = __webpack_require__(/*! ./palette */ "./examples/treasure-map/p
 
 class WorldGenerator {
 	constructor(options) {
-	    this._options = options;
 		let pcell = new Perlin();
 		pcell.size(options.cellSize / options.scale);
 		pcell.seed(options.seed);
@@ -469,10 +511,14 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-		this._cache = new o876.structures.Cache2D({size: 64});
+		this._cache = new o876.structures.Cache2D({size: options.cacheSize || 64});
 		this._hexSize = options.hexSize || 16;
 		this._hexSpacing = options.hexSpacing || 6;
 		this._scale = options.scale || 1;
+	}
+
+	options(options) {
+		this._cache.size(options.cacheSize || 64);
 	}
 
 	static _mod(n, d) {
@@ -960,6 +1006,7 @@ module.exports = WorldTile;
 const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
 const PirateWorld = __webpack_require__(/*! ./PirateWorld */ "./examples/treasure-map/PirateWorld.js");
 const CanvasHelper = __webpack_require__(/*! ./CanvasHelper */ "./examples/treasure-map/CanvasHelper.js");
+const Indicators = __webpack_require__(/*! ./Indicators */ "./examples/treasure-map/Indicators.js");
 
 
 function kbHandler(event) {
@@ -992,19 +1039,10 @@ function kbHandler(event) {
 
 let pwrunner, X, Y, bFreeze = false;
 
-function progress(n100) {
-    let elemProgress = document.querySelector('#progress-tiles');
-    let elemProgressValue = elemProgress.querySelector('span.value');
-    if (elemProgress.classList.contains('hidden')) {
-        elemProgress.classList.remove('hidden');
-	}
-	elemProgressValue.innerText = n100.toString() + '%';
-    if (n100 === 100 && !elemProgress.classList.contains('hidden')) {
-        elemProgress.classList.add('hidden');
-    }
-}
-
 function main4() {
+	window.addEventListener('keydown', kbHandler);
+	window.addEventListener('resize', windowResize);
+	windowResize();
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
 		hexSize: 16,
@@ -1014,9 +1052,10 @@ function main4() {
 		drawGrid: true,
 		drawCoords: true,
 		service: '../../dist/examples-treasure-map-service.js',
-		progress
+		progress: Indicators.progress,
+		verbose: true
 	});
-	window.addEventListener('keydown', kbHandler);
+
 	window.pwrunner = pwrunner;
 	X = 27 * 256;
 	Y = 0;
@@ -1097,7 +1136,13 @@ function main2() {
     fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
 }
 
-
+function windowResize() {
+	let oCanvas = document.querySelector('canvas.world');
+	let hWin = window.innerHeight;
+	let wWin = window.innerWidth;
+	oCanvas.height = hWin - 64;
+	oCanvas.width = wWin - 64;
+}
 
 window.addEventListener('load', main4);
 

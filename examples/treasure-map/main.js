@@ -1,6 +1,7 @@
 const o876 = require('../../src');
 const PirateWorld = require('./PirateWorld');
 const CanvasHelper = require('./CanvasHelper');
+const Indicators = require('./Indicators');
 
 
 function kbHandler(event) {
@@ -33,19 +34,10 @@ function kbHandler(event) {
 
 let pwrunner, X, Y, bFreeze = false;
 
-function progress(n100) {
-    let elemProgress = document.querySelector('#progress-tiles');
-    let elemProgressValue = elemProgress.querySelector('span.value');
-    if (elemProgress.classList.contains('hidden')) {
-        elemProgress.classList.remove('hidden');
-	}
-	elemProgressValue.innerText = n100.toString() + '%';
-    if (n100 === 100 && !elemProgress.classList.contains('hidden')) {
-        elemProgress.classList.add('hidden');
-    }
-}
-
 function main4() {
+	window.addEventListener('keydown', kbHandler);
+	window.addEventListener('resize', windowResize);
+	windowResize();
 	pwrunner = this.world = new PirateWorld({
 		cellSize: 256,
 		hexSize: 16,
@@ -55,9 +47,10 @@ function main4() {
 		drawGrid: true,
 		drawCoords: true,
 		service: '../../dist/examples-treasure-map-service.js',
-		progress
+		progress: Indicators.progress,
+		verbose: true
 	});
-	window.addEventListener('keydown', kbHandler);
+
 	window.pwrunner = pwrunner;
 	X = 27 * 256;
 	Y = 0;
@@ -138,6 +131,12 @@ function main2() {
     fetchAndRenderTiles(cvs, 0, 0).then(() => console.log('done.'));
 }
 
-
+function windowResize() {
+	let oCanvas = document.querySelector('canvas.world');
+	let hWin = window.innerHeight;
+	let wWin = window.innerWidth;
+	oCanvas.height = hWin - 64;
+	oCanvas.width = wWin - 64;
+}
 
 window.addEventListener('load', main4);

@@ -4,7 +4,6 @@ const GRADIENT = require('./palette');
 
 class WorldGenerator {
 	constructor(options) {
-	    this._options = options;
 		let pcell = new Perlin();
 		pcell.size(options.cellSize / options.scale);
 		pcell.seed(options.seed);
@@ -22,10 +21,14 @@ class WorldGenerator {
 		// les cluster, détail jusqu'au cellule
 		// défini l'élévation de base de la cellule correspondante
 		this._perlinCluster = pclust;
-		this._cache = new o876.structures.Cache2D({size: 64});
+		this._cache = new o876.structures.Cache2D({size: options.cacheSize || 64});
 		this._hexSize = options.hexSize || 16;
 		this._hexSpacing = options.hexSpacing || 6;
 		this._scale = options.scale || 1;
+	}
+
+	options(options) {
+		this._cache.size(options.cacheSize || 64);
 	}
 
 	static _mod(n, d) {

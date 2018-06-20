@@ -3,10 +3,20 @@ html, body {
     font-size: 14px;
 }
 
+figure.world-container {
+    text-align: center;
+}
+
+figure.world-container figcaption {
+    text-align: left;
+    margin-left: 3em;
+}
+
 canvas.world {
     padding: 0;
     box-shadow: 0 0 8em rgba(200, 120, 55, 1);
 }
+
 
 .indicator {
     color: rgb(200, 120, 55);

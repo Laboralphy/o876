@@ -39,7 +39,23 @@ class PirateWorld {
 		}
 	}
 
+	adjustCacheSize(oCanvas) {
+		let w = oCanvas.width;
+		let h = oCanvas.height;
+		let wCell = Math.ceil(w / this.cellSize()) + (this.oWorldDef.preload << 1) + 1;
+		let hCell = Math.ceil(h / this.cellSize()) + (this.oWorldDef.preload << 1) + 1;
+		let nNewSize = wCell * hCell;
+		if (nNewSize !== this._cache.size()) {
+			this._cache.size(nNewSize);
+			this._service.emit('options', {
+				cacheSize: nNewSize
+			});
+			this.log('adjusting cache size :', nNewSize);
+		}
+	}
+
 	view(oCanvas, x, y) {
+		this.adjustCacheSize(oCanvas);
 		if (!this._fetching) {
 			this._fetching = true;
 			this.preloadTiles(x, y, oCanvas.width, oCanvas.height).then(({tileFetched, timeElapsed}) => {
@@ -104,8 +120,10 @@ class PirateWorld {
 			}
 			yTilePix += cellSize;
 		}
-		n100 = 100;
-        this.progress(n100);
+		if (nTileFetched) {
+			n100 = 100;
+			this.progress(n100);
+		}
 		return {
 			tileFetched: nTileFetched,
 			timeElapsed: (performance.now() - tStart | 0) / 1000

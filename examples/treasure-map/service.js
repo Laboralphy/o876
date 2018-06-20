@@ -12,6 +12,10 @@ class Service {
 		    this._generator = new WorldGenerator(options);
         });
 
+		io.on('options', (options) => {
+			this._generator.options(options);
+		});
+
         io.on('tile', ({x, y}, cb) => {
             cb({tile: this._generator.computeCellCache(x, y)});
         });
