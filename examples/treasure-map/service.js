@@ -1,11 +1,11 @@
 const WorldGenerator = require('./WorldGenerator');
-const ServiceWorkerIO = require('./ServiceWorkerIO');
+const Webworkio = require('./Webworkio');
 
 
 class Service {
     constructor() {
         this._generator = null;
-        let io = new ServiceWorkerIO();
+        let io = new Webworkio();
 		io.service();
 
 		io.on('init', (options) => {

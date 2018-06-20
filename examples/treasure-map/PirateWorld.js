@@ -1,6 +1,6 @@
 const WorldGenerator = require('./WorldGenerator');
 const o876 = require('../../src');
-const ServiceWorkerIO = require('./ServiceWorkerIO');
+const Webworkio = require('./Webworkio');
 const CanvasHelper = require('./CanvasHelper');
 const WorldTile = require('./WorldTile');
 
@@ -10,9 +10,9 @@ class PirateWorld {
 	constructor(wgd) {
 		this.oWorldDef = wgd;
 		this._cache = new o876.structures.Cache2D({size: 64});
-        this._service = new ServiceWorkerIO();
-        this._service.service(wgd.service);
-        this._service.emit('init', {
+        this._wwio = new Webworkio();
+        this._wwio.service(wgd.service);
+        this._wwio.emit('init', {
         	seed: wgd.seed,
 			cellSize: wgd.cellSize,
 			clusterSize: CLUSTER_SIZE,
@@ -42,12 +42,12 @@ class PirateWorld {
 	adjustCacheSize(oCanvas) {
 		let w = oCanvas.width;
 		let h = oCanvas.height;
-		let wCell = Math.ceil(w / this.cellSize()) + (this.oWorldDef.preload << 1) + 1;
-		let hCell = Math.ceil(h / this.cellSize()) + (this.oWorldDef.preload << 1) + 1;
-		let nNewSize = wCell * hCell;
+		let cellSize = this.cellSize();
+		PirateWorld.getViewPointMetrics(this._xView, this._yView, w, h, cellSize, this.oWorldDef.preload);
+		let nNewSize = (m.yTo - m.yFrom + 2) * (m.xTo - m.xFrom + 2);
 		if (nNewSize !== this._cache.size()) {
 			this._cache.size(nNewSize);
-			this._service.emit('options', {
+			this._wwio.emit('options', {
 				cacheSize: nNewSize
 			});
 			this.log('adjusting cache size :', nNewSize);
@@ -85,7 +85,7 @@ class PirateWorld {
 			});
 			this._cache.push(x, y, oWorldTile).forEach(wt => !!wt && (typeof wt.free === 'function') && wt.free());
 			oWorldTile.lock();
-			this._service.emit('tile', {...oWorldTile.getCoords()}, result => {
+			this._wwio.emit('tile', {...oWorldTile.getCoords()}, result => {
 				oWorldTile.colormap = result.tile.colormap;
 				oWorldTile.physicmap = result.tile.physicmap;
 				oWorldTile.unlock();

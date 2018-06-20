@@ -169,7 +169,7 @@ module.exports = Indicators;
 
 const WorldGenerator = __webpack_require__(/*! ./WorldGenerator */ "./examples/treasure-map/WorldGenerator.js");
 const o876 = __webpack_require__(/*! ../../src */ "./src/index.js");
-const ServiceWorkerIO = __webpack_require__(/*! ./ServiceWorkerIO */ "./examples/treasure-map/ServiceWorkerIO.js");
+const Swio = __webpack_require__(/*! ./Swio */ "./examples/treasure-map/Swio.js");
 const CanvasHelper = __webpack_require__(/*! ./CanvasHelper */ "./examples/treasure-map/CanvasHelper.js");
 const WorldTile = __webpack_require__(/*! ./WorldTile */ "./examples/treasure-map/WorldTile.js");
 
@@ -179,7 +179,7 @@ class PirateWorld {
 	constructor(wgd) {
 		this.oWorldDef = wgd;
 		this._cache = new o876.structures.Cache2D({size: 64});
-        this._service = new ServiceWorkerIO();
+        this._service = new Swio();
         this._service.service(wgd.service);
         this._service.emit('init', {
         	seed: wgd.seed,
@@ -361,17 +361,22 @@ module.exports = PirateWorld;
 
 /***/ }),
 
-/***/ "./examples/treasure-map/ServiceWorkerIO.js":
-/*!**************************************************!*\
-  !*** ./examples/treasure-map/ServiceWorkerIO.js ***!
-  \**************************************************/
+/***/ "./examples/treasure-map/Swio.js":
+/*!***************************************!*\
+  !*** ./examples/treasure-map/Swio.js ***!
+  \***************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
+/**
+ * This class will help creating service worker
+ * This class is use in both worker-side and script-side
+ *
+ *
+ */
 const EventManager = __webpack_require__(/*! events */ "./node_modules/events/events.js");
 
-
-class ServiceWorkerIO {
+class Swio {
 
 	constructor() {
 		this._callbacks = {};
@@ -402,9 +407,9 @@ class ServiceWorkerIO {
 	service(w) {
 		if (w) {
 			this._worker = new Worker(w);
-			this._worker.addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
+			this._worker.addEventListener('message', event => this.messageReceived(Swio._decode(event.data)));
 		} else {
-			addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
+			addEventListener('message', event => this.messageReceived(Swio._decode(event.data)));
 		}
 	}
 
@@ -443,9 +448,9 @@ class ServiceWorkerIO {
 		}
 		this.log('emitting message', sEvent, packet);
 		if (this._worker) {
-			this._worker.postMessage(ServiceWorkerIO._encode(packet));
+			this._worker.postMessage(Swio._encode(packet));
 		} else {
-			postMessage(ServiceWorkerIO._encode(packet));
+			postMessage(Swio._encode(packet));
 		}
 	}
 
@@ -477,7 +482,7 @@ class ServiceWorkerIO {
 	}
 }
 
-module.exports = ServiceWorkerIO;
+module.exports = Swio;
 
 /***/ }),
 

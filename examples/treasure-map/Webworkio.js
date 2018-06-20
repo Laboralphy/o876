@@ -1,7 +1,12 @@
+/**
+ * This class will help creating service worker
+ * This class is use in both worker-side and script-side
+ *
+ *
+ */
 const EventManager = require('events');
 
-
-class ServiceWorkerIO {
+class Webworkio {
 
 	constructor() {
 		this._callbacks = {};
@@ -32,9 +37,9 @@ class ServiceWorkerIO {
 	service(w) {
 		if (w) {
 			this._worker = new Worker(w);
-			this._worker.addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
+			this._worker.addEventListener('message', event => this.messageReceived(Webworkio._decode(event.data)));
 		} else {
-			addEventListener('message', event => this.messageReceived(ServiceWorkerIO._decode(event.data)));
+			addEventListener('message', event => this.messageReceived(Webworkio._decode(event.data)));
 		}
 	}
 
@@ -73,9 +78,9 @@ class ServiceWorkerIO {
 		}
 		this.log('emitting message', sEvent, packet);
 		if (this._worker) {
-			this._worker.postMessage(ServiceWorkerIO._encode(packet));
+			this._worker.postMessage(Webworkio._encode(packet));
 		} else {
-			postMessage(ServiceWorkerIO._encode(packet));
+			postMessage(Webworkio._encode(packet));
 		}
 	}
 
@@ -107,4 +112,4 @@ class ServiceWorkerIO {
 	}
 }
 
-module.exports = ServiceWorkerIO;
+module.exports = Webworkio;
