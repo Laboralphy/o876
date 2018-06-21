@@ -463,36 +463,36 @@ describe('o876', function() {
         describe('#array', function() {
             it('should return the same array', function() {
                 let a = ['a', 'b', 'c'];
-                let b = o876.SpellBook.array(a);
+                let b = o876.ArrayHelper.array(a);
                 expect(a).toEqual(b);
                 expect(a === b).toBeTruthy();
             });
             it('should convert a simple object', function() {
                 let aSource = {3:'t', 2:'o', 1: 'i', 0:'y'};
-                expect(o876.SpellBook.array(aSource))
+                expect(o876.ArrayHelper.array(aSource))
                     .toEqual(['y', 'i', 'o', 't']);
             });
             it('should convert a simple object with quoted keys', function() {
                 let aSource = {'3':'t', '2':'o', '1':'i', '0':'y'};
-                expect(o876.SpellBook.array(aSource))
+                expect(o876.ArrayHelper.array(aSource))
                     .toEqual(['y', 'i', 'o', 't']);
             });
             it('should convert an array like object', function() {
                 let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 4};
-                expect(o876.SpellBook.array(aSource)).toEqual([111, 222, 333, 444]);
+                expect(o876.ArrayHelper.array(aSource)).toEqual([111, 222, 333, 444]);
             });
             it('should fail to convert an array like object (bad length)', function() {
                 let aSource = {0:111, 1:222, 2:333, 3:444, 'length': 5};
-                expect(o876.SpellBook.array(aSource)).toBeFalsy();
+                expect(o876.ArrayHelper.array(aSource)).toBeFalsy();
             });
             it('should fail to convert an array like object (missing key)', function() {
                 let aSource = {0:111, 1:222, 2:333, 4:444};
-                expect(o876.SpellBook.array(aSource)).toBeFalsy();
+                expect(o876.ArrayHelper.array(aSource)).toBeFalsy();
             });
             it('should convert argument', function() {
                 let a;
                 (function() {
-                    a = o876.SpellBook.array(arguments);
+                    a = o876.ArrayHelper.array(arguments);
                 })(4, 5, 6);
                 expect(a).toEqual([4, 5, 6]);
             });
@@ -607,7 +607,7 @@ describe('o876', function() {
 describe('#name generator', function() {
     describe('#indexListProb3', function() {
         it('should generate a coherent registry', function() {
-            let u = new o876.algorithms.UnivGeneList();
+            let u = new o876.algorithms.NameCrafter();
             let r = u.indexListProb([
                 'albator',
                 'albatruc',
@@ -626,7 +626,7 @@ describe('#name generator', function() {
         });
 
         it('should generate a coherent registry final', function() {
-            let u = new o876.algorithms.UnivGeneList();
+            let u = new o876.algorithms.NameCrafter();
             let r = u.indexListFinal([
                 'albator',
                 'albatruc',

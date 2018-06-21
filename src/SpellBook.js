@@ -2,75 +2,9 @@
  * Created by ralphy on 07/09/17.
  */
 
+const ArrayHelper = require('./ArrayHelper');
+
 class SpellBook {
-    /**
-     * Turns an array-like-structure into an array (a real one)
-     */
-    static array(subject) {
-        const LENGTH_PROPERTY = 'length';
-        if (Array.isArray(subject)) {
-            return subject;
-        }
-        if (typeof subject === 'object') {
-            // is there a length property ?
-            let bLength = LENGTH_PROPERTY in subject;
-            // extracting keys minus "length" property
-            let aKeys = Object
-                .keys(subject)
-                .filter(k => k !== LENGTH_PROPERTY);
-            if (aKeys.some(k => isNaN(k))) {
-                return false;
-            }
-            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
-                return false;
-            }
-            if (aKeys
-                .map(k => parseInt(k))
-                .sort((k1, k2) => k1 - k2)
-                .every((k, i) => k === i)) {
-                return bLength
-                    ? Array.prototype.slice.call(subject, 0)
-                    : aKeys.map(k => subject[k]);
-            }
-        }
-        return false;
-    }
-
-    static catsortArray(aInput, {cat, sort = null}) {
-    	let oOutput = {};
-    	aInput.forEach(e => {
-    		let sCat = cat(e);
-    		if (!(sCat in oOutput)) {
-    			oOutput[sCat] = [];
-			}
-			oOutput[sCat].push(e);
-		});
-    	if (typeof sort === 'function') {
-			for (let sCat in oOutput) {
-				oOutput[sCat] = oOutput[sCat].sort(sort)
-			}
-		}
-		return oOutput;
-	}
-
-	/**
-	 * élimine tout les doubloons de l'array spécifié. Ne modifie par l'array, mais renvoie un nouveau tableau
-	 * @param aArray
-	 * @returns {*}
-	 */
-	static uniqArray(aArray) {
-    	return aArray.filter((x, i, a) => a.indexOf(x) === i)
-	}
-
-    /**
-     * quickly clones an array into a new one
-     * this method is mainly used for turning "arguments" pseudo array into a real array
-     * @param a {Array|Object}
-     * @return {Array}
-     */
-    static cloneArray(a) {
-        return Array.prototype.slice.call(a, 0)
-    }
 
 	/**
 	 * Renvoie le type d'une variable (différencie les Tableau Array des objet}
@@ -116,7 +50,7 @@ class SpellBook {
      * @return {string}
      */
     static typeMap(aArgs) {
-		return this.cloneArray(aArgs).map(function(x) {
+		return ArrayHelper.clone(aArgs).map(function(x) {
 			return SpellBook.typeof(x);
 		}).join('');
     }

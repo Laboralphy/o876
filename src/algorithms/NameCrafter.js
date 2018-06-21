@@ -3,12 +3,12 @@
  */
 const Random = require('../Random');
 
-class UnivGeneList {
+class NameCrafter {
 
     constructor() {
         this._random = new Random();
         this._registries = {};
-        this._exclusions = [];
+        this.MAX_TRIES = 1024;
     }
 
     /**
@@ -32,10 +32,9 @@ class UnivGeneList {
      * @return {*}
      */
     indexListProb(aList, n) {
-        const ALPHA = ('abcdefghijklmnopqrstuvwxyz').split('');
         let oRegistry = {};
         aList.forEach(word => {
-            word = word.replace(/[^a-z]+/g, '');
+            word = word.replace(/[^a-z]+/gi, '');
             if (word.length > n) {
                 for (let i = 0; i < word.length - n; ++i) {
                     let letter = word.charAt(i + n);
@@ -63,7 +62,7 @@ class UnivGeneList {
         if (aList.length === 0) {
             throw new Error('nothing to index, the list is empty');
         }
-        aList = aList.filter(word => !!word);
+        this._list = aList = aList.filter(word => !!word);
         this._registries = {
             initial: this.indexListInitial(aList, nPatternLength),
             prob: this.indexListProb(aList, nPatternLength),
@@ -78,39 +77,40 @@ class UnivGeneList {
         return regInitial && regProb && regFinal;
     }
 
-    exclude(aList) {
-        this._exclusions = this._exclusions.concat(aList);
-    }
-
     generate(nLength, nPatternLength) {
-        let random = this._random;
-        let regInitial = this._registries.initial;
-        let regProb = this._registries.prob;
-        let regFinal = this._registries.final;
-        if (!this.hasBeenIndexed()) {
-            throw new Error('you must initialize registries by indexing a list');
-        }
-        let sPattern = this._random.randPick(regInitial);
-        let sResult = sPattern;
-        while (sResult.length < (nLength - 1)) {
-            let p = regProb[sPattern] ? random.randPick(regProb[sPattern]) : '';
-            if (p) {
-                sResult += p;
-                sPattern = sResult.substr(-nPatternLength);
-            } else {
-                return '';
+		let random = this._random;
+		let regInitial = this._registries.initial;
+		let regProb = this._registries.prob;
+		let regFinal = this._registries.final;
+		if (!this.hasBeenIndexed()) {
+			throw new Error('you must initialize registries by indexing a list');
+		}
+		let nTries = this.MAX_TRIES;
+		let nFails = 0;
+        while(nFails < nTries) {
+			let sPattern = this._random.randPick(regInitial);
+			let sResult = sPattern;
+			while (sResult.length < (nLength - 1)) {
+				let p = regProb[sPattern] ? random.randPick(regProb[sPattern]) : '';
+				if (p) {
+					sResult += p;
+					sPattern = sResult.substr(-nPatternLength);
+				} else {
+					sPattern = '';
+				    break;
+                }
+			}
+            if (regFinal[sPattern]) {
+				sResult += random.randPick(regFinal[sPattern]);
+			} else {
+				continue;
+			}
+			if (!this._list.includes(sResult)) {
+				return sResult;
             }
-        }
-        if (regFinal[sPattern]) {
-            sResult += random.randPick(regFinal[sPattern]);
-        } else if (regProb[sPattern]) {
-            sResult += random.randPick(regProb[sPattern]);
-        }
-        if (this._exclusions.includes(sResult)) {
-            return '';
-        }
-        return sResult;
+		}
+		throw new Error('could not generate any name after ' + this.MAX_TRIES + ' tries... the initial list may be two small...');
     }
 }
 
-module.exports = UnivGeneList;
+module.exports = NameCrafter;

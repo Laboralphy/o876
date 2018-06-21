@@ -3,6 +3,7 @@
  */
 
 const SB = require('./SpellBook');
+const AH = require('./ArrayHelper');
 /**
  * this class is similar to the node.js Emitter system
  * it emits events
@@ -28,7 +29,7 @@ module.exports = class Emitter {
      * @return {*}
      */
     trigger(sEvent, params) {
-        let aArgs = SB.array(arguments);
+        let aArgs = AH.array(arguments);
         aArgs.shift();
         let eh = this._oEventHandlers;
         if (sEvent in eh) {

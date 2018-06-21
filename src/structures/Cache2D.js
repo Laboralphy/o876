@@ -33,18 +33,27 @@ class Cache2D {
 		}
 	}
 
-	push(x, y, payload) {
+	trim() {
 		let c = this._cache;
-		if (!this.getMetaData(x, y)) {
-			c.push({
-				x, y, payload
-			});
-		}
+		c.sort((a, b) => b.n - a.n);
 		let aDelete = [];
 		while (c.length > this._cacheSize) {
 			aDelete.push(c.shift());
 		}
 		return aDelete;
+	}
+
+	push(x, y, payload) {
+		let c = this._cache;
+		let md = this.getMetaData(x, y);
+		if (!md) {
+			c.push({
+				x, y, n: 0, payload
+			});
+		} else {
+			++md.n;
+		}
+		return this.trim();
 	}
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "o876",
   "version": "1.0.0",
-  "description": "a set of tools, algorithms, and structures, useful for creating video games.",
+  "description": "A set of tools, algorithms, and structures, useful for creating video games.",
   "main": "src/index.js",
   "directories": {
     "example": "examples",

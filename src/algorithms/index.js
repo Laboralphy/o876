@@ -3,7 +3,7 @@ const Easing = require('./Easing');
 const Perlin = require('./Perlin');
 const SquareSpiral = require('./SquareSpiral');
 const Astar = require('./Astar');
-const UnivGeneList = require('./UnivGeneList');
+const NameCrafter = require('./NameCrafter');
 
 module.exports = {
     Bresenham,
@@ -11,5 +11,5 @@ module.exports = {
     Perlin,
     SquareSpiral,
     Astar,
-    UnivGeneList
+	NameCrafter
 };

@@ -86,6 +86,89 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./src/ArrayHelper.js":
+/*!****************************!*\
+  !*** ./src/ArrayHelper.js ***!
+  \****************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+class ArrayHelper {
+	/**
+	 * Turns an array-like-structure into an array (a real one)
+	 */
+	static array(subject) {
+		const LENGTH_PROPERTY = 'length';
+		if (Array.isArray(subject)) {
+			return subject;
+		}
+		if (typeof subject === 'object') {
+			// is there a length property ?
+			let bLength = LENGTH_PROPERTY in subject;
+			// extracting keys minus "length" property
+			let aKeys = Object
+				.keys(subject)
+				.filter(k => k !== LENGTH_PROPERTY);
+			if (aKeys.some(k => isNaN(k))) {
+				return false;
+			}
+			if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
+				return false;
+			}
+			if (aKeys
+				.map(k => parseInt(k))
+				.sort((k1, k2) => k1 - k2)
+				.every((k, i) => k === i)) {
+				return bLength
+					? Array.prototype.slice.call(subject, 0)
+					: aKeys.map(k => subject[k]);
+			}
+		}
+		return false;
+	}
+
+	static catsort(aInput, {cat, sort = null}) {
+		let oOutput = {};
+		aInput.forEach(e => {
+			let sCat = cat(e);
+			if (!(sCat in oOutput)) {
+				oOutput[sCat] = [];
+			}
+			oOutput[sCat].push(e);
+		});
+		if (typeof sort === 'function') {
+			for (let sCat in oOutput) {
+				oOutput[sCat] = oOutput[sCat].sort(sort)
+			}
+		}
+		return oOutput;
+	}
+
+	/**
+	 * Remove all duplicate entries in the specified array. This will not modify the array ; a new one
+	 * @param aArray
+	 * @returns {*}
+	 */
+	static uniq(aArray) {
+		return aArray.filter((x, i, a) => a.indexOf(x) === i)
+	}
+
+	/**
+	 * quickly clones an array into a new one
+	 * this method is mainly used for turning "arguments" pseudo array into a real array
+	 * @param a {Array|Object}
+	 * @return {Array}
+	 */
+	static clone(a) {
+		return Array.prototype.slice.call(a, 0)
+	}
+
+}
+
+module.exports = ArrayHelper;
+
+/***/ }),
+
 /***/ "./src/Emitter.js":
 /*!************************!*\
   !*** ./src/Emitter.js ***!
@@ -98,6 +181,7 @@
  */
 
 const SB = __webpack_require__(/*! ./SpellBook */ "./src/SpellBook.js");
+const AH = __webpack_require__(/*! ./ArrayHelper */ "./src/ArrayHelper.js");
 /**
  * this class is similar to the node.js Emitter system
  * it emits events
@@ -123,7 +207,7 @@ module.exports = class Emitter {
      * @return {*}
      */
     trigger(sEvent, params) {
-        let aArgs = SB.array(arguments);
+        let aArgs = AH.array(arguments);
         aArgs.shift();
         let eh = this._oEventHandlers;
         if (sEvent in eh) {
@@ -746,81 +830,15 @@ module.exports = class Random {
   !*** ./src/SpellBook.js ***!
   \**************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /**
  * Created by ralphy on 07/09/17.
  */
 
+const ArrayHelper = __webpack_require__(/*! ./ArrayHelper */ "./src/ArrayHelper.js");
+
 class SpellBook {
-    /**
-     * Turns an array-like-structure into an array (a real one)
-     */
-    static array(subject) {
-        const LENGTH_PROPERTY = 'length';
-        if (Array.isArray(subject)) {
-            return subject;
-        }
-        if (typeof subject === 'object') {
-            // is there a length property ?
-            let bLength = LENGTH_PROPERTY in subject;
-            // extracting keys minus "length" property
-            let aKeys = Object
-                .keys(subject)
-                .filter(k => k !== LENGTH_PROPERTY);
-            if (aKeys.some(k => isNaN(k))) {
-                return false;
-            }
-            if ((bLength) && (subject[LENGTH_PROPERTY] !== aKeys.length)) {
-                return false;
-            }
-            if (aKeys
-                .map(k => parseInt(k))
-                .sort((k1, k2) => k1 - k2)
-                .every((k, i) => k === i)) {
-                return bLength
-                    ? Array.prototype.slice.call(subject, 0)
-                    : aKeys.map(k => subject[k]);
-            }
-        }
-        return false;
-    }
-
-    static catsortArray(aInput, {cat, sort = null}) {
-    	let oOutput = {};
-    	aInput.forEach(e => {
-    		let sCat = cat(e);
-    		if (!(sCat in oOutput)) {
-    			oOutput[sCat] = [];
-			}
-			oOutput[sCat].push(e);
-		});
-    	if (typeof sort === 'function') {
-			for (let sCat in oOutput) {
-				oOutput[sCat] = oOutput[sCat].sort(sort)
-			}
-		}
-		return oOutput;
-	}
-
-	/**
-	 * élimine tout les doubloons de l'array spécifié. Ne modifie par l'array, mais renvoie un nouveau tableau
-	 * @param aArray
-	 * @returns {*}
-	 */
-	static uniqArray(aArray) {
-    	return aArray.filter((x, i, a) => a.indexOf(x) === i)
-	}
-
-    /**
-     * quickly clones an array into a new one
-     * this method is mainly used for turning "arguments" pseudo array into a real array
-     * @param a {Array|Object}
-     * @return {Array}
-     */
-    static cloneArray(a) {
-        return Array.prototype.slice.call(a, 0)
-    }
 
 	/**
 	 * Renvoie le type d'une variable (différencie les Tableau Array des objet}
@@ -866,7 +884,7 @@ class SpellBook {
      * @return {string}
      */
     static typeMap(aArgs) {
-		return this.cloneArray(aArgs).map(function(x) {
+		return ArrayHelper.clone(aArgs).map(function(x) {
 			return SpellBook.typeof(x);
 		}).join('');
     }
@@ -1596,6 +1614,132 @@ module.exports = class Easing {
 
 /***/ }),
 
+/***/ "./src/algorithms/NameCrafter.js":
+/*!***************************************!*\
+  !*** ./src/algorithms/NameCrafter.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * A partir d'une liste de mots, cette classe peut générer de nouveaux mots ressemblant à ceux de la liste
+ */
+const Random = __webpack_require__(/*! ../Random */ "./src/Random.js");
+
+class NameCrafter {
+
+    constructor() {
+        this._random = new Random();
+        this._registries = {};
+        this.MAX_TRIES = 1024;
+    }
+
+    /**
+     * Ajoute une lettre à la liste des lettres du pattern du registre spécifié
+     * @param oRegistry
+     * @param pattern
+     * @param letter
+     */
+    pushLetter(oRegistry, pattern, letter) {
+        if (!(pattern in oRegistry)) {
+            oRegistry[pattern] = letter;
+        } else {
+            oRegistry[pattern] += letter;
+        }
+    }
+
+    /**
+     * Chargement d'une liste et indexation
+     * @param aList {string[]}
+     * @param n {number}
+     * @return {*}
+     */
+    indexListProb(aList, n) {
+        let oRegistry = {};
+        aList.forEach(word => {
+            word = word.replace(/[^a-z]+/gi, '');
+            if (word.length > n) {
+                for (let i = 0; i < word.length - n; ++i) {
+                    let letter = word.charAt(i + n);
+                    let pattern = word.substr(i, n);
+                    this.pushLetter(oRegistry, pattern, letter);
+                }
+            }
+        });
+        return oRegistry;
+    }
+
+    indexListInitial(aList, n) {
+        return aList.map(word => word.substr(0, n))
+    }
+
+    indexListFinal(aList, n) {
+        let oRegistry = {};
+        aList.forEach(word => {
+            this.pushLetter(oRegistry, word.substr(-n - 1, n), word.substr(-1));
+        });
+        return oRegistry;
+    }
+
+    indexList(aList, nPatternLength) {
+        if (aList.length === 0) {
+            throw new Error('nothing to index, the list is empty');
+        }
+        this._list = aList = aList.filter(word => !!word);
+        this._registries = {
+            initial: this.indexListInitial(aList, nPatternLength),
+            prob: this.indexListProb(aList, nPatternLength),
+            final: this.indexListFinal(aList, nPatternLength)
+        };
+    }
+
+    hasBeenIndexed() {
+        let regInitial = this._registries.initial;
+        let regProb = this._registries.prob;
+        let regFinal = this._registries.final;
+        return regInitial && regProb && regFinal;
+    }
+
+    generate(nLength, nPatternLength) {
+		let random = this._random;
+		let regInitial = this._registries.initial;
+		let regProb = this._registries.prob;
+		let regFinal = this._registries.final;
+		if (!this.hasBeenIndexed()) {
+			throw new Error('you must initialize registries by indexing a list');
+		}
+		let nTries = this.MAX_TRIES;
+		let nFails = 0;
+        while(nFails < nTries) {
+			let sPattern = this._random.randPick(regInitial);
+			let sResult = sPattern;
+			while (sResult.length < (nLength - 1)) {
+				let p = regProb[sPattern] ? random.randPick(regProb[sPattern]) : '';
+				if (p) {
+					sResult += p;
+					sPattern = sResult.substr(-nPatternLength);
+				} else {
+					sPattern = '';
+				    break;
+                }
+			}
+            if (regFinal[sPattern]) {
+				sResult += random.randPick(regFinal[sPattern]);
+			} else {
+				continue;
+			}
+			if (!this._list.includes(sResult)) {
+				return sResult;
+            }
+		}
+		throw new Error('could not generate any name after ' + this.MAX_TRIES + ' tries... the initial list may be two small...');
+    }
+}
+
+module.exports = NameCrafter;
+
+/***/ }),
+
 /***/ "./src/algorithms/Perlin.js":
 /*!**********************************!*\
   !*** ./src/algorithms/Perlin.js ***!
@@ -2002,132 +2146,6 @@ module.exports = class SquareSpiral {
 
 /***/ }),
 
-/***/ "./src/algorithms/UnivGeneList.js":
-/*!****************************************!*\
-  !*** ./src/algorithms/UnivGeneList.js ***!
-  \****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * A partir d'une liste de mots, cette classe peut générer de nouveaux mots ressemblant à ceux de la liste
- */
-const Random = __webpack_require__(/*! ../Random */ "./src/Random.js");
-
-class UnivGeneList {
-
-    constructor() {
-        this._random = new Random();
-        this._registries = {};
-        this._exclusions = [];
-    }
-
-    /**
-     * Ajoute une lettre à la liste des lettres du pattern du registre spécifié
-     * @param oRegistry
-     * @param pattern
-     * @param letter
-     */
-    pushLetter(oRegistry, pattern, letter) {
-        if (!(pattern in oRegistry)) {
-            oRegistry[pattern] = letter;
-        } else {
-            oRegistry[pattern] += letter;
-        }
-    }
-
-    /**
-     * Chargement d'une liste et indexation
-     * @param aList {string[]}
-     * @param n {number}
-     * @return {*}
-     */
-    indexListProb(aList, n) {
-        const ALPHA = ('abcdefghijklmnopqrstuvwxyz').split('');
-        let oRegistry = {};
-        aList.forEach(word => {
-            word = word.replace(/[^a-z]+/g, '');
-            if (word.length > n) {
-                for (let i = 0; i < word.length - n; ++i) {
-                    let letter = word.charAt(i + n);
-                    let pattern = word.substr(i, n);
-                    this.pushLetter(oRegistry, pattern, letter);
-                }
-            }
-        });
-        return oRegistry;
-    }
-
-    indexListInitial(aList, n) {
-        return aList.map(word => word.substr(0, n))
-    }
-
-    indexListFinal(aList, n) {
-        let oRegistry = {};
-        aList.forEach(word => {
-            this.pushLetter(oRegistry, word.substr(-n - 1, n), word.substr(-1));
-        });
-        return oRegistry;
-    }
-
-    indexList(aList, nPatternLength) {
-        if (aList.length === 0) {
-            throw new Error('nothing to index, the list is empty');
-        }
-        aList = aList.filter(word => !!word);
-        this._registries = {
-            initial: this.indexListInitial(aList, nPatternLength),
-            prob: this.indexListProb(aList, nPatternLength),
-            final: this.indexListFinal(aList, nPatternLength)
-        };
-    }
-
-    hasBeenIndexed() {
-        let regInitial = this._registries.initial;
-        let regProb = this._registries.prob;
-        let regFinal = this._registries.final;
-        return regInitial && regProb && regFinal;
-    }
-
-    exclude(aList) {
-        this._exclusions = this._exclusions.concat(aList);
-    }
-
-    generate(nLength, nPatternLength) {
-        let random = this._random;
-        let regInitial = this._registries.initial;
-        let regProb = this._registries.prob;
-        let regFinal = this._registries.final;
-        if (!this.hasBeenIndexed()) {
-            throw new Error('you must initialize registries by indexing a list');
-        }
-        let sPattern = this._random.randPick(regInitial);
-        let sResult = sPattern;
-        while (sResult.length < (nLength - 1)) {
-            let p = regProb[sPattern] ? random.randPick(regProb[sPattern]) : '';
-            if (p) {
-                sResult += p;
-                sPattern = sResult.substr(-nPatternLength);
-            } else {
-                return '';
-            }
-        }
-        if (regFinal[sPattern]) {
-            sResult += random.randPick(regFinal[sPattern]);
-        } else if (regProb[sPattern]) {
-            sResult += random.randPick(regProb[sPattern]);
-        }
-        if (this._exclusions.includes(sResult)) {
-            return '';
-        }
-        return sResult;
-    }
-}
-
-module.exports = UnivGeneList;
-
-/***/ }),
-
 /***/ "./src/algorithms/index.js":
 /*!*********************************!*\
   !*** ./src/algorithms/index.js ***!
@@ -2140,7 +2158,7 @@ const Easing = __webpack_require__(/*! ./Easing */ "./src/algorithms/Easing.js")
 const Perlin = __webpack_require__(/*! ./Perlin */ "./src/algorithms/Perlin.js");
 const SquareSpiral = __webpack_require__(/*! ./SquareSpiral */ "./src/algorithms/SquareSpiral.js");
 const Astar = __webpack_require__(/*! ./Astar */ "./src/algorithms/Astar/index.js");
-const UnivGeneList = __webpack_require__(/*! ./UnivGeneList */ "./src/algorithms/UnivGeneList.js");
+const NameCrafter = __webpack_require__(/*! ./NameCrafter */ "./src/algorithms/NameCrafter.js");
 
 module.exports = {
     Bresenham,
@@ -2148,7 +2166,7 @@ module.exports = {
     Perlin,
     SquareSpiral,
     Astar,
-    UnivGeneList
+	NameCrafter
 };
 
 
@@ -2805,13 +2823,14 @@ module.exports = {
 
 const geometry = __webpack_require__(/*! ./geometry */ "./src/geometry/index.js");
 const algorithms = __webpack_require__(/*! ./algorithms */ "./src/algorithms/index.js");
+const collider = __webpack_require__(/*! ./collider */ "./src/collider/index.js");
+const structures = __webpack_require__(/*! ./structures */ "./src/structures/index.js");
+
 const SpellBook = __webpack_require__(/*! ./SpellBook */ "./src/SpellBook.js");
 const Random = __webpack_require__(/*! ./Random */ "./src/Random.js");
 const Rainbow = __webpack_require__(/*! ./Rainbow */ "./src/Rainbow.js");
 const Emitter = __webpack_require__(/*! ./Emitter */ "./src/Emitter.js");
-const collider = __webpack_require__(/*! ./collider */ "./src/collider/index.js");
-const structures = __webpack_require__(/*! ./structures */ "./src/structures/index.js");
-const Cache2D = __webpack_require__(/*! ./structures/Cache2D */ "./src/structures/Cache2D.js");
+const ArrayHelper = __webpack_require__(/*! ./ArrayHelper */ "./src/ArrayHelper.js");
 
 module.exports = {
 
@@ -2825,7 +2844,8 @@ module.exports = {
 	SpellBook,
 	Random,
 	Rainbow,
-	Emitter
+	Emitter,
+	ArrayHelper
 };
 
 /***/ }),
@@ -2872,18 +2892,27 @@ class Cache2D {
 		}
 	}
 
-	push(x, y, payload) {
+	trim() {
 		let c = this._cache;
-		if (!this.getMetaData(x, y)) {
-			c.push({
-				x, y, payload
-			});
-		}
+		c.sort((a, b) => b.n - a.n);
 		let aDelete = [];
 		while (c.length > this._cacheSize) {
 			aDelete.push(c.shift());
 		}
 		return aDelete;
+	}
+
+	push(x, y, payload) {
+		let c = this._cache;
+		let md = this.getMetaData(x, y);
+		if (!md) {
+			c.push({
+				x, y, n: 0, payload
+			});
+		} else {
+			++md.n;
+		}
+		return this.trim();
 	}
 }
 
