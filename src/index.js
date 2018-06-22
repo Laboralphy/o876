@@ -8,6 +8,7 @@ const Random = require('./Random');
 const Rainbow = require('./Rainbow');
 const Emitter = require('./Emitter');
 const ArrayHelper = require('./ArrayHelper');
+const PixelProcessor = require('./PixelProcessor');
 
 module.exports = {
 
@@ -22,5 +23,6 @@ module.exports = {
 	Random,
 	Rainbow,
 	Emitter,
-	ArrayHelper
+	ArrayHelper,
+	PixelProcessor
 };
