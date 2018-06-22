@@ -9,6 +9,7 @@ const Rainbow = require('./Rainbow');
 const Emitter = require('./Emitter');
 const ArrayHelper = require('./ArrayHelper');
 const PixelProcessor = require('./PixelProcessor');
+const CanvasHelper = require('./CanvasHelper');
 
 module.exports = {
 
@@ -24,5 +25,6 @@ module.exports = {
 	Rainbow,
 	Emitter,
 	ArrayHelper,
-	PixelProcessor
+	PixelProcessor,
+	CanvasHelper
 };
