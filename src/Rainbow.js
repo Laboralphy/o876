@@ -339,7 +339,7 @@ module.exports = class Rainbow {
 		let s2 = oData.r.toString() + ', ' + oData.g.toString() + ', ' + oData.b.toString();
 		if ('a' in oData) {
 			s1 += 'a';
-			s2 += ', ' + oData.a.toString();
+			s2 += ', ' + oData.a.toString() / 255;
 		}
 		return s1 + '(' + s2 + ')';
 	}
