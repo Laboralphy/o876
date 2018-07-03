@@ -3,8 +3,8 @@ const sb =  require('../SpellBook');
 
 class View {
 	constructor() {
-		this._offset = new Vector();
-		this._position = new Vector();
+		this._offset = new Vector(); // offset retranché à la position pour déterminer le point super-gauche
+		this._position = new Vector(); // position de la vue
 		this._width = 0;
 		this._height = 0;
 	}
@@ -35,3 +35,5 @@ class View {
 		return [p0, p1];
 	}
 }
+
+module.exports = View;

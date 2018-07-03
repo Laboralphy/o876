@@ -26,7 +26,7 @@ function main() {
 		let girl = upperCaseFirst(femaleNameGenerator.generate(Math.random() * 5 + 3 | 0, 3));
 		let city = upperCaseFirst(cityNameGenerator.generate(Math.random() * 5 + 5 | 0, 3));
 		if (boy && girl && city) {
-		    console.log(boy, 'and', girl, 'are living in', city);
+		    console.log(boy, 'et', girl, 'vivent dans la ville de "' + city + '"');
         }
     }
 }

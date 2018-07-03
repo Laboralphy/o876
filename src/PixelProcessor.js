@@ -15,7 +15,7 @@ class PixelProcessor {
                     g: (p >> 8) & 0xFF,
                     b: (p >> 16) & 0xFF,
                     a: (p >> 24) & 0xFF
-                }
+                };
             },
             width: w,
             height: h,
@@ -40,6 +40,9 @@ class PixelProcessor {
                 oPixelCtx.color.b = (p >> 16) && 0xFF;
                 oPixelCtx.color.a = (p >> 24) && 0xFF;
                 cb(oPixelCtx);
+                if (!oPixelCtx.color) {
+                    throw new Error('pixelprocessor : callback destroyed the color');
+                }
                 aColors.push({...oPixelCtx.color});
             }
         }

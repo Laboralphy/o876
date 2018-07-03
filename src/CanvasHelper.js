@@ -1,4 +1,3 @@
-const SpellBook = require('./SpellBook');
 class CanvasHelper {
     /**
      * fabrique et renvoie un canvas
@@ -29,30 +28,6 @@ class CanvasHelper {
         );
         return oCanvas;
     }
-
-    static draw(oDestCvs, ...args) {
-        let ctx, aArgs = [...args];
-        switch (SpellBook.typeMap(aArgs)) {
-            case 'onn':
-            case 'onnnnnn':
-            case 'onnnnnnnn':
-                oDestCvs.getContext('2d').drawImage(...args);
-                break;
-
-            case 'onnn':
-            case 'onnnnnnn':
-            case 'onnnnnnnnn':
-                let ctx = oDestCvs.getContext('2d');
-                let globAlpha = ctx.globalAlpha;
-                ctx.globalAlpha = aArgs[1];
-                ctx.drawImage(...args);
-                ctx.globalAlpha = globAlpha;
-                break;
-
-            default:
-                throw new Error('could not do anything with this parameters');
-        }
-    }
 }
 
-export default CanvasHelper;
+module.exports = CanvasHelper;

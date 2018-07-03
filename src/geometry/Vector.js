@@ -8,7 +8,7 @@
 
 const Helper = require('./Helper.js');
 
-module.exports = class Vector {
+class Vector {
 	/**
 	 * The constructor accepts one two parameters
 	 * If one parameter is given, the constructor will consider it as
@@ -81,19 +81,38 @@ module.exports = class Vector {
 	}
 
 	/**
-	 * return the vector distance
+	 * Immutable
+	 * returns 0 - this
+	 * @return Vector;
+	 */
+	neg() {
+		return new Vector(-this.x, -this.y);
+	}
+
+	/**
+	 * returns true if two vectors are equal
+	 * @param v {Vector}
+	 * @returns {boolean}
+	 */
+	isEqual(v) {
+		return this.x === v.x && this.y === v.y;
+	}
+
+	/**
+	 * return the vector magnitude
 	 * @return {number}
 	 */
-	distance() {
+	magnitude() {
 		return Helper.distance(0, 0, this.x, this.y);
 	}
 
 	/**
+	 * immutable !
 	 * returns a normalized version of this vector
 	 * @return {Vector}
 	 */
 	normalize() {
-		return this.mul(1 / this.distance());
+		return this.mul(1 / this.magnitude());
 	}
 
 	/**
@@ -127,20 +146,40 @@ module.exports = class Vector {
 	}
 
     /**
-	 * Renvoie l'angle entre le vecteur et l'axe X
+	 * Renvoie la norme de ce vecteur et l'angle entre le vecteur et l'axe X
 	 * si le vecteur est dans la direction x+ alors l'angle = 0
      */
-	angle() {
+	direction() {
 		return Helper.angle(0, 0, this.x, this.y);
+	}
+
+	/**
+	 * Calcule l'angle avec un autre vecteur
+	 * @param v {Vector}
+	 */
+	angle(v) {
+		if (!v) {
+			throw new Error('vector argument is mandatory');
+		}
+		return Math.acos(this.normalize().dot(v.normalize()))
 	}
 
 	toString() {
 		return [this.x, this.y].map(n => n.toString()).join(':');
 	}
 
-	fromPolar(a, s) {
+	static fromPolar(a, s) {
 		let v = Helper.polar2rect(a, s);
-		this.set(v.dx, v.dy);
-		return this;
+		return  new Vector(v.dx, v.dy);
 	}
-};
+
+	/**
+	 * scalar product
+	 * @param v {Vector}
+	 */
+	dot(v) {
+		return this.x * v.x + this.y * v.y;
+	}
+}
+
+module.exports = Vector;
