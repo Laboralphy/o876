@@ -109,25 +109,25 @@ describe('o876', function() {
             describe('get vector distance', function () {
                 it('should compute vector distance', function () {
                     let v = new Vector(5, 5);
-                    expect(v.distance()).toBeCloseTo(5 * Math.sqrt(2), 4);
+                    expect(v.magnitude()).toBeCloseTo(5 * Math.sqrt(2), 4);
                 });
                 it('should compute vector distance 2', function () {
                     let v = new Vector(-3, 2);
-                    expect(v.distance()).toBeCloseTo(Math.sqrt(9 + 4), 4);
+                    expect(v.magnitude()).toBeCloseTo(Math.sqrt(9 + 4), 4);
                 });
             });
 
             describe('normalize vector', function () {
                 it('should build a normalized vector', function () {
                     let v = new Vector(64, 4123);
-                    expect(v.normalize().distance()).toBeCloseTo(1, 5);
+                    expect(v.normalize().magnitude()).toBeCloseTo(1, 5);
                 });
             });
 
-            describe('angle', function() {
+            describe('direction', function() {
                 it('should compute 60deg', function() {
                     let v = new Vector(30, 30);
-                    expect(180 * v.angle() / Math.PI).toBe(45);
+                    expect(180 * v.direction() / Math.PI).toBe(45);
                 });
             });
         });
@@ -359,17 +359,17 @@ describe('o876', function() {
     describe('Rainbow', function() {
         it ('should parse colors without error', function() {
             const r = o876.Rainbow;
-            expect(r.parse('741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-            expect(r.parse('774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-            expect(r.parse('#741')).toEqual({r: 0x77, g: 0x44, b: 0x11});
-            expect(r.parse('#774411')).toEqual({r: 0x77, g: 0x44, b: 0x11});
+            expect(r.parse('741')).toEqual({r: 0x77, g: 0x44, b: 0x11, a: 255});
+            expect(r.parse('774411')).toEqual({r: 0x77, g: 0x44, b: 0x11, a: 255});
+            expect(r.parse('#741')).toEqual({r: 0x77, g: 0x44, b: 0x11, a: 255});
+            expect(r.parse('#774411')).toEqual({r: 0x77, g: 0x44, b: 0x11, a: 255});
             expect(r.parse('rgb(119,68, 17)')).toEqual({r: 0x77, g: 0x44, b: 0x11});
             expect(r.parse('rgba(119,68, 17, 0.777)')).toEqual({r: 0x77, g: 0x44, b: 0x11, a:0.777});
         });
 
         it('should convert rgba', function() {
             const r = o876.Rainbow;
-            expect(r.rgba('#FFF')).toEqual('rgb(255, 255, 255)');
+            expect(r.rgba('#FFF')).toEqual('rgba(255, 255, 255, 1)');
         });
 
         it('should make an array of 4 items', function() {
@@ -388,11 +388,11 @@ describe('o876', function() {
                 4: 'yellow'
             });
             expect(a).toEqual([
-                "rgb(255, 0, 0)",
-                "rgb(127, 0, 64)",
-                "rgb(0, 0, 128)",
-                "rgb(127, 127, 64)",
-                "rgb(255, 255, 0)"
+                "rgba(255, 0, 0, 1)",
+                "rgba(127, 0, 64, 1)",
+                "rgba(0, 0, 128, 1)",
+                "rgba(127, 127, 64, 1)",
+                "rgba(255, 255, 0, 1)"
             ]);
             expect(a.length).toEqual(5);
 
@@ -402,9 +402,9 @@ describe('o876', function() {
                 2: 'yellow'
             });
             expect(a).toEqual([
-                "rgb(255, 0, 0)",
-                "rgb(0, 0, 128)",
-                "rgb(255, 255, 0)"
+                "rgba(255, 0, 0, 1)",
+                "rgba(0, 0, 128, 1)",
+                "rgba(255, 255, 0, 1)"
             ]);
             expect(a.length).toEqual(3);
 
@@ -414,37 +414,37 @@ describe('o876', function() {
                 30: 'yellow'
             });
             expect(a).toEqual([
-                "rgb(255, 0, 0)",
-                "rgb(223, 0, 16)",
-                "rgb(207, 0, 24)",
-                "rgb(191, 0, 32)",
-                "rgb(175, 0, 40)",
-                "rgb(159, 0, 48)",
-                "rgb(143, 0, 56)",
-                "rgb(127, 0, 64)",
-                "rgb(111, 0, 72)",
-                "rgb(95, 0, 80)",
-                "rgb(79, 0, 88)",
-                "rgb(63, 0, 96)",
-                "rgb(47, 0, 104)",
-                "rgb(31, 0, 112)",
-                "rgb(15, 0, 120)",
-                "rgb(0, 0, 128)",
-                "rgb(31, 31, 112)",
-                "rgb(47, 47, 104)",
-                "rgb(63, 63, 96)",
-                "rgb(79, 79, 88)",
-                "rgb(95, 95, 80)",
-                "rgb(111, 111, 72)",
-                "rgb(127, 127, 64)",
-                "rgb(143, 143, 56)",
-                "rgb(159, 159, 48)",
-                "rgb(175, 175, 40)",
-                "rgb(191, 191, 32)",
-                "rgb(207, 207, 24)",
-                "rgb(223, 223, 16)",
-                "rgb(239, 239, 8)",
-                "rgb(255, 255, 0)"
+                "rgba(255, 0, 0, 1)",
+                "rgba(223, 0, 16, 1)",
+                "rgba(207, 0, 24, 1)",
+                "rgba(191, 0, 32, 1)",
+                "rgba(175, 0, 40, 1)",
+                "rgba(159, 0, 48, 1)",
+                "rgba(143, 0, 56, 1)",
+                "rgba(127, 0, 64, 1)",
+                "rgba(111, 0, 72, 1)",
+                "rgba(95, 0, 80, 1)",
+                "rgba(79, 0, 88, 1)",
+                "rgba(63, 0, 96, 1)",
+                "rgba(47, 0, 104, 1)",
+                "rgba(31, 0, 112, 1)",
+                "rgba(15, 0, 120, 1)",
+                "rgba(0, 0, 128, 1)",
+                "rgba(31, 31, 112, 1)",
+                "rgba(47, 47, 104, 1)",
+                "rgba(63, 63, 96, 1)",
+                "rgba(79, 79, 88, 1)",
+                "rgba(95, 95, 80, 1)",
+                "rgba(111, 111, 72, 1)",
+                "rgba(127, 127, 64, 1)",
+                "rgba(143, 143, 56, 1)",
+                "rgba(159, 159, 48, 1)",
+                "rgba(175, 175, 40, 1)",
+                "rgba(191, 191, 32, 1)",
+                "rgba(207, 207, 24, 1)",
+                "rgba(223, 223, 16, 1)",
+                "rgba(239, 239, 8, 1)",
+                "rgba(255, 255, 0, 1)"
             ]);
             expect(a.length).toEqual(31);
         });
@@ -588,15 +588,15 @@ describe('o876', function() {
         const Rainbow = o876.Rainbow;
 		describe('parse', function() {
 			it('should parse correctly', function() {
-				expect(Rainbow.parse('red')).toEqual({r: 255, g: 0, b: 0});
+				expect(Rainbow.parse('red')).toEqual({r: 255, g: 0, b: 0, a: 255});
 				expect(Rainbow.parse('rgba(128, 192, 101, 0.5)')).toEqual({r: 128, g: 192, b: 101, a: 0.5});
-				expect(Rainbow.parse('#F00')).toEqual({r: 255, g: 0, b: 0});
+				expect(Rainbow.parse('#F00')).toEqual({r: 255, g: 0, b: 0, a: 255});
 			});
 		});
 
 		describe('brightness', function() {
 			it('should filter correctly', function() {
-				expect(Rainbow.brightness(Rainbow.parse('red'), 0.5)).toEqual({r: 127, g: 0, b: 0});
+				expect(Rainbow.brightness(Rainbow.parse('red'), 0.5)).toEqual({r: 127, g: 0, b: 0, a:255});
 			});
 		});
     });

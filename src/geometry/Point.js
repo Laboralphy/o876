@@ -4,7 +4,7 @@
 
 const Helper = require('./Helper');
 
-module.exports = class Point {
+class Point {
 	constructor(x, y) {
 		if (typeof x === 'object' && ('x' in x) && ('y' in x)) {
 			this.x = x.x;
@@ -23,4 +23,6 @@ module.exports = class Point {
 	distance(p) {
 		return Helper.distance(p.x, p.y, this.x, this.y);
 	}
-};
+}
+
+module.exports = Point;

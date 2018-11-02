@@ -5,7 +5,7 @@
 /**
  * A simple helper class
  */
-module.exports = class Helper {
+class Helper {
 	/**
 	 * Distance between 2 points
 	 * @param x1 {Number} point 1 coordinates
@@ -64,4 +64,6 @@ module.exports = class Helper {
 	static polar2rect(angle, norm) {
 		return {dx: norm * Math.cos(angle), dy: norm * Math.sin(angle)};
 	}
-};
+}
+
+module.exports = Helper;

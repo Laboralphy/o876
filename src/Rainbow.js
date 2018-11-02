@@ -167,6 +167,11 @@ module.exports = class Rainbow {
 	static rgba(xData) {
 		return Rainbow._buildRGBAFromStructure(Rainbow.parse(xData));
 	}
+
+	static int32(xData) {
+		let x = Rainbow.parse(xData);
+		return xData.r || (xData.g << 8) || (xData.b << 16) || (xData.a << 24);
+	}
 	
 	/**
 	 * Analyse une valeur d'entrée pour construire une structure avec les 
@@ -239,8 +244,9 @@ module.exports = class Rainbow {
 			return {
 				r: (x1.r + x2.r) >> 1,
 				g: (x1.g + x2.g) >> 1,
-				b: (x1.b + x2.b) >> 1
-			};			
+				b: (x1.b + x2.b) >> 1,
+				a: (x1.a + x2.a) >> 1,
+			};
 		}
 		
 		function fillArray(a, x1, x2, n1, n2) {
@@ -305,24 +311,27 @@ module.exports = class Rainbow {
 	}
 
 	static _buildStructureFromInt(n) {
-		let r = (n >> 16) & 0xFF;
+		let a = (n >> 24) & 0xFF;
+		let b = (n >> 16) & 0xFF;
 		let g = (n >> 8) & 0xFF;
-		let b = n & 0xFF;
-		return {r: r, g: g, b: b};
+		let r = n & 0xFF;
+		return {r, g, b, a};
 	}
 	
 	static _buildStructureFromString3(s) {
 		let r = parseInt('0x' + s[0] + s[0]);
 		let g = parseInt('0x' + s[1] + s[1]);
 		let b = parseInt('0x' + s[2] + s[2]);
-		return {r: r, g: g, b: b};
+		let a = 255;
+		return {r, g, b, a};
 	}
 
 	static _buildStructureFromString6(s) {
 		let r = parseInt('0x' + s[0] + s[1]);
 		let g = parseInt('0x' + s[2] + s[3]);
 		let b = parseInt('0x' + s[4] + s[5]);
-		return {r: r, g: g, b: b};
+		let a = 255;
+		return {r, g, b, a};
 	}
 
 	static _buildRGBAFromStructure(oData) {
@@ -330,7 +339,7 @@ module.exports = class Rainbow {
 		let s2 = oData.r.toString() + ', ' + oData.g.toString() + ', ' + oData.b.toString();
 		if ('a' in oData) {
 			s1 += 'a';
-			s2 += ', ' + oData.a.toString();
+			s2 += ', ' + oData.a.toString() / 255;
 		}
 		return s1 + '(' + s2 + ')';
 	}
@@ -351,6 +360,13 @@ module.exports = class Rainbow {
 		c.r = Rainbow.byte(f * c.r);
 		c.g = Rainbow.byte(f * c.g);
 		c.b = Rainbow.byte(f * c.b);
+		return c;
+	}
+
+	static grayscale(color) {
+		let c = Rainbow.parse(color);
+		let n = Math.round((c.r * 30 + c.g * 59 + c.b * 11) / 100);
+		c.r = c.g = c.b = n;
 		return c;
 	}
 };
