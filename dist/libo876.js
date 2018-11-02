@@ -77,7 +77,7 @@
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "/dist/";
+/******/ 	__webpack_require__.p = "";
 /******/
 /******/
 /******/ 	// Load entry module and return exports
@@ -373,7 +373,7 @@ class PixelProcessor {
                     g: (p >> 8) & 0xFF,
                     b: (p >> 16) & 0xFF,
                     a: (p >> 24) & 0xFF
-                }
+                };
             },
             width: w,
             height: h,
@@ -398,6 +398,9 @@ class PixelProcessor {
                 oPixelCtx.color.b = (p >> 16) && 0xFF;
                 oPixelCtx.color.a = (p >> 24) && 0xFF;
                 cb(oPixelCtx);
+                if (!oPixelCtx.color) {
+                    throw new Error('pixelprocessor : callback destroyed the color');
+                }
                 aColors.push({...oPixelCtx.color});
             }
         }
@@ -588,6 +591,11 @@ module.exports = class Rainbow {
 	static rgba(xData) {
 		return Rainbow._buildRGBAFromStructure(Rainbow.parse(xData));
 	}
+
+	static int32(xData) {
+		let x = Rainbow.parse(xData);
+		return xData.r || (xData.g << 8) || (xData.b << 16) || (xData.a << 24);
+	}
 	
 	/**
 	 * Analyse une valeur d'entrée pour construire une structure avec les 
@@ -660,8 +668,9 @@ module.exports = class Rainbow {
 			return {
 				r: (x1.r + x2.r) >> 1,
 				g: (x1.g + x2.g) >> 1,
-				b: (x1.b + x2.b) >> 1
-			};			
+				b: (x1.b + x2.b) >> 1,
+				a: (x1.a + x2.a) >> 1,
+			};
 		}
 		
 		function fillArray(a, x1, x2, n1, n2) {
@@ -726,24 +735,27 @@ module.exports = class Rainbow {
 	}
 
 	static _buildStructureFromInt(n) {
-		let r = (n >> 16) & 0xFF;
+		let a = (n >> 24) & 0xFF;
+		let b = (n >> 16) & 0xFF;
 		let g = (n >> 8) & 0xFF;
-		let b = n & 0xFF;
-		return {r: r, g: g, b: b};
+		let r = n & 0xFF;
+		return {r, g, b, a};
 	}
 	
 	static _buildStructureFromString3(s) {
 		let r = parseInt('0x' + s[0] + s[0]);
 		let g = parseInt('0x' + s[1] + s[1]);
 		let b = parseInt('0x' + s[2] + s[2]);
-		return {r: r, g: g, b: b};
+		let a = 255;
+		return {r, g, b, a};
 	}
 
 	static _buildStructureFromString6(s) {
 		let r = parseInt('0x' + s[0] + s[1]);
 		let g = parseInt('0x' + s[2] + s[3]);
 		let b = parseInt('0x' + s[4] + s[5]);
-		return {r: r, g: g, b: b};
+		let a = 255;
+		return {r, g, b, a};
 	}
 
 	static _buildRGBAFromStructure(oData) {
@@ -751,7 +763,7 @@ module.exports = class Rainbow {
 		let s2 = oData.r.toString() + ', ' + oData.g.toString() + ', ' + oData.b.toString();
 		if ('a' in oData) {
 			s1 += 'a';
-			s2 += ', ' + oData.a.toString();
+			s2 += ', ' + oData.a.toString() / 255;
 		}
 		return s1 + '(' + s2 + ')';
 	}
@@ -772,6 +784,13 @@ module.exports = class Rainbow {
 		c.r = Rainbow.byte(f * c.r);
 		c.g = Rainbow.byte(f * c.g);
 		c.b = Rainbow.byte(f * c.b);
+		return c;
+	}
+
+	static grayscale(color) {
+		let c = Rainbow.parse(color);
+		let n = Math.round((c.r * 30 + c.g * 59 + c.b * 11) / 100);
+		c.r = c.g = c.b = n;
 		return c;
 	}
 };
@@ -2599,7 +2618,7 @@ module.exports = {
 /**
  * A simple helper class
  */
-module.exports = class Helper {
+class Helper {
 	/**
 	 * Distance between 2 points
 	 * @param x1 {Number} point 1 coordinates
@@ -2658,7 +2677,9 @@ module.exports = class Helper {
 	static polar2rect(angle, norm) {
 		return {dx: norm * Math.cos(angle), dy: norm * Math.sin(angle)};
 	}
-};
+}
+
+module.exports = Helper;
 
 /***/ }),
 
@@ -2675,7 +2696,7 @@ module.exports = class Helper {
 
 const Helper = __webpack_require__(/*! ./Helper */ "./src/geometry/Helper.js");
 
-module.exports = class Point {
+class Point {
 	constructor(x, y) {
 		if (typeof x === 'object' && ('x' in x) && ('y' in x)) {
 			this.x = x.x;
@@ -2694,7 +2715,9 @@ module.exports = class Point {
 	distance(p) {
 		return Helper.distance(p.x, p.y, this.x, this.y);
 	}
-};
+}
+
+module.exports = Point;
 
 /***/ }),
 
@@ -2715,7 +2738,7 @@ module.exports = class Point {
 
 const Helper = __webpack_require__(/*! ./Helper.js */ "./src/geometry/Helper.js");
 
-module.exports = class Vector {
+class Vector {
 	/**
 	 * The constructor accepts one two parameters
 	 * If one parameter is given, the constructor will consider it as
@@ -2788,19 +2811,38 @@ module.exports = class Vector {
 	}
 
 	/**
-	 * return the vector distance
+	 * Immutable
+	 * returns 0 - this
+	 * @return Vector;
+	 */
+	neg() {
+		return new Vector(-this.x, -this.y);
+	}
+
+	/**
+	 * returns true if two vectors are equal
+	 * @param v {Vector}
+	 * @returns {boolean}
+	 */
+	isEqual(v) {
+		return this.x === v.x && this.y === v.y;
+	}
+
+	/**
+	 * return the vector magnitude
 	 * @return {number}
 	 */
-	distance() {
+	magnitude() {
 		return Helper.distance(0, 0, this.x, this.y);
 	}
 
 	/**
+	 * immutable !
 	 * returns a normalized version of this vector
 	 * @return {Vector}
 	 */
 	normalize() {
-		return this.mul(1 / this.distance());
+		return this.mul(1 / this.magnitude());
 	}
 
 	/**
@@ -2834,23 +2876,43 @@ module.exports = class Vector {
 	}
 
     /**
-	 * Renvoie l'angle entre le vecteur et l'axe X
+	 * Renvoie la norme de ce vecteur et l'angle entre le vecteur et l'axe X
 	 * si le vecteur est dans la direction x+ alors l'angle = 0
      */
-	angle() {
+	direction() {
 		return Helper.angle(0, 0, this.x, this.y);
+	}
+
+	/**
+	 * Calcule l'angle avec un autre vecteur
+	 * @param v {Vector}
+	 */
+	angle(v) {
+		if (!v) {
+			throw new Error('vector argument is mandatory');
+		}
+		return Math.acos(this.normalize().dot(v.normalize()))
 	}
 
 	toString() {
 		return [this.x, this.y].map(n => n.toString()).join(':');
 	}
 
-	fromPolar(a, s) {
+	static fromPolar(a, s) {
 		let v = Helper.polar2rect(a, s);
-		this.set(v.dx, v.dy);
-		return this;
+		return  new Vector(v.dx, v.dy);
 	}
-};
+
+	/**
+	 * scalar product
+	 * @param v {Vector}
+	 */
+	dot(v) {
+		return this.x * v.x + this.y * v.y;
+	}
+}
+
+module.exports = Vector;
 
 /***/ }),
 
@@ -2866,8 +2928,8 @@ const sb =  __webpack_require__(/*! ../SpellBook */ "./src/SpellBook.js");
 
 class View {
 	constructor() {
-		this._offset = new Vector();
-		this._position = new Vector();
+		this._offset = new Vector(); // offset retranché à la position pour déterminer le point super-gauche
+		this._position = new Vector(); // position de la vue
 		this._width = 0;
 		this._height = 0;
 	}
@@ -2899,6 +2961,8 @@ class View {
 	}
 }
 
+module.exports = View;
+
 /***/ }),
 
 /***/ "./src/geometry/index.js":
@@ -2911,7 +2975,7 @@ class View {
 const Helper = __webpack_require__(/*! ./Helper */ "./src/geometry/Helper.js");
 const Point = __webpack_require__(/*! ./Point */ "./src/geometry/Point.js");
 const Vector = __webpack_require__(/*! ./Vector */ "./src/geometry/Vector.js");
-const View = __webpack_require__(/*! ../geometry/View */ "./src/geometry/View.js");
+const View = __webpack_require__(/*! ./View */ "./src/geometry/View.js");
 
 module.exports = {
 	Helper,
