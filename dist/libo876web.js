@@ -173,12 +173,9 @@ module.exports = ArrayHelper;
 /*!*****************************!*\
   !*** ./src/CanvasHelper.js ***!
   \*****************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-const SpellBook = __webpack_require__(/*! ./SpellBook */ "./src/SpellBook.js");
 class CanvasHelper {
     /**
      * fabrique et renvoie un canvas
@@ -209,33 +206,9 @@ class CanvasHelper {
         );
         return oCanvas;
     }
-
-    static draw(oDestCvs, ...args) {
-        let ctx, aArgs = [...args];
-        switch (SpellBook.typeMap(aArgs)) {
-            case 'onn':
-            case 'onnnnnn':
-            case 'onnnnnnnn':
-                oDestCvs.getContext('2d').drawImage(...args);
-                break;
-
-            case 'onnn':
-            case 'onnnnnnn':
-            case 'onnnnnnnnn':
-                let ctx = oDestCvs.getContext('2d');
-                let globAlpha = ctx.globalAlpha;
-                ctx.globalAlpha = aArgs[1];
-                ctx.drawImage(...args);
-                ctx.globalAlpha = globAlpha;
-                break;
-
-            default:
-                throw new Error('could not do anything with this parameters');
-        }
-    }
 }
 
-/* harmony default export */ __webpack_exports__["default"] = (CanvasHelper);
+module.exports = CanvasHelper;
 
 /***/ }),
 
